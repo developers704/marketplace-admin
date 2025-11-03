@@ -1,0 +1,94 @@
+$toggle-width: 60px;
+$toggle-height: 34px;
+$circle-size: 26px;
+$off-color: #ccc;
+$on-color: #3a61b6;
+$text-color: white;
+
+.toggle-container {
+	position: relative;
+
+	.toggle {
+		position: relative;
+		display: inline-block;
+		width: $toggle-width;
+		height: $toggle-height;
+
+		input:disabled + .slider {
+			background-color: #e0e0e0; // Lighter gray for disabled state
+			cursor: not-allowed; // Change cursor style
+
+			&:before {
+				background-color: #b0b0b0; // Different color for the circle when disabled
+			}
+		}
+
+		input:disabled ~ .text {
+			color: #b0b0b0; // Change text color when disabled
+			opacity: 0.5; // Make text semi-transparent
+		}
+
+		input {
+			opacity: 0;
+			width: 0;
+			height: 0;
+		}
+
+		.slider {
+			position: absolute;
+			cursor: pointer;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background-color: $off-color;
+			transition: background-color 0.4s;
+			border-radius: 34px;
+
+			&:before {
+				position: absolute;
+				content: '';
+				height: $circle-size;
+				width: $circle-size;
+				left: 4px;
+				bottom: 4px;
+				background-color: white;
+				transition: transform 0.4s;
+				border-radius: 50%;
+			}
+		}
+
+		input:checked + .slider {
+			background-color: $on-color;
+
+			&:before {
+				transform: translateX($toggle-width - $circle-size - 4px);
+			}
+		}
+
+		.text {
+			position: absolute;
+			top: 50%;
+			transform: translateY(-50%);
+			font-size: 12px;
+			color: $text-color;
+
+			&.on {
+				left: 10px;
+			}
+
+			&.off {
+				right: 6px;
+				opacity: 0.5;
+			}
+		}
+
+		input:checked ~ .text.on {
+			opacity: 1;
+		}
+
+		input:checked ~ .text.off {
+			opacity: 0;
+		}
+	}
+}

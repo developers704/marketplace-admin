@@ -1,0 +1,166 @@
+//
+// accordions.scss
+//
+.signature-canvas-container {
+	background: #f8f9fa;
+}
+
+.signature-canvas {
+	cursor: crosshair;
+	transition: border-color 0.15s ease-in-out;
+}
+
+.signature-canvas:hover {
+	border-color: #007bff !important;
+}
+
+.signature-canvas:disabled {
+	cursor: not-allowed;
+	opacity: 0.6;
+}
+
+/* Tab styling */
+.nav-pills .nav-link {
+	border-radius: 20px;
+	margin: 0 5px;
+	transition: all 0.3s ease;
+}
+
+.nav-pills .nav-link:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.nav-pills .nav-link.active {
+	background-color: #007bff;
+	border-color: #007bff;
+}
+
+/* Signature preview styling */
+.signature-preview img {
+	transition: transform 0.2s ease;
+}
+
+.signature-preview img:hover {
+	transform: scale(1.05);
+}
+
+/* Badge styling */
+.badge-lg {
+	padding: 0.5rem 0.75rem;
+	font-size: 0.875rem;
+}
+
+/* Alert enhancements */
+.alert .btn {
+	border: none;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Table enhancements */
+.table-striped tbody tr:hover {
+	background-color: rgba(0, 123, 255, 0.05);
+}
+
+/* File uploader disabled state */
+.file-uploader-disabled {
+	opacity: 0.6;
+	pointer-events: none;
+	cursor: not-allowed;
+}
+
+/* Responsive signature canvas */
+@media (max-width: 576px) {
+	.signature-canvas {
+		width: 100% !important;
+		max-width: 400px;
+	}
+}
+
+.accordion-header {
+	margin: 0;
+}
+
+.accordion {
+	> .card {
+		> .card-header {
+			border-radius: 0;
+			margin-bottom: -1px;
+		}
+	}
+}
+
+/* Security Settings Specific Styles */
+.transition-opacity {
+	transition: opacity 0.3s ease-in-out;
+}
+
+.badge-lg {
+	padding: 0.5rem 0.75rem;
+	font-size: 0.875rem;
+}
+
+/* Switch styling */
+.form-check-input:checked {
+	background-color: #198754;
+	border-color: #198754;
+}
+
+.form-check-input:focus {
+	border-color: #86b7fe;
+	outline: 0;
+	box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Quick preset buttons */
+.btn-outline-secondary:hover {
+	color: #fff;
+	background-color: #6c757d;
+	border-color: #6c757d;
+}
+
+/* Table enhancements */
+.table-striped tbody tr:hover {
+	background-color: rgba(0, 123, 255, 0.05);
+}
+
+/* Alert enhancements */
+.alert .btn {
+	border: none;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Security feature cards */
+.security-feature-card {
+	transition: transform 0.2s ease-in-out;
+}
+
+.security-feature-card:hover {
+	transform: translateY(-2px);
+}
+
+/* Input group styling */
+.input-group .form-control:disabled {
+	background-color: #e9ecef;
+	opacity: 0.65;
+}
+
+/* Modal enhancements */
+.modal-header {
+	border-bottom: 2px solid #dee2e6;
+}
+
+.modal-footer {
+	border-top: 2px solid #dee2e6;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+	.d-flex.gap-2 {
+		flex-direction: column;
+	}
+
+	.btn-outline-secondary {
+		margin-bottom: 0.5rem;
+	}
+}

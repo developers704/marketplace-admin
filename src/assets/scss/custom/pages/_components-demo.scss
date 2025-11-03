@@ -1,0 +1,65 @@
+//
+// _components-demo.scss
+//
+
+// Scrollspy
+.scrollspy-example {
+	position: relative;
+	height: 200px;
+	margin-top: 0.5rem;
+	overflow: auto;
+}
+
+// Grid
+.grid-structure {
+	.grid-container {
+		background-color: var(--#{$prefix}tertiary-bg);
+		margin-bottom: 10px;
+		font-size: 0.8rem;
+		font-weight: $font-weight-semibold;
+		padding: 10px 20px;
+	}
+}
+
+// Icons
+.icons-list-demo {
+	.col-xl-3.col-lg-4.col-sm-6 {
+		cursor: pointer;
+		line-height: 45px;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+		overflow: hidden;
+
+		p {
+			margin-bottom: 0;
+			line-height: inherit;
+		}
+
+		&:hover,
+		&:hover i {
+			color: var(--#{$prefix}primary);
+		}
+	}
+
+	i {
+		text-align: center;
+		vertical-align: middle;
+		font-size: 24px;
+		width: 50px;
+		height: 50px;
+		line-height: 50px;
+		margin-right: 12px;
+		border-radius: 3px;
+		display: inline-block;
+		transition: all 0.2s;
+	}
+}
+
+.form-select {
+	min-width: 200px; // Ensure the dropdown has enough width
+	max-width: 100%; // Adapts to the available space
+	max-height: 200px; // Makes the dropdown scrollable when content exceeds 200px
+	overflow-y: auto; // Enables vertical scrolling
+	z-index: 1000; // Ensure the dropdown is not hidden behind other elements
+	white-space: nowrap; // Prevents text wrapping within dropdown options
+}

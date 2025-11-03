@@ -1,0 +1,116 @@
+//
+// authentication.scss
+//
+
+// authentication pages background
+.modal-backdrop {
+	z-index: 1040 !important;
+}
+
+.modal {
+	z-index: 1050 !important;
+}
+
+.landing-page-modal {
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	max-height: 90vh;
+	overflow-y: auto;
+}
+
+/* When modal is open, prevent background content from showing through */
+body.modal-open {
+	overflow: hidden;
+	padding-right: 0 !important; /* Prevent content shift */
+}
+
+/* Make sure modal backdrop covers everything */
+.modal-backdrop {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	background-color: rgba(0, 0, 0, 0.5);
+}
+
+body.authentication-bg {
+	background-image: url('@/assets/images/auth-bg.jpg');
+	background-size: cover;
+
+	.account-pages {
+		align-items: center;
+		display: flex;
+		min-height: 100vh;
+	}
+
+	.auth-brand {
+		img {
+		}
+
+		.logo-light {
+			display: none;
+		}
+
+		.logo-dark {
+			display: block;
+		}
+	}
+}
+
+.authentication-bg {
+	.account-pages {
+		.card {
+			border-radius: 0.5rem;
+
+			.logout-icon {
+				width: 140px !important;
+			}
+		}
+	}
+}
+
+// Dark mode
+html[data-bs-theme='dark'] {
+	body.authentication-bg {
+		background-image: url('@/assets/images/auth-bg-dark.jpg');
+	}
+
+	.auth-brand {
+		.logo-light {
+			display: block;
+		}
+
+		.logo-dark {
+			display: none;
+		}
+	}
+}
+
+/* Add this CSS in your component or in a separate stylesheet */
+.PhoneInput {
+	display: flex;
+	align-items: center;
+}
+
+.PhoneInput .PhoneInputInput {
+	border: none;
+	background: none;
+	padding-left: 8px;
+	margin-left: 8px;
+	outline: none;
+}
+
+.PhoneInput .PhoneInputCountry {
+	display: flex;
+	align-items: center;
+}
+
+/* Remove the default form-control class from PhoneInput */
+.PhoneInput.form-control {
+	display: flex;
+	align-items: center;
+	padding: 0.45rem 0.9rem;
+}
