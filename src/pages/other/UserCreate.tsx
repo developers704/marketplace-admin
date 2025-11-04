@@ -27,7 +27,7 @@ const schemaResolver = yupResolver(
 		phone_number: yup.string()
 			.required('Please enter Phone Number'),
 		role_name: yup.string().required('Please select a Role'),
-		storeId: yup.string().required('Please select a Store'),
+		storeId: yup.array().of(yup.string()).min(1, 'Please select at least one Store'),
 		department: yup.string().required('Please select a Department'),
 	})
 )
@@ -216,7 +216,7 @@ const UserCreate = () => {
 				password: '',
 				phone_number: '',
 				role_name: '',
-				storeId: '',
+				storeId: [],
 				department: '', // Added department field
 			})
 		} catch (error: any) {
@@ -295,11 +295,9 @@ const UserCreate = () => {
 											/>
 										)}
 									/>
-									{errors.role_name && (
-										<Form.Text className="text-danger">
-											{errors.role_name.message}
-										</Form.Text>
-									)}
+								{errors.role_name && (
+    							<Form.Text className="text-danger">{errors.role_name.message}</Form.Text>
+  							)}
 								</Form.Group>
 							</Col>
 
@@ -307,34 +305,120 @@ const UserCreate = () => {
 						<Row>
 							<Col lg={6}>
 								<Form.Group className="mb-3">
-									<Form.Label className="d-flex align-items-center justify-content-between">
-										Store
-										<Button
-											onClick={toggleStoreModal}
-											title="Add New Store"
-											className="p-0"
-											variant="link"
-										>
-											<i className="bi bi-plus-circle-fill text-success" style={{ fontSize: '24px' }}></i>
-										</Button>
-									</Form.Label>
-									<Controller
-										name="storeId"
-										control={control}
-										render={({ field }) => (
-											<Select
-												isClearable
-												{...field}
-												options={warehouseOptions}
-												isSearchable={true}
-												placeholder="Select a Store"
-												className="react-select"
-												classNamePrefix="select"
-												value={warehouseOptions.find((option: any) => option.value === field.value)}
-												onChange={(option) => field.onChange(option?.value)}
-											/>
-										)}
-									/>
+									 <Form.Label className="d-flex align-items-center justify-content-between">
+    Stores
+    <Button
+      onClick={toggleStoreModal}
+      title="Add New Store"
+      className="p-0"
+      variant="link"
+    >
+      <i
+        className="bi bi-plus-circle-fill text-success"
+        style={{ fontSize: '24px' }}
+      ></i>
+    </Button>
+  </Form.Label>
+
+  <Controller
+    name="storeId"
+    control={control}
+    render={({ field }) => {
+      const selectedValues = warehouseOptions.filter(opt =>
+        field.value?.includes(opt.value)
+      )
+
+     
+      const Option = (props) => {
+        return (
+          <div
+            {...props.innerProps}
+            className={`d-flex align-items-center p-2 ${props.isFocused ? 'bg-light' : ''}`}
+            style={{ cursor: 'pointer' }}
+          >
+            <input
+              type="checkbox"
+              checked={field.value?.includes(props.data.value)}
+              onChange={() => {
+                const current = field.value || []
+                if (current.includes(props.data.value)) {
+                  field.onChange(current.filter(v => v !== props.data.value))
+                } else {
+                  field.onChange([...current, props.data.value])
+                }
+              }}
+              style={{ marginRight: '8px' }}
+            />
+            <label className="m-0">{props.label}</label>
+          </div>
+        )
+      }
+
+   
+      const MenuList = (props) => {
+        const allSelected = field.value?.length === warehouseOptions.length
+
+        return (
+          <div>
+          
+            <div
+              className="d-flex align-items-center p-2 border-bottom"
+              style={{ cursor: 'pointer', background: '#f8f9fa' }}
+              onClick={() => {
+                if (allSelected) field.onChange([])
+                else field.onChange(warehouseOptions.map(o => o.value))
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={allSelected}
+                readOnly
+                style={{ marginRight: '8px' }}
+              />
+              <label className="m-0 fw-semibold">
+                {allSelected ? 'Unselect All' : 'Select All'}
+              </label>
+            </div > 
+           <div style={{ maxHeight: '220px', overflowY: 'auto' }}>
+              {props.children}
+            </div>
+          </div>
+        )
+      }
+
+      return (
+        <Select
+          {...field}
+          isMulti
+          closeMenuOnSelect={false}
+          hideSelectedOptions={false}
+          options={warehouseOptions}
+		  
+          placeholder="Select Stores"
+          className="react-select"
+          classNamePrefix="select"
+          value={selectedValues}
+          onChange={(selectedOptions) =>
+            field.onChange(selectedOptions ? selectedOptions.map(o => o.value) : [])
+          }
+          components={{
+            Option,
+            MenuList,
+          }}
+		   styles={{
+            menu: (base) => ({
+              ...base,
+              zIndex: 9999, 
+            }),
+          }}
+        />
+      )
+    }}
+  />
+  {errors.storeId && (
+    <Form.Text className="text-danger">{errors.storeId.message}</Form.Text>
+  )}
+
 								</Form.Group>
 							</Col>
 							<Col lg={6}>

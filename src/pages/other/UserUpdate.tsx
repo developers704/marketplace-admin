@@ -7,7 +7,7 @@ import * as yup from 'yup'
 import { useAuthContext } from '@/common'
 import { Link, useParams } from 'react-router-dom'
 import Swal from 'sweetalert2'
-import Select from 'react-select'
+import Select, { components } from 'react-select'
 
 // Define the WarehouseRecord type
 interface WarehouseRecord {
@@ -45,14 +45,17 @@ const schema = yup.object().shape({
 		.email('Please enter a valid email')
 		.required('Please enter Email'),
 	password: yup
-		.string()
-		.min(6, 'Password must be at least 6 characters')
-		.required('Please enter Password'),
-	phone_number: yup
-		.string()
-		.required('Please enter Phone Number'),
+  .string()
+  .transform((value) => (value === '' ? null : value)) // ✅ convert empty string → null
+  .nullable()
+  .notRequired()
+  .min(6, 'Password must be at least 6 characters'),
+	phone_number: yup.string().required('Please enter Phone Number'),
 	role_name: yup.string().required('Please select a Role'),
-	warehouseId: yup.string().required('Please select a Store'),
+	warehouseId: yup
+		.array()
+		.of(yup.string())
+		.min(1, 'Please select at least one Store'),
 	department: yup.string().required('Please select a Department'),
 })
 
@@ -77,9 +80,9 @@ const UserUpdate = () => {
 			username: '',
 			email: '',
 			phone_number: '',
-			role_name: '', // initial value for role
-			password: '',
-			warehouseId: '', // initial value for warehouse
+			role_name: '',
+			password: null,
+			warehouseId: [],
 			department: '',
 		},
 	})
@@ -109,9 +112,9 @@ const UserUpdate = () => {
 
 			const data_res: WarehouseRecord[] = await response.json()
 			if (data_res) {
-				const formattedWarehouses = data_res.map(warehouse => ({
+				const formattedWarehouses = data_res.map((warehouse) => ({
 					value: warehouse._id,
-					label: warehouse.name
+					label: warehouse.name,
 				}))
 				setWarehouseData(formattedWarehouses)
 			}
@@ -134,10 +137,12 @@ const UserUpdate = () => {
 			}
 
 			const data = await response.json()
-			const formattedDepartments = data.map((dept: { _id: string; name: string }) => ({
-				value: dept._id,
-				label: dept.name
-			}))
+			const formattedDepartments = data.map(
+				(dept: { _id: string; name: string }) => ({
+					value: dept._id,
+					label: dept.name,
+				})
+			)
 			setDepartments(formattedDepartments)
 		} catch (error: any) {
 			console.error('Error fetching departments:', error)
@@ -160,7 +165,7 @@ const UserUpdate = () => {
 				const rolesData = await rolesResponse.json()
 				const formattedRoles = rolesData.map((role: any) => ({
 					value: role._id,
-					label: role.role_name
+					label: role.role_name,
 				}))
 				setRoles(formattedRoles)
 
@@ -187,12 +192,22 @@ const UserUpdate = () => {
 				}
 
 				if (userData.warehouse) {
-					// Check if warehouse is an object with _id or just an ID string
-					const warehouseId = typeof userData.warehouse === 'object' ?
-						userData.warehouse._id : userData.warehouse
-					setValue('warehouseId', warehouseId)
-				}
+					let warehouseIds: string[] = []
 
+					if (Array.isArray(userData.warehouse)) {
+						warehouseIds = userData.warehouse.map((wh: any) =>
+							typeof wh === 'object' ? wh._id : wh
+						)
+					} else {
+						warehouseIds = [
+							typeof userData.warehouse === 'object'
+								? userData.warehouse._id
+								: userData.warehouse,
+						]
+					}
+
+					setValue('warehouseId', warehouseIds)
+				}
 
 				if (userData.department) {
 					setValue('department', userData.department)
@@ -368,26 +383,120 @@ const UserUpdate = () => {
 							</Col>
 						</Row>
 						<Row>
-
 							<Col lg={6}>
 								<Form.Group className="mb-3">
-									<Form.Label>Store</Form.Label>
+									<Form.Label>Stores</Form.Label>
 									<Controller
 										name="warehouseId"
 										control={control}
-										render={({ field }) => (
-											<Select
-												{...field}
-												options={warehouseData}
-												styles={customStyles}
-												placeholder="Select a Store"
-												className="react-select"
-												classNamePrefix="react-select"
-												onChange={(option) => field.onChange(option?.value)}
-												value={warehouseData.find(option => option.value === field.value) || null}
-												isDisabled={!canUpdate}
-											/>
-										)}
+										render={({ field }) => {
+											const selectedValues = warehouseData.filter(
+												(opt) => field.value?.includes?.(opt.value)
+											)
+
+											const Option = (props: any) => {
+												const { data, innerProps, isFocused } = props
+												const isChecked = field.value?.includes(data.value)
+
+												return (
+													<div
+														{...innerProps}
+														className={`d-flex align-items-center p-2 ${
+															isFocused ? 'bg-light' : ''
+														}`}
+														style={{ cursor: 'pointer' }}>
+														<input
+															type="checkbox"
+															checked={isChecked}
+															onChange={() => {
+																const current = field.value || []
+																if (isChecked) {
+																	field.onChange(
+																		current.filter(
+																			(v: string) => v !== data.value
+																		)
+																	)
+																} else {
+																	field.onChange([...current, data.value])
+																}
+															}}
+															style={{ marginRight: '8px' }}
+														/>
+														<label className="m-0">{data.label}</label>
+													</div>
+												)
+											}
+
+											const MenuList = (props: any) => {
+												const allSelected =
+													field.value?.length === warehouseData.length
+												return (
+													<div>
+														<div
+															className="d-flex align-items-center p-2 border-bottom"
+															style={{
+																cursor: 'pointer',
+																background: '#f8f9fa',
+																position: 'sticky',
+																top: 0,
+																zIndex: 1,
+															}}
+															onClick={() => {
+																if (allSelected) field.onChange([])
+																else
+																	field.onChange(
+																		warehouseData.map((o) => o.value)
+																	)
+															}}>
+															<input
+																type="checkbox"
+																checked={allSelected}
+																readOnly
+																style={{ marginRight: '8px' }}
+															/>
+															<label className="m-0 fw-semibold">
+																{allSelected ? 'Unselect All' : 'Select All'}
+															</label>
+														</div>
+
+														<div
+															style={{ maxHeight: '220px', overflowY: 'auto' }}>
+															{props.children}
+														</div>
+													</div>
+												)
+											}
+
+											return (
+												<Select
+													{...field}
+													isMulti
+													closeMenuOnSelect={false}
+													hideSelectedOptions={false}
+													options={warehouseData}
+													placeholder="Select Stores"
+													className="react-select"
+													classNamePrefix="select"
+													value={selectedValues}
+													onChange={(selectedOptions) =>
+														field.onChange(
+															selectedOptions
+																? selectedOptions.map((o: any) => o.value)
+																: []
+														)
+													}
+													components={{ Option, MenuList }}
+													styles={{
+														...customStyles,
+														menu: (base: any) => ({
+															...base,
+															zIndex: 9999,
+														}),
+													}}
+													isDisabled={!canUpdate}
+												/>
+											)
+										}}
 									/>
 									{errors.warehouseId && (
 										<Form.Control.Feedback type="invalid" className="d-block">
@@ -447,10 +556,8 @@ const UserUpdate = () => {
 									errors={errors}
 								/>
 							</Col>
-
 						</Row>
 						<Row>
-
 							<Col lg={6}>
 								<FormInput
 									label="Password"
