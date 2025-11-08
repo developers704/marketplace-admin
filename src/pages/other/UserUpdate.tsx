@@ -7,7 +7,7 @@ import * as yup from 'yup'
 import { useAuthContext } from '@/common'
 import { Link, useParams } from 'react-router-dom'
 import Swal from 'sweetalert2'
-import Select, { components } from 'react-select'
+import Select from 'react-select'
 
 // Define the WarehouseRecord type
 interface WarehouseRecord {
@@ -413,7 +413,7 @@ const UserUpdate = () => {
 																if (isChecked) {
 																	field.onChange(
 																		current.filter(
-																			(v: string) => v !== data.value
+																			(v: any) => v !== data.value
 																		)
 																	)
 																} else {

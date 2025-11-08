@@ -75,6 +75,8 @@ const Products = () => {
 	const [showBulkEditModal, setShowBulkEditModal] = useState(false)
 	const [isImporting, setIsImporting] = useState(false)
 	const fileInputRef = useRef<HTMLInputElement>(null)
+	console.log("product data filter error", productData);
+	
 
 	//  *************************** hooks & basics **************************************
 

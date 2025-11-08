@@ -21,6 +21,10 @@ interface WalletRequest {
     reason: string;
     status: string;
     targetWallet: string; // Added targetWallet field
+    selectedWarehouse: {
+        _id: string;
+        name: string;
+    };
     customer: {
         _id: string;
         username: string;
@@ -437,7 +441,7 @@ const WalletRequest = () => {
                                                 <small>{request?.customer?.email}</small>
                                             </div>
                                         </td>
-                                        <td>{request?.customer?.warehouse?.name}</td>
+                                        <td>{request?.selectedWarehouse?.name }</td>
                                         <td>${request?.amount}</td>
                                         <td
                                             onClick={() => toggleMessage(request?._id)}
@@ -649,7 +653,7 @@ const WalletRequest = () => {
                                         <strong>Phone:</strong> {selectedRequest?.customer?.phone_number}
                                     </div>
                                     <div className="mb-2">
-                                        <strong>Store:</strong> {selectedRequest?.customer?.warehouse?.name}
+                                        <strong>Store:</strong> {selectedRequest?.selectedWarehouse?.name}
                                     </div>
                                 </div>
 
