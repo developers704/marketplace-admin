@@ -216,6 +216,8 @@ const EcommerceOrder = () => {
 		(currentPage - 1) * itemsPerPage,
 		currentPage * itemsPerPage
 	)
+
+	
 	const truncateText = (text: string, maxLength: number = 15) => {
 		return text.length > maxLength ? text.substring(0, maxLength) + '...' : text
 	}
@@ -667,7 +669,7 @@ const EcommerceOrder = () => {
 											<td>{record?.customer?.username || 'N/A'}</td>
 											<td>{record?.customer?.email || 'N/A'}</td>
 											<td>{record?.customer?.phone_number || 'N/A'}</td>
-											<td>{record?.customer?.warehouse?.name || 'N/A'}</td>
+											<td>{record?.warehouse?.name || 'N/A'}</td>
 
 											<td>
 												{record?.items
@@ -905,7 +907,7 @@ const EcommerceOrder = () => {
 															<tr>
 																<th scope="row">Store:</th>
 																<td>
-																	{selectedOrder?.customer?.warehouse?.name ||
+																	{selectedOrder?.warehouse?.name ||
 																		'N/A'}
 																</td>
 															</tr>
