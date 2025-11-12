@@ -21,6 +21,17 @@ interface StoreModalProps {
         suppliesWallet?: {
             balance: number
         }
+
+         // 🟢 Add these 2 optional fields
+        districtManager?: {
+            _id: string
+            name: string
+        } | null
+
+        corporateManager?: {
+            _id: string
+            name: string
+        } | null
     } | null
 }
 
@@ -34,7 +45,7 @@ const StoreModal: React.FC<StoreModalProps> = ({
     const canUpdate = isSuperUser || permissions.Products?.Update
     const canCreate = isSuperUser || permissions.Products?.Create
     const [apiLoading, setApiLoading] = useState(false)
-
+    const [managers, setManagers] = useState([])
     const BASE_API = import.meta.env.VITE_BASE_API
     const { token } = user
 
@@ -48,6 +59,34 @@ const StoreModal: React.FC<StoreModalProps> = ({
     } = useForm()
 
     // Handle form submission
+    useEffect(() => {
+    const fetchManagers = async () => {
+        try {
+            const res = await fetch(`${BASE_API}/api/customers/getcustomer-forstore`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            })
+            const data = await res.json()
+            console.log("data for user store", data);
+            
+
+            // 🟢 Sirf "District Manager" ya "Corporate Manager" roles filter kar lo
+            const filteredManagers = data.filter(
+                (user: any) =>
+                    user.role?.role_name?.toLowerCase() === 'district manager' ||
+                    user.role?.role_name?.toLowerCase() === 'corporate manager'
+            )
+
+            setManagers(filteredManagers)
+        } catch (err) {
+            console.error('Failed to fetch managers', err)
+        }
+    }
+
+    if (show) fetchManagers()
+}, [show])
+
     const handleFormSubmit = async (storeData: any) => {
         setApiLoading(true)
         try {
@@ -69,7 +108,9 @@ const StoreModal: React.FC<StoreModalProps> = ({
                     capacity: parseInt(storeData.capacity) || 0,
                     description: storeData.description,
                     initialInventoryBalance: parseFloat(storeData.initialInventoryBalance) || 0,
-                    initialSuppliesBalance: parseFloat(storeData.initialSuppliesBalance) || 0
+                    initialSuppliesBalance: parseFloat(storeData.initialSuppliesBalance) || 0,
+                    districtManager: storeData.districtManager || null,
+                    corporateManager: storeData.corporateManager || null,
                 }),
             })
 
@@ -127,6 +168,8 @@ const StoreModal: React.FC<StoreModalProps> = ({
             setValue('initialInventoryBalance', editingStore.inventoryWallet?.balance || 0)
             setValue('initialSuppliesBalance', editingStore.suppliesWallet?.balance || 0)
             setValue('description', editingStore.description || '')
+            setValue('districtManager', editingStore.districtManager?._id || '')
+            setValue('corporateManager', editingStore.corporateManager?._id || '')
         } else if (show && !editingStore) {
             reset({
                 name: '',
@@ -162,6 +205,35 @@ const StoreModal: React.FC<StoreModalProps> = ({
                             control={control}
                         />
                     </Form.Group>
+                    <Form.Group className="mb-3">
+    <Form.Label>District Manager</Form.Label>
+    <Form.Select {...register("districtManager")}>
+        <option value="">Select District Manager</option>
+        {managers
+            .filter((m: any) => m.role?.role_name?.toLowerCase() === 'district manager')
+            .map((manager: any) => (
+                <option key={manager._id} value={manager._id}>
+                    {manager.username}
+                </option>
+            ))}
+    </Form.Select>
+</Form.Group>
+
+<Form.Group className="mb-3">
+    <Form.Label>Corporate Manager</Form.Label>
+    <Form.Select {...register("corporateManager")}>
+        <option value="">Select Corporate Manager</option>
+        {managers
+            .filter((m: any) => m.role?.role_name?.toLowerCase() === 'corporate manager')
+            .map((manager: any) => (
+                <option key={manager._id} value={manager._id}>
+                    {manager.username}
+                </option>
+            ))}
+    </Form.Select>
+</Form.Group>
+
+
 
                     <Form.Group className="mb-3">
                         <FormInput
