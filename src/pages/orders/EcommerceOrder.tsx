@@ -66,6 +66,15 @@ interface City {
 	__v: number
 }
 
+// Approval History interface
+interface ApprovalHistory {
+	role: string
+	approvedBy: string
+	status: string
+	date: string
+	remarks?: string
+}
+
 // Main Order interface
 interface EcommerceOrderRecord {
 	_id: string
@@ -78,6 +87,8 @@ interface EcommerceOrderRecord {
 	grandTotal: number
 	paymentMethod: string
 	orderStatus: string | null
+	approvalStatus?: string
+	approvalHistory?: ApprovalHistory[]
 	specialInstructions: string
 	couponUsed: string | null
 	paymentStatus: string | null
@@ -113,6 +124,11 @@ const EcommerceOrder = () => {
 	const [orderItems, setOrderItems] = useState<any[]>([])
 	const [isExporting, setIsExporting] = useState(false)
 	const [productTypeFilter, setProductTypeFilter] = useState<string>('all')
+	const [showApprovalModal, setShowApprovalModal] = useState(false)
+	const [approvalAction, setApprovalAction] = useState<'APPROVE' | 'DISAPPROVE' | null>(null)
+	const [approvalRemarks, setApprovalRemarks] = useState('')
+	const [approvingOrderId, setApprovingOrderId] = useState<string | null>(null)
+	const [approvingSubmit, setApprovingSubmit] = useState(false)
 
 	// ************************ Helping Functions ********************************
 	const BASE_API = import.meta.env.VITE_BASE_API
@@ -400,6 +416,47 @@ const EcommerceOrder = () => {
 		}
 	}
 
+	// ************************ Approval Handler ********************************
+	const handleApprovalSubmit = async () => {
+		if (!selectedOrder || !approvalAction) return
+
+		setApprovingSubmit(true)
+		try {
+			const response = await fetch(
+				`${BASE_API}/api/checkout/${selectedOrder._id}/approve`,
+				{
+					method: 'PATCH',
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${token}`,
+					},
+					body: JSON.stringify({
+						action: approvalAction,
+						remarks: approvalRemarks || undefined,
+					}),
+				}
+			)
+
+			if (!response.ok) {
+				const error = await response.json()
+				throw new Error(error.message || 'Failed to process approval')
+			}
+
+			toastService.success(
+				`Order ${approvalAction === 'APPROVE' ? 'approved' : 'disapproved'} successfully!`
+			)
+			fetchOrders() // Refresh orders
+			setShowApprovalModal(false)
+			setApprovalAction(null)
+			setApprovalRemarks('')
+			setApprovingOrderId(null)
+		} catch (error: any) {
+			toastService.error(error.message || 'Error processing approval')
+		} finally {
+			setApprovingSubmit(false)
+		}
+	}
+
 	// ************************ useEffect Functions ********************************
 	useEffect(() => {
 		setCurrentPage(1) // Reset to first page when filter changes
@@ -639,6 +696,7 @@ const EcommerceOrder = () => {
 									<th>Products</th>
 									<th>Quantity</th>
 									<th>Total Amount</th>
+									<th>Approval Status</th>
 									<th>Shipping Status</th>
 									<th>Order Status</th>
 									<th>Actions</th>
@@ -687,6 +745,18 @@ const EcommerceOrder = () => {
 											</td>
 											<td>$ {record?.grandTotal || 0}</td>
 											<td>
+												<span
+													className={`badge bg-${
+														record?.approvalStatus === 'PENDING'
+															? 'warning'
+															: record?.approvalStatus === 'APPROVED'
+															? 'success'
+															: 'danger'
+													}`}>
+													{record?.approvalStatus || 'N/A'}
+												</span>
+											</td>
+											<td>
 												<Form.Select
 													size="sm"
 													value={record?.shippingStatus || ''}
@@ -733,7 +803,7 @@ const EcommerceOrder = () => {
 												</Form.Select>
 											</td>
 											<td>
-												<div className="d-flex">
+												<div className="d-flex gap-2">
 													<Button
 														variant="info"
 														className="me-2"
@@ -749,13 +819,39 @@ const EcommerceOrder = () => {
 														onClick={() => handleEditClick(record)}>
 														<MdEdit />
 													</Button>
+													{record?.approvalStatus === 'PENDING' && (
+														<>
+															<Button
+																variant="success"
+																size="sm"
+																onClick={() => {
+																	setSelectedOrder(record)
+																	setApprovalAction('APPROVE')
+																	setShowApprovalModal(true)
+																}}
+																title="Approve Order">
+																✓
+															</Button>
+															<Button
+																variant="danger"
+																size="sm"
+																onClick={() => {
+																	setSelectedOrder(record)
+																	setApprovalAction('DISAPPROVE')
+																	setShowApprovalModal(true)
+																}}
+																title="Reject Order">
+																✕
+															</Button>
+														</>
+													)}
 												</div>
 											</td>
 										</tr>
 									))
 								) : (
 									<tr>
-										<td colSpan={11} className="text-center">
+										<td colSpan={13} className="text-center">
 											No orders found
 										</td>
 									</tr>
@@ -1108,6 +1204,156 @@ const EcommerceOrder = () => {
 					</Modal.Footer>
 				</Form>
 			</Modal>
+
+			{/* Approval Modal */}
+			{showApprovalModal && selectedOrder && (
+				<Modal show={showApprovalModal} onHide={() => setShowApprovalModal(false)} size="lg">
+					<Modal.Header closeButton className="bg-light">
+						<Modal.Title>
+							{approvalAction === 'APPROVE' ? '✅ Approve Order' : '❌ Reject Order'} #{selectedOrder?.orderId}
+						</Modal.Title>
+					</Modal.Header>
+					<Modal.Body>
+						{/* Order Items */}
+						<div className="mb-4">
+							<h6 className="mb-3">📦 Order Items</h6>
+							<div className="table-responsive">
+								<table className="table table-sm table-bordered">
+									<thead className="table-light">
+										<tr>
+											<th>Product</th>
+											<th>Qty</th>
+											<th>Price</th>
+											<th>Total</th>
+										</tr>
+									</thead>
+									<tbody>
+										{selectedOrder?.items?.map((item: any, idx: number) => (
+											<tr key={idx}>
+												<td>{item?.product?.name}</td>
+												<td className="text-center">{item?.quantity}</td>
+												<td className="text-right">$ {item?.price}</td>
+												<td className="text-right fw-bold">$ {item?.quantity * item?.price}</td>
+											</tr>
+										))}
+										<tr className="table-light fw-bold">
+											<td colSpan={3} className="text-right">
+												Grand Total:
+											</td>
+											<td className="text-right">$ {selectedOrder?.grandTotal}</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						</div>
+
+						{/* Customer Info */}
+						<div className="row mb-4">
+							<div className="col-md-6">
+								<h6 className="mb-3">👤 Customer Info</h6>
+								<p>
+									<strong>Name:</strong> {selectedOrder?.customer?.username}
+								</p>
+								<p>
+									<strong>Email:</strong> {selectedOrder?.customer?.email}
+								</p>
+								<p>
+									<strong>Phone:</strong> {selectedOrder?.customer?.phone_number}
+								</p>
+							</div>
+							<div className="col-md-6">
+								<h6 className="mb-3">🏪 Store Info</h6>
+								<p>
+									<strong>Store:</strong> {selectedOrder?.customer?.warehouse?.name}
+								</p>
+								<p>
+									<strong>Order Date:</strong> {new Date(selectedOrder?.createdAt).toLocaleDateString()}
+								</p>
+							</div>
+						</div>
+
+						{/* Approval History Timeline */}
+						{selectedOrder?.approvalHistory && selectedOrder?.approvalHistory.length > 0 && (
+							<div className="mb-4">
+								<h6 className="mb-3">📋 Approval History</h6>
+								<div className="timeline">
+									{selectedOrder?.approvalHistory.map((history: ApprovalHistory, idx: number) => (
+										<div key={idx} className="mb-3 pb-3 border-bottom">
+											<div className="d-flex align-items-start">
+												<div
+													className={`badge bg-${
+														history.status === 'APPROVED' ? 'success' : 'danger'
+													} me-3`}
+													style={{ minWidth: '30px' }}>
+													{idx + 1}
+												</div>
+												<div className="flex-grow-1">
+													<div className="fw-bold">
+														{history.role}
+														<span
+															className={`badge ms-2 bg-${
+																history.status === 'APPROVED' ? 'success' : 'danger'
+															}`}>
+															{history.status}
+														</span>
+													</div>
+													{history.remarks && (
+														<p className="text-muted small mb-0">Note: {history.remarks}</p>
+													)}
+													<small className="text-muted">
+														{new Date(history.date).toLocaleString()}
+													</small>
+												</div>
+											</div>
+										</div>
+									))}
+								</div>
+							</div>
+						)}
+
+						{/* Remarks Input */}
+						<div className="mb-3">
+							<label className="form-label">
+								{approvalAction === 'APPROVE' ? '✏️ Approval Remarks' : '✏️ Rejection Reason'}
+							</label>
+							<textarea
+								className="form-control"
+								rows={3}
+								placeholder="Enter your remarks..."
+								value={approvalRemarks}
+								onChange={(e) => setApprovalRemarks(e.target.value)}
+							/>
+						</div>
+					</Modal.Body>
+					<Modal.Footer>
+						<Button
+							variant="secondary"
+							onClick={() => {
+								setShowApprovalModal(false)
+								setApprovalAction(null)
+								setApprovalRemarks('')
+							}}>
+							Cancel
+						</Button>
+						<Button
+							variant={approvalAction === 'APPROVE' ? 'success' : 'danger'}
+							onClick={handleApprovalSubmit}
+							disabled={approvingSubmit}>
+							{approvingSubmit ? (
+								<>
+									<span className="spinner-border spinner-border-sm me-2"></span>
+									Processing...
+								</>
+							) : (
+								<>
+									<i className={`me-2 ${approvalAction === 'APPROVE' ? 'ri-check-line' : 'ri-close-line'}`}></i>
+									{approvalAction === 'APPROVE' ? 'Approve Order' : 'Reject Order'}
+								</>
+							)}
+						</Button>
+					</Modal.Footer>
+				</Modal>
+			)}
 		</>
 	)
 }
