@@ -19,8 +19,6 @@ import { useEffect, useRef, useState } from 'react'
 import { FaFileCsv } from 'react-icons/fa6'
 import { BASE_CITY } from '@/constants'
 import { toastService } from '@/common/context/toast.service'
-import Select from 'react-select'
-import { Controller } from 'react-hook-form'
 
 interface TableRecord {
 	_id: string
@@ -94,11 +92,7 @@ const AllInventory = () => {
 		reset,
 		setValue,
 		formState: { errors },
-	} = useForm({
-		 defaultValues: {
-    	 warehouse: []
-	}, 
-	})
+	} = useForm()
 
 	//  ************************* handle functions &***********************
 	const handleDeleteSelected = () => {
@@ -1083,141 +1077,34 @@ const AllInventory = () => {
 							</Col>
 						</Row>
 						<Row>
-							<Col lg={6}>
-  <Form.Group className="mb-3">
-    <Form.Label className="d-flex align-items-center justify-content-between">
-      Stores
-      <Button
-        onClick={(e) => {
-          e.preventDefault()
-          toggleWarehouseModal()
-        }}
-        title="Add New Store"
-        className="p-0"
-        variant="link"
-      >
-        <i
-          className="bi bi-plus-circle-fill text-success"
-          style={{ fontSize: '24px' }}
-        ></i>
-      </Button>
-    </Form.Label>
-
-    <Controller
-      name="warehouse"
-      control={control}
-      render={({ field }) => {
-        // All warehouses converted to Select options
-        const warehouseOptions =
-          warehouses?.map((w: any) => ({
-            value: w._id,
-            label: w.name,
-          })) || []
-
-        const selectedValues = warehouseOptions.filter((opt) =>
-          field.value?.includes(opt.value)
-        )
-
-        // Custom checkbox-style option
-        const Option = (props: any) => {
-          return (
-            <div
-              {...props.innerProps}
-              className={`d-flex align-items-center p-2 ${
-                props.isFocused ? 'bg-light' : ''
-              }`}
-              style={{ cursor: 'pointer' }}
-            >
-              <input
-                type="checkbox"
-                checked={field.value?.includes(props.data.value)}
-                onChange={() => {
-                  const current = field.value || []
-                  if (current.includes(props.data.value)) {
-                    field.onChange(current.filter((v) => v !== props.data.value))
-                  } else {
-                    field.onChange([...current, props.data.value])
-                  }
-                }}
-                style={{ marginRight: '8px' }}
-              />
-              <label className="m-0">{props.label}</label>
-            </div>
-          )
-        }
-
-        // MenuList with Select All/Unselect All + scroll
-        const MenuList = (props: any) => {
-          const allSelected =
-            field.value?.length === warehouseOptions.length
-
-          return (
-            <div>
-              <div
-                className="d-flex align-items-center p-2 border-bottom"
-                style={{ cursor: 'pointer', background: '#f8f9fa' }}
-                onClick={() => {
-                  if (allSelected) field.onChange([])
-                  else field.onChange(warehouseOptions.map((o) => o.value))
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={allSelected}
-                  readOnly
-                  style={{ marginRight: '8px' }}
-                />
-                <label className="m-0 fw-semibold">
-                  {allSelected ? 'Unselect All' : 'Select All'}
-                </label>
-              </div>
-              <div style={{ maxHeight: '220px', overflowY: 'auto' }}>
-                {props.children}
-              </div>
-            </div>
-          )
-        }
-
-        return (
-          <Select
-            {...field}
-            isMulti
-            closeMenuOnSelect={false}
-            hideSelectedOptions={false}
-            options={warehouseOptions}
-            placeholder="Select Stores"
-            className="react-select"
-            classNamePrefix="select"
-            value={selectedValues}
-            onChange={(selectedOptions) =>
-              field.onChange(
-                selectedOptions ? selectedOptions.map((o) => o.value) : []
-              )
-            }
-            components={{
-              Option,
-              MenuList,
-            }}
-            styles={{
-              menu: (base) => ({
-                ...base,
-                zIndex: 9999, // ✅ fix dropdown overlay
-              }),
-            }}
-          />
-        )
-      }}
-    />
-
-    {errors.warehouse && (
-      <Form.Text className="text-danger">
-        {errors.warehouse.message}
-      </Form.Text>
-    )}
-  </Form.Group>
-</Col>
-
-
+							<Col md={6}>
+								<Form.Group className="mb-3">
+									<div className="d-flex align-items-center justify-content-between gap-3">
+										<Form.Label className="mb-0">Store</Form.Label>
+										<Button
+											variant="link"
+											className="p-0 text-success"
+											onClick={(e) => {
+												e.preventDefault()
+												toggleWarehouseModal()
+											}}>
+											<i
+												className="bi bi-plus-circle-fill"
+												style={{ fontSize: '22px' }}></i>
+										</Button>
+									</div>
+									<Form.Select {...register('warehouse')} defaultValue="">
+										<option value="" disabled>
+											Select Store
+										</option>
+										{warehouses?.map((warehouse: any) => (
+											<option key={warehouse._id} value={warehouse._id}>
+												{warehouse.name}
+											</option>
+										))}
+									</Form.Select>
+								</Form.Group>
+							</Col>
 							<Col md={6}>
 								<FormInput
 									label="Location Within Store"

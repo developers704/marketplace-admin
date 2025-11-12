@@ -72,7 +72,7 @@ const UserCreate = () => {
 		_id: role._id
 	}))
 	const warehouseOptions = store.map(warehouse => ({
-		value: warehouse._id,
+		value: String(warehouse._id),
 		label: warehouse.name
 	}))
 	const getRoles = async () => {
@@ -325,7 +325,7 @@ const UserCreate = () => {
     control={control}
     render={({ field }) => {
       const selectedValues = warehouseOptions.filter(opt =>
-        field.value?.includes(opt.value)
+        field.value?.includes(String(opt.value))
       )
 
      
@@ -406,11 +406,11 @@ const UserCreate = () => {
             MenuList,
           }}
 		   styles={{
-            menu: (base) => ({
+            menu: (base:any) => ({
               ...base,
               zIndex: 9999, 
             }),
-          }}
+          }as any}
         />
       )
     }}
