@@ -127,7 +127,7 @@ const EcommerceOrder = () => {
 	const [showApprovalModal, setShowApprovalModal] = useState(false)
 	const [approvalAction, setApprovalAction] = useState<'APPROVE' | 'DISAPPROVE' | null>(null)
 	const [approvalRemarks, setApprovalRemarks] = useState('')
-	// const [approvingOrderId, setApprovingOrderId] = useState<string | null>(null)
+	const [approvingOrderId, setApprovingOrderId] = useState<string | null>(null)
 	const [approvingSubmit, setApprovingSubmit] = useState(false)
 
 	// ************************ Helping Functions ********************************
@@ -449,7 +449,7 @@ const EcommerceOrder = () => {
 			setShowApprovalModal(false)
 			setApprovalAction(null)
 			setApprovalRemarks('')
-			// setApprovingOrderId(null)
+			setApprovingOrderId(null)
 		} catch (error: any) {
 			toastService.error(error.message || 'Error processing approval')
 		} finally {
