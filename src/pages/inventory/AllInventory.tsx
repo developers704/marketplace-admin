@@ -51,6 +51,19 @@ interface TableRecord {
 	__v: number
 }
 
+interface InventoryFormValues {
+	product: string
+	warehouse: string[]
+	quantity: number
+	stockAlertThreshold: number
+	locationWithinWarehouse: string
+	batchId: string
+	expiryDate: string
+	barcode: string
+	vat: number
+	expiryDateThreshold: number
+}
+
 const AllInventory = () => {
 	const { isSuperUser, permissions, user } = useAuthContext()
 	const canUpdate = isSuperUser || permissions.Inventory?.Update
@@ -94,7 +107,7 @@ const AllInventory = () => {
 		reset,
 		setValue,
 		formState: { errors },
-	} = useForm({
+	} = useForm<InventoryFormValues>({
 		 defaultValues: {
     	 warehouse: []
 	}, 
@@ -188,7 +201,7 @@ const AllInventory = () => {
 		setEditingSubCategory(inventory)
 		setValue('product', inventory.product._id)
 		setProductSearchTerm(inventory.product.name)
-		setValue('warehouse', inventory.warehouse?._id || '')
+		setValue('warehouse', inventory.warehouse?._id ? [inventory.warehouse._id] : [])
 		setValue('quantity', inventory.quantity)
 		setValue('locationWithinWarehouse', inventory.locationWithinWarehouse || '')
 		setValue('batchId', inventory.batchId || '')
@@ -1203,7 +1216,7 @@ const AllInventory = () => {
                 ...base,
                 zIndex: 9999, // ✅ fix dropdown overlay
               }),
-            }}
+            } as any}
           />
         )
       }}

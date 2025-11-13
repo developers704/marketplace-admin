@@ -325,7 +325,7 @@ const UserCreate = () => {
     control={control}
     render={({ field }) => {
       const selectedValues = warehouseOptions.filter(opt =>
-        field.value?.includes(opt.value)
+        (field.value as any)?.includes(opt.value)
       )
 
      
@@ -406,7 +406,7 @@ const UserCreate = () => {
             MenuList,
           }}
 		   styles={{
-            menu: (base) => ({
+            menu: (base: any) => ({
               ...base,
               zIndex: 9999, 
             }),
