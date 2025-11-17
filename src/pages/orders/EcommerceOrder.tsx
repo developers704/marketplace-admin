@@ -247,6 +247,7 @@ const EcommerceOrder = () => {
 			setValue('specialInstructions', selectedOrder?.specialInstructions)
 			setValue('couponUsed', selectedOrder?.couponUsed)
 			setValue('adminNotes', selectedOrder?.adminNotes)
+			setValue('shippingStatus', selectedOrder?.shippingStatus)
 		}
 		setShowOrderModal(true)
 	}
@@ -819,7 +820,7 @@ const EcommerceOrder = () => {
 														onClick={() => handleEditClick(record)}>
 														<MdEdit />
 													</Button>
-													{record?.approvalStatus === 'PENDING' && (
+													{!record?.isFinalized && record?.approvalStatus === "PENDING" && (
 														<>
 															<Button
 																variant="success"

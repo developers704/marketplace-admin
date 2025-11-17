@@ -80,9 +80,9 @@ const ContactList = () => {
 				email: item.email || 'No Email',
 				role: item.role ? item.role.role_name : 'No Role',
 				phone: item.phone_number || 'No Phone Number',
-				warehouse: item?.warehouse?.name || "N/A",
+				warehouse: item?.warehouse?.map((w:any) => w.name).join(", ")|| "N/A",
 				department: item?.department?.name || "N/A",
-			}))
+			}))			
 
 			setUserData(mappedData)
 		} catch (error: any) {

@@ -168,8 +168,8 @@ const StoreModal: React.FC<StoreModalProps> = ({
             setValue('initialInventoryBalance', editingStore.inventoryWallet?.balance || 0)
             setValue('initialSuppliesBalance', editingStore.suppliesWallet?.balance || 0)
             setValue('description', editingStore.description || '')
-            setValue('districtManager', editingStore.districtManager?._id || '')
-            setValue('corporateManager', editingStore.corporateManager?._id || '')
+            setValue('districtManager', editingStore.districtManager || '')
+            setValue('corporateManager', editingStore.corporateManager || '')
         } else if (show && !editingStore) {
             reset({
                 name: '',
