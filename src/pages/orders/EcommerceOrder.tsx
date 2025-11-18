@@ -129,6 +129,13 @@ const EcommerceOrder = () => {
 	const [approvalRemarks, setApprovalRemarks] = useState('')
 	// const [approvingOrderId, setApprovingOrderId] = useState<string | null>(null)
 	const [approvingSubmit, setApprovingSubmit] = useState(false)
+	const statusColors = {
+  	Pending: 'warning',      // Yellow
+  	Shipped: 'primary',      // Blue
+  	OnTheWay: 'info',        // Light blue / info
+  	Delivered: 'success',    // Green
+  	Returned: 'danger'       // Red
+	};
 
 	// ************************ Helping Functions ********************************
 	const BASE_API = import.meta.env.VITE_BASE_API
@@ -216,9 +223,10 @@ const EcommerceOrder = () => {
 				matchesOrderId ||
 				matchesCustomerName ||
 				matchesCustomerEmail ||
-				matchesCustomerStore
+				matchesCustomerStore ||
+				matchesProductName ||
+				matchesSpecialCategory
 			)
-			matchesProductName || matchesSpecialCategory
 		}
 
 		return true // If no search term, include all records that passed the filters
@@ -457,6 +465,39 @@ const EcommerceOrder = () => {
 			setApprovingSubmit(false)
 		}
 	}
+
+	const handleShippingStatusUpdate = async (orderId: string, newStatus: string) => {
+    try {
+        setApiLoading(true);
+        const response = await fetch(
+            `${BASE_API}/api/checkout/${orderId}/approve`,
+            {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    // action: 'APPROVE',
+                    shippingStatus: newStatus,
+                    // remarks: 'Shipping status updated',
+                }),
+            }
+        );
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to update shipping status');
+        }
+
+        toastService.success('Shipping status updated successfully!');
+        fetchOrders(); // Refresh orders
+    } catch (error: any) {
+        toastService.error(error.message || 'Error updating shipping status');
+    } finally {
+        setApiLoading(false);
+    }
+};
 
 	// ************************ useEffect Functions ********************************
 	useEffect(() => {
@@ -699,7 +740,7 @@ const EcommerceOrder = () => {
 									<th>Total Amount</th>
 									<th>Approval Status</th>
 									<th>Shipping Status</th>
-									<th>Order Status</th>
+									<th className=''>Order Confermation</th>
 									<th>Actions</th>
 								</tr>
 							</thead>
@@ -758,6 +799,13 @@ const EcommerceOrder = () => {
 												</span>
 											</td>
 											<td>
+												<span
+	 						
+													className={`badge bg-${statusColors[record?.shippingStatus] || 'secondary'}`}>
+  													{record?.shippingStatus.toUpperCase() || 'N/A'}
+												</span>
+											</td>
+											{/* <td>
 												<Form.Select
 													size="sm"
 													value={record?.shippingStatus || ''}
@@ -779,48 +827,10 @@ const EcommerceOrder = () => {
 														</option>
 													))}
 												</Form.Select>
-											</td>
+											</td> */}
 											<td>
-												<Form.Select
-													size="sm"
-													value={record?.orderStatus || ''}
-													onChange={(e) =>
-														handleStatusUpdate(
-															record?._id || '',
-															'order',
-															e.target.value,
-															record?.orderStatus
-														)
-													}
-													className="w-100"
-													style={{ minWidth: '120px', maxWidth: '130px' }}>
-													{orderStatuses?.map((status) => (
-														<option
-															key={status?._id}
-															value={status?.name || ''}>
-															{status?.name || 'N/A'}
-														</option>
-													))}
-												</Form.Select>
-											</td>
-											<td>
-												<div className="d-flex gap-2">
-													<Button
-														variant="info"
-														className="me-2"
-														onClick={() => {
-															setSelectedOrder(record)
-															setShowModal(true)
-														}}>
-														<MdRemoveRedEye />
-													</Button>
-													<Button
-														variant="secondary"
-														className="me-2"
-														onClick={() => handleEditClick(record)}>
-														<MdEdit />
-													</Button>
-													{!record?.isFinalized && record?.approvalStatus === "PENDING" && (
+												<div className="d-flex gap-2 justify-content-center">
+													{!record?.isFinalized && record?.approvalStatus === "PENDING" ? (
 														<>
 															<Button
 																variant="success"
@@ -845,14 +855,70 @@ const EcommerceOrder = () => {
 																✕
 															</Button>
 														</>
-													)}
+													) : (
+														<span
+        													className={`badge ${
+        													record?.orderStatus === 'Processing'
+        													? 'bg-success'
+        													: record?.orderStatus === 'Cancelled'
+        													? 'bg-danger'
+        													: 'bg-warning'
+        													}`}
+      													>
+        													{record?.orderStatus || 'N/A'}
+      														</span>
+													)
+													}
 												</div>
 											</td>
+											{/* <td>
+												<Form.Select
+													size="sm"
+													value={record?.orderStatus || ''}
+													onChange={(e) =>
+														handleStatusUpdate(
+															record?._id || '',
+															'order',
+															e.target.value,
+															record?.orderStatus
+														)
+													}
+													className="w-100"
+													style={{ minWidth: '120px', maxWidth: '130px' }}>
+													{orderStatuses?.map((status) => (
+														<option
+															key={status?._id}
+															value={status?.name || ''}>
+															{status?.name || 'N/A'}
+														</option>
+													))}
+												</Form.Select>
+											</td> */}
+											<td>
+												<div className="d-flex gap-2">
+													<Button
+														variant="info"
+														className="me-2"
+														onClick={() => {
+															setSelectedOrder(record)
+															setShowModal(true)
+														}}>
+														<MdRemoveRedEye />
+													</Button>
+													<Button
+														variant="secondary"
+														className="me-2"
+														onClick={() => handleEditClick(record)}>
+														<MdEdit />
+													</Button>
+												</div>
+											</td>
+											
 										</tr>
 									))
 								) : (
 									<tr>
-										<td colSpan={13} className="text-center">
+										<td colSpan={14} className="text-center">
 											No orders found
 										</td>
 									</tr>
@@ -929,140 +995,453 @@ const EcommerceOrder = () => {
 							Order Details #{selectedOrder?.orderId}
 						</Modal.Title>
 					</Modal.Header>
-					<Modal.Body className="p-4">
-						{selectedOrder && (
-							<div className="order-details">
-								<div className="row">
-									<div className="col-12 mb-4">
-										<div className="card">
-											<div className="card-body">
-												<h5 className="card-title mb-3">Order Items</h5>
-												<div className="table-responsive">
-													<table className="table table-bordered">
-														<thead className="table-light">
-															<tr>
-																<th>Product</th>
-																<th style={{ width: '15%' }}>Quantity</th>
-																<th style={{ width: '15%' }}>Price</th>
-																<th style={{ width: '15%' }}>Color</th>
-																<th style={{ width: '15%' }}>Total</th>
-															</tr>
-														</thead>
-														<tbody>
-															{selectedOrder?.items?.map(
-																(item: any, index: any) => (
-																	<tr key={index}>
-																		<td>{item?.product?.name || 'N/A'}</td>
-																		<td>{item?.quantity || 0}</td>
-																		<td>$ {item?.price || 0}</td>
-																		<td>{item?.color || 'N/A'}</td>
-																		<td>
-																			${' '}
-																			{(item?.quantity || 0) *
-																				(item?.price || 0)}
-																		</td>
-																	</tr>
-																)
-															)}
-														</tbody>
-													</table>
-												</div>
-											</div>
-										</div>
-									</div>
+					<Modal.Body className="p-4 p-md-5 bg-light">
+  {selectedOrder && (
+    <>
+      {/* Define shipping steps order for stepper */}
+      {(() => {
+        const shippingSteps = ["Pending", "Shipped", "OnTheWay", "Delivered"] as const;
+        const currentIndex = shippingSteps.indexOf(
+          selectedOrder.shippingStatus || "Pending"
+        );
 
-									<div className="col-md-6 mb-4">
-										<div className="card h-100">
-											<div className="card-body">
-												<h5 className="card-title mb-3">
-													Customer Information
-												</h5>
-												<div className="table-responsive">
-													<table className="table table-borderless mb-0">
-														<tbody>
-															<tr>
-																<th scope="row" style={{ width: '35%' }}>
-																	Name:
-																</th>
-																<td>
-																	{selectedOrder?.customer?.username || 'N/A'}
-																</td>
-															</tr>
-															<tr>
-																<th scope="row">Email:</th>
-																<td>
-																	{selectedOrder?.customer?.email || 'N/A'}
-																</td>
-															</tr>
-															<tr>
-																<th scope="row">Phone:</th>
-																<td>
-																	{selectedOrder?.customer?.phone_number ||
-																		'N/A'}
-																</td>
-															</tr>
-															<tr>
-																<th scope="row">Store:</th>
-																<td>
-																	{selectedOrder?.warehouse?.name ||
-																		'N/A'}
-																</td>
-															</tr>
-														</tbody>
-													</table>
-												</div>
-											</div>
-										</div>
-									</div>
+        return (
+          <>
+            {/* Top Summary Bar */}
+            <div className="bg-white rounded-4 shadow-sm p-4 mb-5 border border-light">
+              <div className="row align-items-center">
+                <div className="col-lg-8">
+                  <h4 className="fw-bold text-dark mb-1">Order Details</h4>
+                  <p className="text-muted mb-0 fs-5">
+                    Order ID: ORD-
+                    {selectedOrder._id
+                      ? selectedOrder._id.slice(-8).toUpperCase()
+                      : "N/A"}
+                  </p>
+                </div>
+                <div className="col-lg-4 text-lg-end mt-4 mt-lg-0">
+                  <div className="d-flex justify-content-lg-end align-items-center gap-4">
+                    <div className="text-center">
+                      <small className="text-muted d-block">Order Status</small>
+                      <span className="badge bg-primary px-4 py-2 fs-6 fw-bold">
+                        {selectedOrder.orderStatus || "N/A"}
+                      </span>
+                    </div>
+                    <div className="text-center">
+                      <small className="text-muted d-block">Payment</small>
+                      <span
+                        className={`badge ${
+                          selectedOrder.paymentStatus === "Paid"
+                            ? "bg-success"
+                            : "bg-warning text-dark"
+                        } px-4 py-2 fs-6 fw-bold`}
+                      >
+                        {selectedOrder.paymentStatus || "N/A"}
+                      </span>
+                    </div>
+                    <div className="text-center">
+                      <small className="text-muted d-block mb-1">
+                        Grand Total
+                      </small>
+                      <h3 className="text-primary fw-bold mb-0">
+                        ${Number(selectedOrder.grandTotal || 0).toFixed(2)}
+                      </h3>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-									<div className="col-md-6">
-										<div className="card">
-											<div className="card-body">
-												<h5 className="card-title mb-3">Payment Summary</h5>
-												<div className="table-responsive">
-													<table className="table table-bordered">
-														<thead className="table-light">
-															<tr>
-																<th>Description</th>
-																<th style={{ width: '30%' }}>Amount</th>
-															</tr>
-														</thead>
-														<tbody>
-															{selectedOrder?.specialInstructions && (
-																<tr>
-																	<td>Special Instructions</td>
-																	<td>
-																		{selectedOrder?.specialInstructions ||
-																			'N/A'}
-																	</td>
-																</tr>
-															)}
-															<tr>
-																<td>Payment Method</td>
-																<td>{selectedOrder?.paymentMethod || 'N/A'}</td>
-															</tr>
-															<tr>
-																<td>Shipping Status</td>
-																<td>{selectedOrder?.paymentStatus || 'N/A'}</td>
-															</tr>
-															<tr>
-																<td>Subtotal</td>
-																<td>$ {selectedOrder?.subtotal || 0}</td>
-															</tr>
-															<tr className="table-light fw-bold">
-																<td>Grand Total</td>
-																<td>$ {selectedOrder?.grandTotal || 0}</td>
-															</tr>
-														</tbody>
-													</table>
-												</div>
-											</div>
-										</div>
-									</div>
-								</div>
-							</div>
-						)}
-					</Modal.Body>
+            {/* Main Content */}
+            <div className="row g-5">
+              {/* Left: Items + Instructions */}
+              <div className="col-lg-8">
+                {/* Items Table */}
+                <div className="card shadow-sm border-0 rounded-4 overflow-hidden">
+                  <div className="card-header bg-transparent border-0 py-4">
+                    <h5 className="mb-0 fw-bold text-dark">Order Items</h5>
+                  </div>
+                  <div className="table-responsive">
+                    <table className="table table-hover table-striped mb-0 align-middle">
+                      <thead className="bg-light">
+                        <tr>
+                          <th className="ps-4 fw-medium">Product</th>
+                          <th className="text-center">Qty</th>
+                          <th className="text-end">Price</th>
+                          <th className="text-center">Color</th>
+                          <th className="text-end pe-4">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedOrder.items?.map((item: any, index: number) => (
+                          <tr key={index}>
+                            <td className="ps-4 fw-medium">
+                              {item.product?.name || "N/A"}
+                            </td>
+                            <td className="text-center">{item.quantity || 0}</td>
+                            <td className="text-end">
+                              ${Number(item.price || 0).toFixed(2)}
+                            </td>
+                            <td className="text-center">
+                              <span className="badge bg-secondary-subtle text-dark px-3">
+                                {item.color || "N/A"}
+                              </span>
+                            </td>
+                            <td className="text-end pe-4 fw-bold">
+                              $
+                              {(
+                                Number(item.quantity || 0) *
+                                Number(item.price || 0)
+                              ).toFixed(2)}
+                            </td>
+                          </tr>
+                        ))}
+                        <tr className="border-top border-2 border-primary bg-light">
+                          <td colSpan={4} className="text-end fw-bold fs-5">
+                            Subtotal
+                          </td>
+                          <td className="text-end fw-bold fs-5 text-primary">
+                            ${Number(selectedOrder.subtotal || 0).toFixed(2)}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Special Instructions */}
+                {selectedOrder.specialInstructions && (
+                  <div className="mt-4">
+                    <div className="alert alert-info border-0 rounded-4 shadow-sm p-4 bg-opacity-10">
+                      <h6 className="fw-bold mb-2">Special Instructions</h6>
+                      <p className="mb-0 text-dark">
+                        {selectedOrder.specialInstructions}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Right Column */}
+              <div className="col-lg-4">
+                {/* Customer Info */}
+                <div className="card shadow-sm border-0 rounded-4 mb-4">
+                  <div className="card-header bg-transparent border-0 py-4">
+                    <h5 className="mb-0 fw-bold text-dark">
+                      Customer Information
+                    </h5>
+                  </div>
+                  <div className="card-body pt-3">
+                    <div className="d-grid gap-4">
+                      {[
+                        { label: "Name", value: selectedOrder.customer?.username },
+                        { label: "Email", value: selectedOrder.customer?.email },
+                        { label: "Phone", value: selectedOrder.customer?.phone_number },
+                        { label: "Store", value: selectedOrder.warehouse?.name },
+                      ].map((field) => (
+                        <div
+                          key={field.label}
+                          className="d-flex justify-content-between"
+                        >
+                          <span className="text-muted">{field.label}</span>
+                          <span className="fw-medium">
+                            {field.value || "N/A"}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Payment Summary */}
+                <div className="card shadow-sm border-0 rounded-4">
+                  <div className="card-header bg-transparent border-0 py-4">
+                    <h5 className="mb-0 fw-bold text-dark">
+                      Payment Summary
+                    </h5>
+                  </div>
+                  <div className="card-body pt-3">
+                    <div className="d-grid gap-4">
+                      <div className="d-flex justify-content-between">
+                        <span className="text-muted">Payment Method</span>
+                        <span className="fw-medium">
+                          {selectedOrder.paymentMethod || "N/A"}
+                        </span>
+                      </div>
+                      <div className="d-flex justify-content-between">
+                        <span className="text-muted">Payment Status</span>
+                        <span
+                          className={`badge ${
+                            selectedOrder.paymentStatus === "Paid"
+                              ? "bg-success"
+                              : "bg-danger"
+                          } px-3 py-1`}
+                        >
+                          {selectedOrder.paymentStatus || "N/A"}
+                        </span>
+                      </div>
+                      <hr className="my-3" />
+                      <div className="d-flex justify-content-between fw-bold fs-5">
+                        <span>Grand Total</span>
+                        <span className="text-primary">
+                          ${Number(selectedOrder.grandTotal || 0).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Shipping Management */}
+            <div className="mt-5">
+              <div className="card shadow-sm border-0 rounded-4">
+                <div className="card-header bg-transparent border-0 py-4">
+                  <h5 className="mb-0 fw-bold text-dark">
+                    Shipping Management
+                  </h5>
+                </div>
+                <div className="card-body pt-4">
+                  <div className="row align-items-end g-4 mb-5">
+                    <div className="col-md-5">
+                      <label className="form-label fw-medium">
+                        Current Status
+                      </label>
+                      <div
+                        className={`fw-bold fs-4 ${
+                          selectedOrder.shippingStatus === "Returned"
+                            ? "text-danger"
+                            : "text-primary"
+                        }`}
+                      >
+                        {selectedOrder.shippingStatus || "Pending"}
+                      </div>
+                    </div>
+                    <div className="col-md-4">
+                      <label className="form-label fw-medium">
+                        Update Status
+                      </label>
+                      <Form.Select
+                        value={selectedOrder.shippingStatus || ""}
+                        onChange={(e) =>
+                          handleShippingStatusUpdate(
+                            selectedOrder._id,
+                            e.target.value
+                          )
+                        }
+                        disabled={
+                          !selectedOrder?.isFinalized ||
+                          selectedOrder?.orderStatus !== "Processing"
+                        }
+                        className="form-select-lg"
+                      >
+                        <option value="">Select Status</option>
+                        {shippingSteps.map((status) => (
+                          <option key={status} value={status}>
+                            {status}
+                          </option>
+                        ))}
+                        <option value="Returned">Returned</option>
+                      </Form.Select>
+                      {(!selectedOrder?.isFinalized ||
+                        selectedOrder?.orderStatus !== "Processing") && (
+                        <small className="text-danger d-block mt-1">
+                          {selectedOrder?.isFinalized
+                            ? "Only Processing orders can be updated"
+                            : "Order must be finalized first"}
+                        </small>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Stepper */}
+                  {selectedOrder.shippingStatus !== "Returned" && (
+                    <div className="position-relative">
+                      <div className="d-flex justify-content-between align-items-center">
+                        {shippingSteps.map((step, index) => {
+                          const isActive = index <= currentIndex;
+                          const isCompleted = index < currentIndex;
+
+                          return (
+                            <div
+                              key={step}
+                              className="text-center position-relative flex-fill"
+                            >
+                              <div
+                                className={`d-inline-flex align-items-center justify-content-center rounded-circle text-white fw-bold shadow-lg mb-3`}
+                                style={{
+                                  width: "60px",
+                                  height: "60px",
+                                  backgroundColor: isActive
+                                    ? "#198754"
+                                    : "#6c757d",
+                                  boxShadow: isActive
+                                    ? "0 0 0 6px rgba(50,135,84,0.2)"
+                                    : "none",
+                                }}
+                              >
+                                {isCompleted ? "✓" : index === currentIndex ? "Now" : "Next"}
+                              </div>
+                              <p
+                                className={`mb-0 fw-medium ${
+                                  isActive ? "text-success" : "text-muted"
+                                }`}
+                              >
+                                {step}
+                              </p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {/* Progress Line */}
+                     <div className="position-relative my-4" style={{ height: "20px" }}>
+
+  	{/* Background Line */}
+  	<div
+  	  style={{
+  	    position: "absolute",
+  	    top: "50%",
+  	    left: "90px",
+  	    right: "90px",
+  	    height: "5px",
+  	    background: "#e5e5e5",
+  	    borderRadius: "20px",
+  	    transform: "translateY(-50%)",
+  	    zIndex: 1,
+  	  }}
+  	/>
+
+ 	 {/* Progress Line */}
+  	<div
+    style={{
+      position: "absolute",
+      top: "50%",
+      left: "90px",
+      right: "96px",
+      height: "4px",
+      background: "#28a745",
+      borderRadius: "20px",
+    //   width: `${(currentIndex / (shippingSteps.length - 1)) * 100}%`,
+      transform: "translateY(-50%)",
+      zIndex: 1,
+      transition: "width 0.3s ease",
+    }}
+  />
+
+  {/* Circles (Steps) */}
+  <div className="d-flex justify-content-between" style={{ padding: "0 90px", position: "relative", zIndex: 2 }}>
+    {shippingSteps.map((step, index) => (
+      <div
+        key={index}
+        style={{
+          width: "18px",
+          height: "18px",
+          background: index <= currentIndex ? "#28a745" : "#d6d6d6",
+          borderRadius: "50%",
+          border: "2px solid white",
+          boxShadow: "0 0 5px rgba(0,0,0,0.15)",
+        }}
+      ></div>
+    ))}
+  </div>
+</div>
+
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Approval History */}
+            {selectedOrder.approvalHistory &&
+              selectedOrder.approvalHistory.length > 0 && (
+                <div className="mt-5">
+                  <div className="card shadow-sm border-0 rounded-4">
+                    <div className="card-header bg-transparent border-0 py-4">
+                      <h5 className="mb-0 fw-bold text-dark">
+                        Approval History
+                      </h5>
+                    </div>
+                    <div className="card-body pt-4">
+                      <div className="position-relative ps-5">
+                        {selectedOrder.approvalHistory.map(
+                          (history: any, idx: number) => (
+                            <div
+                              key={idx}
+                              className="d-flex mb-5 position-relative"
+                            >
+                              <div className="flex-shrink-0 me-4">
+                                <div
+                                  className={`rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow ${
+                                    history.status === "APPROVED"
+                                      ? "bg-success"
+                                      : history.status === "DISAPPROVED"
+                                      ? "bg-danger"
+                                      : "bg-warning text-dark"
+                                  }`}
+                                  style={{ width: "44px", height: "44px" }}
+                                >
+                                  {history.status === "APPROVED"
+                                    ? "✓"
+                                    : history.status === "DISAPPROVED"
+                                    ? "✗"
+                                    : "!"}
+                                </div>
+                              </div>
+                              <div className="flex-grow-1 bg-white rounded-4 shadow-sm p-4 border">
+                                <div className="d-flex justify-content-between align-items-start">
+                                  <div>
+                                    <h6 className="fw-bold mb-1">
+                                      {history.role
+                                        ? history.role.charAt(0).toUpperCase() +
+                                          history.role.slice(1)
+                                        : "Unknown Role"}
+                                    </h6>
+                                    <p className="text-muted small mb-2">
+                                      {new Date(history.date).toLocaleString()}
+                                    </p>
+                                    {history.remarks && (
+                                      <p className="mb-0 text-muted fst-italic">
+                                        "{history.remarks}"
+                                      </p>
+                                    )}
+                                  </div>
+                                  <span
+                                    className={`badge rounded-pill ${
+                                      history.status === "APPROVED"
+                                        ? "bg-success"
+                                        : history.status === "DISAPPROVED"
+                                        ? "bg-danger"
+                                        : "bg-warning"
+                                    } px-3`}
+                                  >
+                                    {history.status}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        )}
+                        <div
+                          className="position-absolute bg-light opacity-75"
+                          style={{
+                            left: "21px",
+                            top: "22px",
+                            bottom: "40px",
+                            width: "4px",
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+          </>
+        );
+      })()}
+    </>
+  )}
+</Modal.Body>
 				</div>
 				<Modal.Footer>
 					<Button variant="secondary" onClick={() => setShowModal(false)}>
@@ -1075,8 +1454,13 @@ const EcommerceOrder = () => {
 				show={showOrderModal}
 				onHide={() => setShowOrderModal(false)}
 				dialogClassName="modal-dialog-centered modal-lg">
-				<Modal.Header closeButton>
-					<h4 className="modal-title">Update Order Details</h4>
+				<Modal.Header closeButton className={selectedOrder?.isFinalized ? 'bg-warning' : ''}>
+					<div>
+						<h4 className="modal-title">Update Order Details</h4>
+						{selectedOrder?.isFinalized && (
+							<small className="text-danger fw-bold">🔒 This order is finalized and cannot be edited</small>
+						)}
+					</div>
 				</Modal.Header>
 				<Form onSubmit={handleSubmit(handleUpdateOrderDetails)}>
 					<Modal.Body>
@@ -1102,6 +1486,7 @@ const EcommerceOrder = () => {
 														<input
 															type="number"
 															className="form-control form-control-sm"
+															disabled={selectedOrder?.isFinalized}
 															value={item?.quantity || 0}
 															onChange={(e) => {
 																const newItems = [...(orderItems || [])]
@@ -1118,6 +1503,7 @@ const EcommerceOrder = () => {
 														<input
 															type="number"
 															className="form-control form-control-sm"
+															disabled={selectedOrder?.isFinalized}
 															value={item?.price || 0}
 															onChange={(e) => {
 																const newItems = [...(orderItems || [])]
@@ -1135,6 +1521,7 @@ const EcommerceOrder = () => {
 														<Button
 															variant="danger"
 															size="sm"
+															disabled={selectedOrder?.isFinalized}
 															onClick={() => {
 																const newItems =
 																	orderItems?.filter((_, i) => i !== index) ||
@@ -1199,8 +1586,12 @@ const EcommerceOrder = () => {
 						<Button variant="light" onClick={() => setShowOrderModal(false)}>
 							Close
 						</Button>
-						<Button variant="success" type="submit">
-							{apiLoading ? 'Updating...' : 'Update Order'}
+						<Button 
+							variant="success" 
+							type="submit"
+							disabled={selectedOrder?.isFinalized || apiLoading}
+						>
+							{apiLoading ? 'Updating...' : selectedOrder?.isFinalized ? '🔒 Order Finalized' : 'Update Order'}
 						</Button>
 					</Modal.Footer>
 				</Form>
@@ -1208,153 +1599,267 @@ const EcommerceOrder = () => {
 
 			{/* Approval Modal */}
 			{showApprovalModal && selectedOrder && (
-				<Modal show={showApprovalModal} onHide={() => setShowApprovalModal(false)} size="lg">
-					<Modal.Header closeButton className="bg-light">
-						<Modal.Title>
-							{approvalAction === 'APPROVE' ? '✅ Approve Order' : '❌ Reject Order'} #{selectedOrder?.orderId}
-						</Modal.Title>
-					</Modal.Header>
-					<Modal.Body>
-						{/* Order Items */}
-						<div className="mb-4">
-							<h6 className="mb-3">📦 Order Items</h6>
-							<div className="table-responsive">
-								<table className="table table-sm table-bordered">
-									<thead className="table-light">
-										<tr>
-											<th>Product</th>
-											<th>Qty</th>
-											<th>Price</th>
-											<th>Total</th>
-										</tr>
-									</thead>
-									<tbody>
-										{selectedOrder?.items?.map((item: any, idx: number) => (
-											<tr key={idx}>
-												<td>{item?.product?.name}</td>
-												<td className="text-center">{item?.quantity}</td>
-												<td className="text-right">$ {item?.price}</td>
-												<td className="text-right fw-bold">$ {item?.quantity * item?.price}</td>
-											</tr>
-										))}
-										<tr className="table-light fw-bold">
-											<td colSpan={3} className="text-right">
-												Grand Total:
-											</td>
-											<td className="text-right">$ {selectedOrder?.grandTotal}</td>
-										</tr>
-									</tbody>
-								</table>
-							</div>
-						</div>
+  <Modal
+    show={showApprovalModal}
+    onHide={() => {
+      setShowApprovalModal(false);
+      setApprovalRemarks("");
+      setApprovalAction(null);
+    }}
+    size="lg"
+    centered
+    backdrop="static"
+    keyboard={false}
+  >
+    <Modal.Header closeButton className="border-0 pb-0">
+      <div className="w-100">
+        {/* Premium Gradient Header */}
+        <div
+          className="rounded-4 p-4 text-white mb-4 shadow-lg"
+          style={{
+            background:
+              approvalAction === "APPROVE"
+                ? "linear-gradient(135deg, #11998e, #38ef7d)"
+                : "linear-gradient(135deg, #ff512f, #dd2476)",
+          }}
+        >
+          <div className="d-flex justify-content-between align-items-center">
+            <div>
+              <h3 className="mb-1 fw-bold">
+                {approvalAction === "APPROVE" ? "Approve Order" : "Reject Order"}
+              </h3>
+              <p className="mb-0 opacity-90 fs-5">
+                ORD-{selectedOrder._id?.slice(-8).toUpperCase()}
+              </p>
+            </div>
+            <div className="text-end">
+              <h2 className="mb-0 fw-bold">
+                ${Number(selectedOrder.grandTotal || 0).toFixed(2)}
+              </h2>
+              <small>Grand Total</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Modal.Header>
 
-						{/* Customer Info */}
-						<div className="row mb-4">
-							<div className="col-md-6">
-								<h6 className="mb-3">👤 Customer Info</h6>
-								<p>
-									<strong>Name:</strong> {selectedOrder?.customer?.username}
-								</p>
-								<p>
-									<strong>Email:</strong> {selectedOrder?.customer?.email}
-								</p>
-								<p>
-									<strong>Phone:</strong> {selectedOrder?.customer?.phone_number}
-								</p>
-							</div>
-							<div className="col-md-6">
-								<h6 className="mb-3">🏪 Store Info</h6>
-								<p>
-									<strong>Store:</strong> {selectedOrder?.customer?.warehouse?.name}
-								</p>
-								<p>
-									<strong>Order Date:</strong> {new Date(selectedOrder?.createdAt).toLocaleDateString()}
-								</p>
-							</div>
-						</div>
+    <Modal.Body className="pt-3">
+      {/* Order Items Table */}
+      <div className="card border-0 shadow-sm rounded-4 mb-4">
+        <div className="card-body p-4">
+          <h5 className="fw-bold mb-3 text-dark">Order Items</h5>
+          <div className="table-responsive">
+            <table className="table table-hover align-middle">
+              <thead className="table-light">
+                <tr>
+                  <th>Product</th>
+                  <th className="text-center">Qty</th>
+                  <th className="text-end">Price</th>
+                  <th className="text-end">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {selectedOrder.items?.map((item: any, i: number) => (
+                  <tr key={i}>
+                    <td>
+                      <div className="d-flex align-items-center gap-3">
+                        <div
+                          className="bg-light rounded-3 d-flex align-items-center justify-content-center"
+                          style={{ width: 48, height: 48 }}
+                        >
+                          <i className="ri-boxing-fill text-muted fs-4"></i>
+                        </div>
+                        <div>
+                          <div className="fw-medium">{item.product?.name || "Unknown Product"}</div>
+                          {item.color && <small className="text-muted">Color: {item.color}</small>}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="text-center fw-bold">{item.quantity}</td>
+                    <td className="text-end">${Number(item.price || 0).toFixed(2)}</td>
+                    <td className="text-end fw-bold text-primary">
+                      ${(item.quantity * Number(item.price || 0)).toFixed(2)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="fw-bold fs-5">
+                  <td colSpan={3} className="text-end bg-light">Grand Total</td>
+                  <td className="text-end bg-light text-primary">
+                    ${Number(selectedOrder.grandTotal || 0).toFixed(2)}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
 
-						{/* Approval History Timeline */}
-						{selectedOrder?.approvalHistory && selectedOrder?.approvalHistory.length > 0 && (
-							<div className="mb-4">
-								<h6 className="mb-3">📋 Approval History</h6>
-								<div className="timeline">
-									{selectedOrder?.approvalHistory.map((history: ApprovalHistory, idx: number) => (
-										<div key={idx} className="mb-3 pb-3 border-bottom">
-											<div className="d-flex align-items-start">
-												<div
-													className={`badge bg-${
-														history.status === 'APPROVED' ? 'success' : 'danger'
-													} me-3`}
-													style={{ minWidth: '30px' }}>
-													{idx + 1}
-												</div>
-												<div className="flex-grow-1">
-													<div className="fw-bold">
-														{history.role}
-														<span
-															className={`badge ms-2 bg-${
-																history.status === 'APPROVED' ? 'success' : 'danger'
-															}`}>
-															{history.status}
-														</span>
-													</div>
-													{history.remarks && (
-														<p className="text-muted small mb-0">Note: {history.remarks}</p>
-													)}
-													<small className="text-muted">
-														{new Date(history.date).toLocaleString()}
-													</small>
-												</div>
-											</div>
-										</div>
-									))}
-								</div>
-							</div>
-						)}
+      {/* Customer + Store Info */}
+      <div className="row g-4 mb-4">
+        <div className="col-md-6">
+          <div className="card border-0 shadow-sm rounded-4 h-100">
+            <div className="card-body">
+              <h6 className="fw-bold mb-3">Customer Details</h6>
+              <div className="vstack gap-3">
+                {[
+                  { icon: "ri-user-line", label: "Name", value: selectedOrder.customer?.username },
+                  { icon: "ri-mail-line", label: "Email", value: selectedOrder.customer?.email },
+                  { icon: "ri-phone-line", label: "Phone", value: selectedOrder.customer?.phone_number },
+                ].map((item, i) => (
+                  <div key={i} className="d-flex gap-3">
+                    <div className="bg-primary bg-opacity-10 rounded-circle p-2">
+                      <i className={`${item.icon} text-primary`}></i>
+                    </div>
+                    <div>
+                      <small className="text-muted">{item.label}</small>
+                      <p className="mb-0 fw-medium">{item.value || "N/A"}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
 
-						{/* Remarks Input */}
-						<div className="mb-3">
-							<label className="form-label">
-								{approvalAction === 'APPROVE' ? '✏️ Approval Remarks' : '✏️ Rejection Reason'}
-							</label>
-							<textarea
-								className="form-control"
-								rows={3}
-								placeholder="Enter your remarks..."
-								value={approvalRemarks}
-								onChange={(e) => setApprovalRemarks(e.target.value)}
-							/>
-						</div>
-					</Modal.Body>
-					<Modal.Footer>
-						<Button
-							variant="secondary"
-							onClick={() => {
-								setShowApprovalModal(false)
-								setApprovalAction(null)
-								setApprovalRemarks('')
-							}}>
-							Cancel
-						</Button>
-						<Button
-							variant={approvalAction === 'APPROVE' ? 'success' : 'danger'}
-							onClick={handleApprovalSubmit}
-							disabled={approvingSubmit}>
-							{approvingSubmit ? (
-								<>
-									<span className="spinner-border spinner-border-sm me-2"></span>
-									Processing...
-								</>
-							) : (
-								<>
-									<i className={`me-2 ${approvalAction === 'APPROVE' ? 'ri-check-line' : 'ri-close-line'}`}></i>
-									{approvalAction === 'APPROVE' ? 'Approve Order' : 'Reject Order'}
-								</>
-							)}
-						</Button>
-					</Modal.Footer>
-				</Modal>
-			)}
+        <div className="col-md-6">
+          <div className="card border-0 shadow-sm rounded-4 h-100">
+            <div className="card-body">
+              <h6 className="fw-bold mb-3">Order Info</h6>
+              <div className="vstack gap-3">
+                <div className="d-flex gap-3">
+                  <div className="bg-warning bg-opacity-10 rounded-circle p-2">
+                    <i className="ri-store-2-line text-warning"></i>
+                  </div>
+                  <div>
+                    <small className="text-muted">Store</small>
+                    <p className="mb-0 fw-medium">{selectedOrder.warehouse?.name || "N/A"}</p>
+                  </div>
+                </div>
+                <div className="d-flex gap-3">
+                  <div className="bg-info bg-opacity-10 rounded-circle p-2">
+                    <i className="ri-calendar-check-line text-info"></i>
+                  </div>
+                  <div>
+                    <small className="text-muted">Placed On</small>
+                    <p className="mb-0 fw-medium">
+                      {new Date(selectedOrder.createdAt).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Approval History - Vertical Timeline */}
+      {selectedOrder.approvalHistory && selectedOrder.approvalHistory.length > 0 && (
+        <div className="mb-5">
+          <h6 className="fw-bold mb-4">Approval History</h6>
+          <div className="position-relative">
+            {selectedOrder.approvalHistory.map((h: any, i: number) => (
+              <div key={i} className="d-flex mb-4">
+                <div className="me-4 text-center">
+                  <div
+                    className={`rounded-circle d-flex align-items-center justify-content-center text-white fw-bold  ${
+                      h.status === "APPROVED" ? "bg-success" : "bg-danger"
+                    } shadow`}
+                    style={{ width: 40, height: 40 }}
+                  >
+                    {h.status === "APPROVED" ? "✓" : "✕"}
+                  </div>
+                  {i < selectedOrder.approvalHistory.length - 1 && (
+                    <div className="position-absolute start-50 translate-middle-x bg-light" style={{ width: 3, height: 60, top: 40 }}></div>
+                  )}
+                </div>
+                <div className="bg-white rounded-4 shadow-sm p-4 border flex-grow-1">
+                  <div className="d-flex justify-content-between">
+                    <div>
+                      <strong>{h.role?.charAt(0).toUpperCase() + h.role?.slice(1)}</strong>
+                      <small className="text-muted d-block">
+                        {new Date(h.date).toLocaleString()}
+                      </small>
+                      {h.remarks && <p className="mb-0 mt-2 text-muted fst-italic">"{h.remarks}"</p>}
+                    </div>
+                    <span className={`badge rounded-pill d-flex align-items-center justify-content-center ${h.status === "APPROVED" ? "bg-success" : "bg-danger"}`}>
+                      {h.status}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Remarks Field - Floating Label + Validation */}
+      <div className="form-floating mb-3">
+        <textarea
+          className={`form-control rounded-4 ${
+            approvalAction === "DISAPPROVE" && !approvalRemarks.trim() && approvalRemarks !== ""
+              ? "is-invalid"
+              : ""
+          }`}
+          placeholder=" "
+          id="remarks"
+          style={{ height: "120px" }}
+          value={approvalRemarks}
+          onChange={(e) => setApprovalRemarks(e.target.value)}
+        />
+        <label htmlFor="remarks">
+          {approvalAction === "APPROVE"
+            ? "Approval Remarks (Optional)"
+            : "Rejection Reason (Required)"}
+        </label>
+        {/* Live validation message */}
+        {approvalAction === "DISAPPROVE" && !approvalRemarks.trim() && approvalRemarks.length > 0 && (
+          <div className="text-danger small mt-1">
+            Rejection reason is required
+          </div>
+        )}
+      </div>
+    </Modal.Body>
+
+    <Modal.Footer className="border-0 pt-4">
+      <Button
+        variant="light"
+        size="lg"
+        className="px-5"
+        onClick={() => {
+          setShowApprovalModal(false);
+          setApprovalRemarks("");
+          setApprovalAction(null);
+        }}
+      >
+        Cancel
+      </Button>
+
+      <Button
+        variant={approvalAction === "APPROVE" ? "success" : "danger"}
+        size="lg"
+        className="px-2  shadow-lg"
+        disabled={
+          approvingSubmit ||
+          (approvalAction === "DISAPPROVE" && !approvalRemarks.trim())
+        }
+        onClick={handleApprovalSubmit}
+      >
+        {approvingSubmit ? (
+          <>
+            <span className="spinner-border spinner-border-sm me-2"></span>
+            Processing...
+          </>
+        ) : (
+          <>
+            {approvalAction === "APPROVE" ? "Confirm Approval" : "Confirm Rejection"}
+          </>
+        )}
+      </Button>
+    </Modal.Footer>
+  </Modal>
+)}
 		</>
 	)
 }
