@@ -298,60 +298,60 @@ const EcommerceOrder = () => {
 			console.error('Error fetching statuses:', error)
 		}
 	}
-	const handleStatusUpdate = async (
-		orderId: string,
-		type: 'order' | 'payment',
-		newStatus: string,
-		currentStatus: string
-	) => {
-		try {
-			if (currentStatus === 'Disapproved') {
-				toastService.error(
-					'This status is already Disapproved and cannot be changed.'
-				)
-				return
-			}
-			if (newStatus === 'Disapproved') {
-				const result = await Swal.fire({
-					title: 'Are you sure?',
-					text: 'Once disapproved, this order status cannot be changed again.',
-					icon: 'warning',
-					showCancelButton: true,
-					confirmButtonText: 'Yes, Disapprove',
-					cancelButtonText: 'Cancel',
-				})
+	// const handleStatusUpdate = async (
+	// 	orderId: string,
+	// 	type: 'order' | 'payment',
+	// 	newStatus: string,
+	// 	currentStatus: string
+	// ) => {
+	// 	try {
+	// 		if (currentStatus === 'Disapproved') {
+	// 			toastService.error(
+	// 				'This status is already Disapproved and cannot be changed.'
+	// 			)
+	// 			return
+	// 		}
+	// 		if (newStatus === 'Disapproved') {
+	// 			const result = await Swal.fire({
+	// 				title: 'Are you sure?',
+	// 				text: 'Once disapproved, this order status cannot be changed again.',
+	// 				icon: 'warning',
+	// 				showCancelButton: true,
+	// 				confirmButtonText: 'Yes, Disapprove',
+	// 				cancelButtonText: 'Cancel',
+	// 			})
 
-				if (!result.isConfirmed) {
-					return // user ne cancel kiya
-				}
-			}
+	// 			if (!result.isConfirmed) {
+	// 				return // user ne cancel kiya
+	// 			}
+	// 		}
 
-			// ✅ API Call
-			const response = await fetch(
-				`${BASE_API}/api/checkout/${orderId}/status`,
-				{
-					method: 'PUT',
-					headers: {
-						'Content-Type': 'application/json',
-						Authorization: `Bearer ${token}`,
-					},
-					body: JSON.stringify({
-						[type === 'order' ? 'orderStatus' : 'shippingStatus']: newStatus,
-					}),
-				}
-			)
+	// 		// ✅ API Call
+	// 		const response = await fetch(
+	// 			`${BASE_API}/api/checkout/${orderId}/status`,
+	// 			{
+	// 				method: 'PUT',
+	// 				headers: {
+	// 					'Content-Type': 'application/json',
+	// 					Authorization: `Bearer ${token}`,
+	// 				},
+	// 				body: JSON.stringify({
+	// 					[type === 'order' ? 'orderStatus' : 'shippingStatus']: newStatus,
+	// 				}),
+	// 			}
+	// 		)
 
-			if (!response.ok) {
-				const errorMessage = await response.json()
-				throw new Error(errorMessage.error || 'An error occurred')
-			}
+	// 		if (!response.ok) {
+	// 			const errorMessage = await response.json()
+	// 			throw new Error(errorMessage.error || 'An error occurred')
+	// 		}
 
-			toastService.success('Status updated successfully')
-			fetchOrders() // Refresh orders after update
-		} catch (error: any) {
-			toastService.error(error.message)
-		}
-	}
+	// 		toastService.success('Status updated successfully')
+	// 		fetchOrders() // Refresh orders after update
+	// 	} catch (error: any) {
+	// 		toastService.error(error.message)
+	// 	}
+	// }
 	const handleUpdateOrderDetails = async (data: any) => {
 		try {
 			setApiLoading(true)

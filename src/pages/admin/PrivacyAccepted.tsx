@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useAuthContext } from '@/common'
 import Select from 'react-select'
 import { TableRowSkeleton } from '../other/SimpleLoader'
+import { toastService } from '@/common/context/toast.service'
 
 interface WarehouseRecord {
     _id: string
@@ -22,7 +23,7 @@ interface DepartmentRecord {
 }
 
 interface Customer {
-    id: string // Changed from _id to id
+    id: string 
     username: string
     email: string
     phone_number: string
@@ -44,7 +45,7 @@ interface Customer {
 }
 
 interface Policy {
-    id: string // Changed from _id to id
+    id: string
     title: string
     version: string
     content: string
@@ -98,6 +99,8 @@ const PrivacyAccepted = () => {
     const [selectedWarehouse, setSelectedWarehouse] = useState<string>('')
     const [selectedDepartment, setSelectedDepartment] = useState<string>('')
 
+    // console.log('Policy Data:', policyData)
+
     // API basics
     const BASE_API = import.meta.env.VITE_BASE_API
     const { token } = user
@@ -137,27 +140,32 @@ const PrivacyAccepted = () => {
         setCurrentPage(1)
     }
 
-    const filteredAcceptances = policyData?.acceptances?.filter((acceptance) => {
-        const matchesSearch = acceptance?.customer?.username?.toLowerCase()?.includes(searchTerm.toLowerCase()) ||
-            acceptance?.customer?.email?.toLowerCase()?.includes(searchTerm.toLowerCase()) ||
-            acceptance?.policy?.title?.toLowerCase()?.includes(searchTerm.toLowerCase()) ||
-            acceptance?.customer?.phone_number?.toLowerCase()?.includes(searchTerm.toLowerCase()) ||
-            acceptance?.customer?.warehouse?.name?.toLowerCase()?.includes(searchTerm.toLowerCase()) ||
-            acceptance?.customer?.warehouse?.location?.toLowerCase()?.includes(searchTerm.toLowerCase())
+ const filteredAcceptances = policyData?.acceptances?.filter((acceptance) => {
+  if (!acceptance.customer || !acceptance.policy) return false;
 
-        const matchesWarehouse = !selectedWarehouse || acceptance?.customer?.warehouse?.id === selectedWarehouse
-        const matchesDepartment = !selectedDepartment || acceptance?.customer?.department?.id === selectedDepartment
+  const searchTermLower = searchTerm.toLowerCase();
 
-        return matchesSearch && matchesWarehouse && matchesDepartment
-    }) || []
+  const matchesSearch =
+    acceptance.customer.username?.toLowerCase().includes(searchTermLower) ||
+    acceptance.customer.email?.toLowerCase().includes(searchTermLower) ||
+    acceptance.policy.title?.toLowerCase().includes(searchTermLower) ||
+    acceptance.customer.phone_number?.toLowerCase().includes(searchTermLower) ||
+    acceptance.customer.warehouse?.name?.toLowerCase().includes(searchTermLower) ||
+    acceptance.customer.warehouse?.location?.toLowerCase().includes(searchTermLower);
+
+  const matchesWarehouse = !selectedWarehouse || acceptance.customer.warehouse?.id === selectedWarehouse;
+  const matchesDepartment = !selectedDepartment || acceptance.customer.department?.id === selectedDepartment;
+
+  return matchesSearch && matchesWarehouse && matchesDepartment;
+}) || [];
 
 
     const handlePageChange = (page: number) => {
         setCurrentPage(page)
     }
 
-    const totalPages = Math.ceil(filteredAcceptances.length / itemsPerPage)
-    const paginatedAcceptances = filteredAcceptances.slice(
+    const totalPages = Math.ceil(filteredAcceptances?.length / itemsPerPage)
+    const paginatedAcceptances = filteredAcceptances?.slice(
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
     )
@@ -168,11 +176,47 @@ const PrivacyAccepted = () => {
         setShowDocumentModal(true)
     }
 
+    const handleForcePolicy = async (customerId: string, policyId: string) => {
+    
+        try {
+            // alert(`Force policy ${policyId} for customer ${customerId}`);
+            const response = await fetch(`${BASE_API}/api/policy/force/${customerId}`, {
+                method: 'POST',
+                headers: {  
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ policyId }), 
+            })
+            const data = await response.json();
+            if (response.ok) {
+                toastService.success( data.message || 'Error forcing policy:');
+                 
+            }else {
+                toastService.error( data.message || 'Error forcing policy:');
+            }
+                
+        } catch (error : any) {
+                toastService.error( error.message || 'Error forcing policy:'); 
+        }
+
+        
+    }
+
     // API Call
     const getPolicyAcceptances = async () => {
         try {
             setLoading(true)
-            const response = await fetch(`${BASE_API}/api/policy-acceptance`, {
+             const params = new URLSearchParams({
+            page: currentPage.toString(),
+            limit: itemsPerPage.toString(),
+            policyId: '',        // Or selectedPolicyId
+            customerId: '',      // Or selectedCustomerId
+            fromDate: '',        // Or selectedFromDate
+            toDate: '',          // Or selectedToDate
+        });
+           
+        const response = await fetch(`${BASE_API}/api/policy-acceptance?${params.toString()}`, {
                 method: 'GET',
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -271,14 +315,15 @@ const PrivacyAccepted = () => {
         }
     }
 
-    const getPolicyTypeColor = (title: string) => {
-        const lowerTitle = title.toLowerCase()
-        if (lowerTitle.includes('privacy')) return 'primary'
-        if (lowerTitle.includes('safety')) return 'danger'
-        if (lowerTitle.includes('login') || lowerTitle.includes('security')) return 'warning'
-        if (lowerTitle.includes('terms')) return 'info'
-        return 'secondary'
-    }
+const getPolicyTypeColor = (title?: string) => {
+    if (!title) return 'secondary' // fallback color
+    const lowerTitle = title.toLowerCase()
+    if (lowerTitle.includes('privacy')) return 'primary'
+    if (lowerTitle.includes('safety')) return 'danger'
+    if (lowerTitle.includes('login') || lowerTitle.includes('security')) return 'warning'
+    if (lowerTitle.includes('terms')) return 'info'
+    return 'secondary'
+}
 
     useEffect(() => {
         getPolicyAcceptances()
@@ -318,7 +363,7 @@ const PrivacyAccepted = () => {
                                 Policy Types Overview
                             </Alert.Heading>
                             <div className="d-flex flex-wrap gap-2">
-                                {Array.from(new Set(policyData.acceptances.map(a => a.policy.title))).map((title, idx) => (
+                                {Array.from(new Set(policyData?.acceptances?.map(a => a?.policy?.title)))?.map((title, idx) => (
                                     <Badge key={idx} bg={getPolicyTypeColor(title)} className="me-1">
                                         {title}
                                     </Badge>
@@ -326,7 +371,7 @@ const PrivacyAccepted = () => {
                             </div>
                         </div>
                         <Badge bg="info" className="fs-6">
-                            {policyData.totalPages} Page{policyData.totalPages > 1 ? 's' : ''}
+                            {policyData?.totalPages} Page{policyData?.totalPages > 1 ? 's' : ''}
                         </Badge>
                     </div>
                 </Alert>
@@ -382,7 +427,7 @@ const PrivacyAccepted = () => {
                             <div style={{ minWidth: '200px' }}>
                                 <Select
                                     options={warehouseOptions}
-                                    value={warehouseOptions.find(option => option.value === selectedWarehouse) || warehouseOptions[0]}
+                                    value={warehouseOptions?.find(option => option?.value === selectedWarehouse) || warehouseOptions[0]}
                                     onChange={(selectedOption) => {
                                         setSelectedWarehouse(selectedOption?.value || '')
                                         setCurrentPage(1)
@@ -400,7 +445,7 @@ const PrivacyAccepted = () => {
                             <div style={{ minWidth: '180px' }}>
                                 <Select
                                     options={departmentOptions}
-                                    value={departmentOptions.find(option => option.value === selectedDepartment) || departmentOptions[0]}
+                                    value={departmentOptions?.find(option => option?.value === selectedDepartment) || departmentOptions[0]}
                                     onChange={(selectedOption) => {
                                         setSelectedDepartment(selectedOption?.value || '')
                                         setCurrentPage(1)
@@ -435,7 +480,7 @@ const PrivacyAccepted = () => {
                                         <input
                                             type="checkbox"
                                             onChange={handleSelectAll}
-                                            checked={selectedRows.length > 0 && selectedRows.length === filteredAcceptances.length}
+                                            checked={selectedRows?.length > 0 && selectedRows?.length === filteredAcceptances?.length}
                                         />
                                     </th>
                                     <th>User</th>
@@ -445,15 +490,15 @@ const PrivacyAccepted = () => {
                                     <th>Version</th>
                                     <th>Acceptance Date</th>
                                     <th>Time Since</th>
-                                    <th>Actions</th>
+                                    <th className=''>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {loading ? (
                                     <TableRowSkeleton headers={acceptanceHeaders} rowCount={5} />
-                                ) : paginatedAcceptances.length > 0 ? (
-                                    paginatedAcceptances.map((acceptance, idx) => {
-                                        const isSelected = selectedRows.includes(acceptance.id)
+                                ) : paginatedAcceptances?.length > 0 ? (
+                                    paginatedAcceptances?.map((acceptance, idx) => {
+                                        const isSelected = selectedRows?.includes(acceptance?.id)
 
                                         return (
                                             <tr key={idx}>
@@ -461,7 +506,7 @@ const PrivacyAccepted = () => {
                                                     <input
                                                         type="checkbox"
                                                         checked={isSelected}
-                                                        onChange={() => handleSelectRow(acceptance.id)}
+                                                        onChange={() => handleSelectRow(acceptance?.id)}
                                                     />
                                                 </td>
                                                 <td>
@@ -469,11 +514,11 @@ const PrivacyAccepted = () => {
                                                         <div className="avatar-sm me-2">
                                                             <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
                                                                 style={{ width: '32px', height: '32px' }}>
-                                                                {acceptance.customer.username.charAt(0).toUpperCase()}
+                                                                {acceptance.customer?.username?.charAt(0).toUpperCase() || "-"}
                                                             </div>
                                                         </div>
                                                         <div>
-                                                            <strong className="text-truncate d-block">{acceptance.customer.username}</strong>
+                                                            <strong className="text-truncate d-block">{acceptance?.customer?.username || '-'}</strong>
                                                             <Badge bg="success" className="badge-sm">
                                                                 <i className="bi bi-check-circle me-1"></i>
                                                                 Accepted
@@ -483,26 +528,26 @@ const PrivacyAccepted = () => {
                                                 </td>
                                                 <td>
                                                     <div>
-                                                        <strong className="d-block text-truncate">{acceptance.customer.email}</strong>
+                                                        <strong className="d-block text-truncate">{acceptance?.customer?.email || "-"}</strong>
                                                         <small className="text-muted">
                                                             <i className="bi bi-telephone me-1"></i>
-                                                            {acceptance.customer.phone_number}
+                                                            {acceptance?.customer?.phone_number || '-' }
                                                         </small>
                                                     </div>
                                                 </td>
                                                 <td>
                                                     <div>
-                                                        <strong className="d-block text-truncate">{acceptance.customer.warehouse.name}</strong>
+                                                        <strong className="d-block text-truncate">{acceptance?.customer?.warehouse?.name || "-"}</strong>
                                                         <small className="text-muted">
                                                             <i className="bi bi-geo-alt me-1"></i>
-                                                            {acceptance.customer.warehouse.location}
+                                                            {acceptance?.customer?.warehouse?.location || '-'}
                                                         </small>
                                                     </div>
                                                 </td>
                                                 <td>
                                                     <div>
-                                                        <Badge bg={getPolicyTypeColor(acceptance.policy.title)} className="mb-1">
-                                                            {acceptance.policy.title}
+                                                        <Badge bg={getPolicyTypeColor(acceptance?.policy?.title)} className="mb-1">
+                                                            {acceptance?.policy?.title || '-'}
                                                         </Badge>
                                                         <br />
 
@@ -510,29 +555,29 @@ const PrivacyAccepted = () => {
                                                 </td>
                                                 <td>
                                                     <Badge bg="outline-secondary" text="dark">
-                                                        v{acceptance.policyVersion}
+                                                        v{acceptance?.policyVersion || '-'}
                                                     </Badge>
                                                 </td>
                                                 <td>
                                                     <div>
-                                                        <strong className="d-block">{formatDate(acceptance.acceptedAt)}</strong>
+                                                        <strong className="d-block">{formatDate(acceptance?.acceptedAt)}</strong>
                                                         <small className="text-muted">
                                                             <i className="bi bi-calendar-check me-1"></i>
-                                                            {new Date(acceptance.acceptedAt).toLocaleDateString()}
+                                                            {new Date(acceptance?.acceptedAt)?.toLocaleDateString()}
                                                         </small>
                                                     </div>
                                                 </td>
                                                 <td>
                                                     <Badge
                                                         bg={
-                                                            getTimeSinceAcceptance(acceptance.acceptedAt).includes('minutes') ||
-                                                                getTimeSinceAcceptance(acceptance.acceptedAt).includes('hours') ? 'success' :
-                                                                getTimeSinceAcceptance(acceptance.acceptedAt).includes('day') ? 'info' :
-                                                                    getTimeSinceAcceptance(acceptance.acceptedAt).includes('month') ? 'warning' : 'secondary'
+                                                            getTimeSinceAcceptance(acceptance?.acceptedAt).includes('minutes') ||
+                                                                getTimeSinceAcceptance(acceptance?.acceptedAt).includes('hours') ? 'success' :
+                                                                getTimeSinceAcceptance(acceptance?.acceptedAt).includes('day') ? 'info' :
+                                                                    getTimeSinceAcceptance(acceptance?.acceptedAt).includes('month') ? 'warning' : 'secondary'
                                                         }
                                                         className="badge-sm"
                                                     >
-                                                        {getTimeSinceAcceptance(acceptance.acceptedAt)}
+                                                        {getTimeSinceAcceptance(acceptance?.acceptedAt)}
                                                     </Badge>
                                                 </td>
                                                 <td>
@@ -547,9 +592,17 @@ const PrivacyAccepted = () => {
                                                         <Button
                                                             variant="outline-primary"
                                                             size="sm"
-                                                            onClick={() => window.open(`${BASE_API}${acceptance.documentUrl}`, '_blank')}
+                                                            onClick={() => window.open(`${BASE_API}${acceptance?.documentUrl}`, '_blank')}
                                                             title="Download Document">
                                                             <i className="bi bi-download"></i>
+                                                        </Button>
+                                                        <Button
+                                                            variant="info"
+                                                            size="sm"
+                                                            onClick={() => handleForcePolicy(acceptance.customer.id, acceptance.policy.id)}
+                                                            title="Force Policy">
+                                                            {/* <i className="bi bi-cloud-check-fill"></i> */}
+                                                            Forced Policy
                                                         </Button>
                                                     </div>
                                                 </td>
@@ -630,7 +683,7 @@ const PrivacyAccepted = () => {
                         <Row>
                             <Col md={6}>
                                 <small className="text-muted">
-                                    Showing {paginatedAcceptances.length} of {filteredAcceptances.length} acceptances
+                                    Showing {paginatedAcceptances?.length} of {filteredAcceptances?.length} acceptances
                                     {searchTerm && ` (filtered from ${policyData?.totalCount || 0} total)`}
                                 </small>
                             </Col>
@@ -657,16 +710,16 @@ const PrivacyAccepted = () => {
                         <div className="mb-3">
                             <Row>
                                 <Col md={6}>
-                                    <strong>Policy:</strong> {selectedPolicy.policy.title}
+                                    <strong>Policy:</strong> {selectedPolicy?.policy?.title || '-'}
                                     <br />
-                                    <strong>Version:</strong> {selectedPolicy.policyVersion}
+                                    <strong>Version:</strong> {selectedPolicy?.policyVersion || '-'}
                                     <br />
-                                    <strong>User:</strong> {selectedPolicy.customer.username}
+                                    <strong>User:</strong> {selectedPolicy?.customer?.username || '-'}
                                 </Col>
                                 <Col md={6}>
-                                    <strong>Email:</strong> {selectedPolicy.customer.email}
+                                    <strong>Email:</strong> {selectedPolicy?.customer?.email || '-'}
                                     <br />
-                                    <strong>Accepted:</strong> {formatDate(selectedPolicy.acceptedAt)}
+                                    <strong>Accepted:</strong> {formatDate(selectedPolicy?.acceptedAt)}
                                     <br />
                                 </Col>
                             </Row>
