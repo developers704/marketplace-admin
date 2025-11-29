@@ -131,15 +131,15 @@ const CertificateApprovalModal: React.FC<CertificateApprovalModalProps> = ({
             // Create FormData for the approval request
             const formData = new FormData()
             formData.append('action', 'approve')
-            formData.append('comments', data.comments)
+            formData.append('comments', data?.comments)
 
             // Convert signature path to File object
-            const signatureResponse = await fetch(`${baseApiUrl}/${presidentSignature.signaturePath}`)
-            const signatureBlob = await signatureResponse.blob()
+            const signatureResponse = await fetch(`${baseApiUrl}/${presidentSignature?.signaturePath}`)
+            const signatureBlob = await signatureResponse?.blob()
             const signatureFile = new File([signatureBlob], 'president-signature.png', { type: 'image/png' })
             formData.append('presidentSignature', signatureFile)
 
-            const response = await fetch(`${baseApiUrl}/api/certificate/approve/${selectedCertificate.id}`, {
+            const response = await fetch(`${baseApiUrl}/api/certificate/approve/${selectedCertificate?.id}`, {
                 method: 'POST',
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -149,7 +149,7 @@ const CertificateApprovalModal: React.FC<CertificateApprovalModalProps> = ({
 
             if (!response.ok) {
                 const errorData = await response.json()
-                throw new Error(errorData.message || 'Failed to approve certificate')
+                throw new Error(errorData?.message || 'Failed to approve certificate')
             }
 
             const result = await response.json()
@@ -249,23 +249,23 @@ const CertificateApprovalModal: React.FC<CertificateApprovalModalProps> = ({
                             <Row>
                                 <Col md={6}>
                                     <div className="mb-2">
-                                        <strong>Student:</strong> {selectedCertificate.userName}
+                                        <strong>Student:</strong> {selectedCertificate?.userName || "-"}
                                     </div>
                                     <div className="mb-2">
-                                        <strong>Email:</strong> {selectedCertificate.user.email}
+                                        <strong>Email:</strong> {selectedCertificate?.user?.email || "-"}
                                     </div>
                                 </Col>
                                 <Col md={6}>
                                     <div className="mb-2">
-                                        <strong>Course:</strong> {selectedCertificate.course.name}
+                                        <strong>Course:</strong> {selectedCertificate?.course?.name || "-"}
                                     </div>
                                     <div className="mb-2">
-                                        <strong>Grade:</strong> {selectedCertificate.completionData.gradeLabel} ({selectedCertificate.completionData.gradePercentage}%)
+                                        <strong>Grade:</strong> {selectedCertificate?.completionData?.gradeLabel || "-"} ({selectedCertificate?.completionData?.gradePercentage || "-"}%)
                                     </div>
                                 </Col>
                             </Row>
                             <div className="mt-2">
-                                <strong>Completion Date:</strong> {formatDate(selectedCertificate.completionData.completionDate)}
+                                <strong>Completion Date:</strong> {formatDate(selectedCertificate?.completionData?.completionDate)}
                             </div>
                         </div>
                     </div>
@@ -291,7 +291,7 @@ const CertificateApprovalModal: React.FC<CertificateApprovalModalProps> = ({
                                             Signature Available
                                         </strong>
                                         <div className="text-muted small mt-1">
-                                            Last updated: {formatDate(presidentSignature.updatedAt)}
+                                            Last updated: {formatDate(presidentSignature?.updatedAt)}
                                         </div>
                                     </div>
                                     <Button
@@ -307,7 +307,7 @@ const CertificateApprovalModal: React.FC<CertificateApprovalModalProps> = ({
                                 <div className="text-center">
                                     {!imageError ? (
                                         <img
-                                            src={`${baseApiUrl}/${presidentSignature.signaturePath}`}
+                                            src={`${baseApiUrl}/${presidentSignature?.signaturePath}`}
                                             alt="President Signature"
                                             className="img-fluid border rounded"
                                             style={{ maxHeight: '120px', maxWidth: '300px' }}
@@ -361,12 +361,12 @@ const CertificateApprovalModal: React.FC<CertificateApprovalModalProps> = ({
                                     }
                                 })}
                                 placeholder="Enter your approval comments here..."
-                                className={errors.comments ? 'is-invalid' : ''}
+                                className={errors?.comments ? 'is-invalid' : ''}
                             />
-                            {errors.comments && (
+                            {errors?.comments && (
                                 <Form.Control.Feedback type="invalid">
                                     <i className="bi bi-exclamation-circle me-1"></i>
-                                    {errors.comments.message}
+                                    {errors?.comments?.message}
                                 </Form.Control.Feedback>
                             )}
                             <Form.Text className="text-muted">
@@ -383,9 +383,9 @@ const CertificateApprovalModal: React.FC<CertificateApprovalModalProps> = ({
                             Student Signature
                         </h6>
                         <div className="text-center p-3 border rounded bg-light">
-                            {selectedCertificate.userSignaturePath ? (
+                            {selectedCertificate?.userSignaturePath ? (
                                 <img
-                                    src={`${baseApiUrl}/${selectedCertificate.userSignaturePath}`}
+                                    src={`${baseApiUrl}/${selectedCertificate?.userSignaturePath}`}
                                     alt="Student Signature"
                                     className="img-fluid border rounded"
                                     style={{ maxHeight: '100px', maxWidth: '250px' }}

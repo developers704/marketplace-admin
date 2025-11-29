@@ -34,6 +34,7 @@ interface TableRecord {
 		description: string
 		createdAt: string
 		updatedAt: string
+		isMain: boolean
 	} | null
 	city: { _id: string; name: string; __v: number }
 	productType: any
@@ -53,7 +54,7 @@ interface TableRecord {
 
 interface InventoryFormValues {
 	product: string
-	warehouse: string[]
+	warehouse: string
 	quantity: number
 	stockAlertThreshold: number
 	locationWithinWarehouse: string
@@ -109,7 +110,7 @@ const AllInventory = () => {
 		formState: { errors },
 	} = useForm<InventoryFormValues>({
 		 defaultValues: {
-    	 warehouse: []
+    	 warehouse: '',
 	}, 
 	})
 
@@ -201,7 +202,7 @@ const AllInventory = () => {
 		setEditingSubCategory(inventory)
 		setValue('product', inventory.product._id)
 		setProductSearchTerm(inventory.product.name)
-		setValue('warehouse', inventory.warehouse?._id ? [inventory.warehouse._id] : [])
+		setValue('warehouse', inventory.warehouse?._id || "")
 		setValue('quantity', inventory.quantity)
 		setValue('locationWithinWarehouse', inventory.locationWithinWarehouse || '')
 		setValue('batchId', inventory.batchId || '')
@@ -318,7 +319,7 @@ const AllInventory = () => {
 			const updateData = {
 				...formData,
 				city: selectedCity,
-				warehouse: formData.warehouse || null, // Convert empty string to null
+				warehouse: formData.warehouse || null,
 				productType: productType,
 			}
 			const response = await fetch(
@@ -375,7 +376,7 @@ const AllInventory = () => {
 	}
 	const handleProductSearch = async (searchTerm: string) => {
 		setProductSearchTerm(searchTerm)
-		if (searchTerm.length < 2) {
+		if (searchTerm.length < 3) {
 			setShowSuggestions(false)
 			return
 		}
@@ -384,8 +385,8 @@ const AllInventory = () => {
 			// Change the endpoint based on the product type
 			const endpoint =
 				productType === 'SpecialProduct'
-					? `${BASE_API}/api/special-products?search=${encodeURIComponent(searchTerm)}`
-					: `${BASE_API}/api/products?search=${encodeURIComponent(searchTerm)}`
+					? `${BASE_API}/api/special-products/search?query=${encodeURIComponent(searchTerm)}`
+					: `${BASE_API}/api/products/search?search=${encodeURIComponent(searchTerm)}`
 
 			const response = await fetch(endpoint, {
 				method: 'GET',
@@ -410,6 +411,7 @@ const AllInventory = () => {
 			console.error('Error fetching product suggestions:', error)
 		}
 	}
+	
 	const getAllInventory = async () => {
 		try {
 			setLoading(true)
@@ -1100,20 +1102,6 @@ const AllInventory = () => {
   <Form.Group className="mb-3">
     <Form.Label className="d-flex align-items-center justify-content-between">
       Stores
-      <Button
-        onClick={(e) => {
-          e.preventDefault()
-          toggleWarehouseModal()
-        }}
-        title="Add New Store"
-        className="p-0"
-        variant="link"
-      >
-        <i
-          className="bi bi-plus-circle-fill text-success"
-          style={{ fontSize: '24px' }}
-        ></i>
-      </Button>
     </Form.Label>
 
     <Controller
@@ -1127,11 +1115,12 @@ const AllInventory = () => {
             label: w.name,
           })) || []
 
-        const selectedValues = warehouseOptions.filter((opt) =>
-          field.value?.includes(opt.value)
-        )
+        // Single value for react-select
+        const selectedValue = warehouseOptions.find(
+          (opt) => opt.value === field.value
+        ) || null
 
-        // Custom checkbox-style option
+        // Custom checkbox-style option (single selection)
         const Option = (props: any) => {
           return (
             <div
@@ -1142,16 +1131,10 @@ const AllInventory = () => {
               style={{ cursor: 'pointer' }}
             >
               <input
-                type="checkbox"
-                checked={field.value?.includes(props.data.value)}
-                onChange={() => {
-                  const current = field.value || []
-                  if (current.includes(props.data.value)) {
-                    field.onChange(current.filter((v) => v !== props.data.value))
-                  } else {
-                    field.onChange([...current, props.data.value])
-                  }
-                }}
+                type="radio"
+                name="warehouse-single"
+                checked={field.value === props.data.value}
+                onChange={() => field.onChange(props.data.value)}
                 style={{ marginRight: '8px' }}
               />
               <label className="m-0">{props.label}</label>
@@ -1159,34 +1142,11 @@ const AllInventory = () => {
           )
         }
 
-        // MenuList with Select All/Unselect All + scroll
+        // MenuList with scroll (no select all for single)
         const MenuList = (props: any) => {
-          const allSelected =
-            field.value?.length === warehouseOptions.length
-
           return (
-            <div>
-              <div
-                className="d-flex align-items-center p-2 border-bottom"
-                style={{ cursor: 'pointer', background: '#f8f9fa' }}
-                onClick={() => {
-                  if (allSelected) field.onChange([])
-                  else field.onChange(warehouseOptions.map((o) => o.value))
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={allSelected}
-                  readOnly
-                  style={{ marginRight: '8px' }}
-                />
-                <label className="m-0 fw-semibold">
-                  {allSelected ? 'Unselect All' : 'Select All'}
-                </label>
-              </div>
-              <div style={{ maxHeight: '220px', overflowY: 'auto' }}>
-                {props.children}
-              </div>
+            <div style={{ maxHeight: '220px', overflowY: 'auto' }}>
+              {props.children}
             </div>
           )
         }
@@ -1194,18 +1154,15 @@ const AllInventory = () => {
         return (
           <Select
             {...field}
-            isMulti
-            closeMenuOnSelect={false}
+            closeMenuOnSelect
             hideSelectedOptions={false}
             options={warehouseOptions}
-            placeholder="Select Stores"
+            placeholder="Select Store"
             className="react-select"
             classNamePrefix="select"
-            value={selectedValues}
-            onChange={(selectedOptions) =>
-              field.onChange(
-                selectedOptions ? selectedOptions.map((o) => o.value) : []
-              )
+            value={selectedValue}
+            onChange={(selectedOption) =>
+              field.onChange(selectedOption ? selectedOption.value : '')
             }
             components={{
               Option,
@@ -1214,7 +1171,7 @@ const AllInventory = () => {
             styles={{
               menu: (base) => ({
                 ...base,
-                zIndex: 9999, // ✅ fix dropdown overlay
+                zIndex: 9999, // fix dropdown overlay
               }),
             } as any}
           />
@@ -1229,6 +1186,7 @@ const AllInventory = () => {
     )}
   </Form.Group>
 </Col>
+
 
 
 							<Col md={6}>

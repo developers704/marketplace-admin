@@ -107,9 +107,9 @@ const Certificates = () => {
     }
     const filteredRecords = certificatesData.filter((record) => {
         const matchesSearch =
-            record.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            record.course.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            record.user.email.toLowerCase().includes(searchTerm.toLowerCase())
+            record?.userName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            record?.course?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            record?.user?.email?.toLowerCase().includes(searchTerm.toLowerCase())
 
         const matchesStatus = statusFilter === 'All' || record.status === statusFilter
 
@@ -162,17 +162,17 @@ const Certificates = () => {
                 },
             })
 
-            if (!response.ok) {
-                const errorMessage = await response.json()
-                throw new Error(errorMessage.message || 'Failed to get certificates')
+            if (!response?.ok) {
+                const errorMessage = await response?.json()
+                throw new Error(errorMessage?.message || 'Failed to get certificates')
             }
 
             const data: ApiResponse = await response.json()
             console.log('Certificates Response:', data)
 
             if (data.success) {
-                setCertificatesData(data.requests)
-                setPagination(data.pagination)
+                setCertificatesData(data?.requests)
+                setPagination(data?.pagination)
             }
         } catch (error: any) {
             console.error('Error fetching certificates:', error)
@@ -215,7 +215,7 @@ const Certificates = () => {
                     <div className="col-md-3">
                         <div className="card bg-primary text-white">
                             <div className="card-body text-center">
-                                <h4 className="mb-1">{pagination.totalRequests}</h4>
+                                <h4 className="mb-1">{pagination?.totalRequests}</h4>
                                 <p className="mb-0">Total Requests</p>
                             </div>
                         </div>
@@ -224,7 +224,7 @@ const Certificates = () => {
                         <div className="card bg-warning text-white">
                             <div className="card-body text-center">
                                 <h4 className="mb-1">
-                                    {certificatesData.filter(c => c.status === 'Pending').length}
+                                    {certificatesData.filter(c => c?.status === 'Pending').length}
                                 </h4>
                                 <p className="mb-0">Pending</p>
                             </div>
@@ -234,7 +234,7 @@ const Certificates = () => {
                         <div className="card bg-success text-white">
                             <div className="card-body text-center">
                                 <h4 className="mb-1">
-                                    {certificatesData.filter(c => c.status === 'Approved').length}
+                                    {certificatesData.filter(c => c?.status === 'Approved').length}
                                 </h4>
                                 <p className="mb-0">Approved</p>
                             </div>
@@ -244,7 +244,7 @@ const Certificates = () => {
                         <div className="card bg-danger text-white">
                             <div className="card-body text-center">
                                 <h4 className="mb-1">
-                                    {certificatesData.filter(c => c.status === 'Rejected').length}
+                                    {certificatesData.filter(c => c?.status === 'Rejected').length}
                                 </h4>
                                 <p className="mb-0">Rejected</p>
                             </div>
@@ -342,7 +342,7 @@ const Certificates = () => {
                                             style={certificate.status === 'Pending' ? { backgroundColor: '#fff3cd' } : {}}>
                                             <td>
                                                 <div>
-                                                    <strong className="d-block">{certificate.userName}</strong>
+                                                    <strong className="d-block">{certificate?.userName || "-"}</strong>
 
                                                 </div>
                                             </td>
@@ -352,22 +352,22 @@ const Certificates = () => {
                                                         {certificate?.course?.name}
                                                     </strong>
                                                     <small className="text-muted">
-                                                        {certificate?.course?.level} • {certificate.course.courseType}
+                                                        {certificate?.course?.level || "-"} • {certificate?.course?.courseType || "-"}
                                                     </small>
                                                 </div>
                                             </td>
-                                            <td className="text-truncate">{certificate.user.email}</td>
+                                            <td className="text-truncate">{certificate?.user?.email || "-"}</td>
                                             <td>{getStatusBadge(certificate.status)}</td>
                                             <td>
                                                 <div>
-                                                    <strong className="d-block">{certificate.completionData.gradeLabel}</strong>
+                                                    <strong className="d-block">{certificate?.completionData?.gradeLabel || "-"}</strong>
                                                     <small className="text-muted">
-                                                        {certificate.completionData.gradePercentage}%
+                                                        {certificate?.completionData?.gradePercentage || "-"}%
                                                     </small>
                                                 </div>
                                             </td>
-                                            <td>{formatDate(certificate.completionData.completionDate)}</td>
-                                            <td>{formatDate(certificate.createdAt)}</td>
+                                            <td>{formatDate(certificate?.completionData?.completionDate)}</td>
+                                            <td>{formatDate(certificate?.createdAt)}</td>
                                             <td>
                                                 <div className="d-flex gap-1">
                                                     <Button
@@ -500,11 +500,11 @@ const Certificates = () => {
                 show={certificateDisplayModalOpen}
                 onHide={() => setCertificateDisplayModalOpen(false)}
                 certificateData={selectedCertificate ? {
-                    userName: selectedCertificate.userName,
-                    userSignaturePath: selectedCertificate.userSignaturePath,
-                    presidentSignaturePath: selectedCertificate.presidentSignaturePath || '',
-                    certificateId: selectedCertificate.certificateId,
-                    course: selectedCertificate.course
+                    userName: selectedCertificate?.userName,
+                    userSignaturePath: selectedCertificate?.userSignaturePath,
+                    presidentSignaturePath: selectedCertificate?.presidentSignaturePath || '',
+                    certificateId: selectedCertificate?.certificateId,
+                    course: selectedCertificate?.course
                 } : null}
                 baseApiUrl={BASE_API}
             />

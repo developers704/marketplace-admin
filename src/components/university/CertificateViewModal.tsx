@@ -91,15 +91,15 @@ const CertificateViewModal: React.FC<CertificateViewModalProps> = ({
 
             <Modal.Body>
                 {/* Status Alert */}
-                <Alert variant={selectedCertificate.status === 'Approved' ? 'success' : selectedCertificate.status === 'Pending' ? 'warning' : 'danger'}>
+                <Alert variant={selectedCertificate?.status === 'Approved' ? 'success' : selectedCertificate?.status === 'Pending' ? 'warning' : 'danger'}>
                     <div className="d-flex justify-content-between align-items-center">
                         <div>
                             <strong>Status: {getStatusBadge(selectedCertificate.status)}</strong>
                             
                         </div>
-                        {selectedCertificate.reviewedAt && (
+                        {selectedCertificate?.reviewedAt && (
                             <small className="text-muted">
-                                Reviewed on: {formatDate(selectedCertificate.reviewedAt)}
+                                Reviewed on: {formatDate(selectedCertificate?.reviewedAt)}
                             </small>
                         )}
                     </div>
@@ -115,13 +115,13 @@ const CertificateViewModal: React.FC<CertificateViewModalProps> = ({
                             </h6>
                             <div className="p-3 border rounded bg-light">
                                 <div className="mb-2">
-                                    <strong>Name:</strong> {selectedCertificate.userName}
+                                    <strong>Name:</strong> {selectedCertificate?.userName || "-"}
                                 </div>
                                 <div className="mb-2">
-                                    <strong>Email:</strong> {selectedCertificate.user.email}
+                                    <strong>Email:</strong> {selectedCertificate?.user?.email || "-"}
                                 </div>
                                 <div>
-                                    <strong>Request Date:</strong> {formatDate(selectedCertificate.createdAt)}
+                                    <strong>Request Date:</strong> {formatDate(selectedCertificate?.createdAt)}
                                 </div>
                             </div>
                         </div>
@@ -136,19 +136,19 @@ const CertificateViewModal: React.FC<CertificateViewModalProps> = ({
                             </h6>
                             <div className="p-3 border rounded bg-light">
                                 <div className="mb-2">
-                                    <strong>Course:</strong> {selectedCertificate.course.name}
+                                    <strong>Course:</strong> {selectedCertificate?.course?.name || "-"}
                                 </div>
                                 <div className="mb-2">
-                                    <strong>Level:</strong> {selectedCertificate.course.level}
+                                    <strong>Level:</strong> {selectedCertificate?.course?.level || "-"}
                                 </div>
                                 <div className="mb-2">
-                                    <strong>Type:</strong> {selectedCertificate.course.courseType}
+                                    <strong>Type:</strong> {selectedCertificate?.course?.courseType || "-"}
                                 </div>
-                                {selectedCertificate.course.description && (
+                                {selectedCertificate?.course?.description && (
                                     <div>
                                         <strong>Description:</strong>
                                         <p className="mb-0 mt-1 text-muted small">
-                                            {selectedCertificate.course.description}
+                                            {selectedCertificate?.course?.description || "-"}
                                         </p>
                                     </div>
                                 )}
@@ -166,31 +166,31 @@ const CertificateViewModal: React.FC<CertificateViewModalProps> = ({
                     <Row>
                         <Col md={3}>
                             <div className="text-center p-3 border rounded bg-success text-white">
-                                <h4 className="mb-1">{selectedCertificate.completionData.gradeLabel}</h4>
+                                <h4 className="mb-1">{selectedCertificate?.completionData?.gradeLabel || "-"}</h4>
                                 <small>Final Grade</small>
                             </div>
                         </Col>
                         <Col md={3}>
                             <div className="text-center p-3 border rounded bg-info text-white">
-                                <h4 className="mb-1">{selectedCertificate.completionData.gradePercentage}%</h4>
+                                <h4 className="mb-1">{selectedCertificate?.completionData?.gradePercentage || "-"}%</h4>
                                 <small>Percentage</small>
                             </div>
                         </Col>
                         <Col md={3}>
                             <div className="text-center p-3 border rounded bg-primary text-white">
-                                <h4 className="mb-1">{selectedCertificate.completionData.completedChapters}/{selectedCertificate.completionData.totalChapters}</h4>
+                                <h4 className="mb-1">{selectedCertificate?.completionData?.completedChapters || "-"}/{selectedCertificate?.completionData?.totalChapters || "-"}</h4>
                                 <small>Chapters</small>
                             </div>
                         </Col>
                         <Col md={3}>
                             <div className="text-center p-3 border rounded bg-warning text-white">
-                                <h4 className="mb-1">{selectedCertificate.completionData.passedQuizzes}/{selectedCertificate.completionData.totalQuizzes}</h4>
+                                <h4 className="mb-1">{selectedCertificate?.completionData?.passedQuizzes || "-"}/{selectedCertificate?.completionData?.totalQuizzes || "-"}</h4>
                                 <small>Quizzes</small>
                             </div>
                         </Col>
                     </Row>
                     <div className="mt-3 p-3 border rounded bg-light">
-                        <strong>Completion Date:</strong> {formatDate(selectedCertificate.completionData.completionDate)}
+                        <strong>Completion Date:</strong> {formatDate(selectedCertificate?.completionData?.completionDate || "-")}
                     </div>
                 </div>
 
@@ -204,9 +204,9 @@ const CertificateViewModal: React.FC<CertificateViewModalProps> = ({
                         <Col md={6}>
                             <div className="text-center p-3 border rounded">
                                 <h6>Employee Signature</h6>
-                                {selectedCertificate.userSignaturePath && !imageError.userSignature ? (
+                                {selectedCertificate?.userSignaturePath && !imageError?.userSignature ? (
                                     <img
-                                        src={`${baseApiUrl}/${selectedCertificate.userSignaturePath}`}
+                                        src={`${baseApiUrl}/${selectedCertificate?.userSignaturePath}`}
                                         alt="Employee Signature"
                                         className="img-fluid border rounded"
                                         style={{ maxHeight: '100px', maxWidth: '200px' }}
@@ -223,9 +223,9 @@ const CertificateViewModal: React.FC<CertificateViewModalProps> = ({
                         <Col md={6}>
                             <div className="text-center p-3 border rounded">
                                 <h6>Admin Signature</h6>
-                                {selectedCertificate.presidentSignaturePath && !imageError.presidentSignature ? (
+                                {selectedCertificate?.presidentSignaturePath && !imageError?.presidentSignature ? (
                                     <img
-                                        src={`${baseApiUrl}/${selectedCertificate.presidentSignaturePath}`}
+                                        src={`${baseApiUrl}/${selectedCertificate?.presidentSignaturePath}`}
                                         alt="AdminSignature"
                                         className="img-fluid border rounded"
                                         style={{ maxHeight: '100px', maxWidth: '200px' }}
@@ -235,7 +235,7 @@ const CertificateViewModal: React.FC<CertificateViewModalProps> = ({
                                     <div className="text-muted">
                                         <i className="bi bi-image fs-1 d-block mb-2"></i>
                                         <small>
-                                            {selectedCertificate.status === 'Pending'
+                                            {selectedCertificate?.status === 'Pending'
                                                 ? 'Awaiting approval'
                                                 : 'Signature not available'
                                             }
@@ -248,29 +248,29 @@ const CertificateViewModal: React.FC<CertificateViewModalProps> = ({
                 </div>
 
                 {/* Review Comments */}
-                {selectedCertificate.reviewComments && (
+                {selectedCertificate?.reviewComments && (
                     <div className="mb-4">
                         <h6 className="mb-3">
                             <i className="bi bi-chat-text me-2"></i>
                             Review Comments
                         </h6>
                         <div className="p-3 border rounded bg-light">
-                            <p className="mb-0">{selectedCertificate.reviewComments}</p>
+                            <p className="mb-0">{selectedCertificate?.reviewComments}</p>
                         </div>
                     </div>
                 )}
 
                 {/* Certificate Image */}
-                {selectedCertificate.certificateImagePath && (
+                {selectedCertificate?.certificateImagePath && (
                     <div className="mb-4">
                         <h6 className="mb-3">
                             <i className="bi bi-file-earmark-image me-2"></i>
                             Certificate Preview
                         </h6>
                         <div className="text-center p-3 border rounded">
-                            {!imageError.certificate ? (
+                            {!imageError?.certificate ? (
                                 <img
-                                    src={`${baseApiUrl}/${selectedCertificate.certificateImagePath}`}
+                                    src={`${baseApiUrl}/${selectedCertificate?.certificateImagePath}`}
                                     alt="Certificate"
                                     className="img-fluid border rounded"
                                     style={{ maxHeight: '400px' }}
@@ -291,13 +291,13 @@ const CertificateViewModal: React.FC<CertificateViewModalProps> = ({
                 <Button variant="secondary" onClick={onHide}>
                     Close
                 </Button>
-                {selectedCertificate.certificateImagePath && (
+                {selectedCertificate?.certificateImagePath && (
                     <Button
                         variant="primary"
                         onClick={() => {
                             const link = document.createElement('a')
-                            link.href = `${baseApiUrl}/${selectedCertificate.certificateImagePath}`
-                            link.download = `certificate-${selectedCertificate.certificateId || selectedCertificate.id}.png`
+                            link.href = `${baseApiUrl}/${selectedCertificate?.certificateImagePath}`
+                            link.download = `certificate-${selectedCertificate?.certificateId || selectedCertificate?.id}.png`
                             document.body.appendChild(link)
                             link.click()
                             document.body.removeChild(link)

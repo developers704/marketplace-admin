@@ -262,6 +262,12 @@ const MENU_ITEMS: MenuItemTypes[] = [
 				url: '/orders/ecommerce-orders',
 				parentKey: 'orders',
 			},
+			{
+				key: 'View',
+				label: 'Requested Orders',
+				url: '/orders/requested-orders',
+				parentKey: 'orders',
+			},
 			// {
 			// 	key: 'View',
 			// 	label: 'Service Bookings',

@@ -6,6 +6,7 @@
 .logo-lg {
 	img {
 		height: $logo-lg-height;
+		// background:white;
 	}
 }
 
@@ -14,8 +15,8 @@
 		height: $logo-sm-height;
 	}
 }
-$logo-lg-width: 200px; // Desired width for large logo
-$logo-lg-height: 80px; // Desired height for large logo
+$logo-lg-width: 160px; // Desired width for large logo
+$logo-lg-height: 50px; // Desired height for large logo
 
 .logo-lg {
 	img {

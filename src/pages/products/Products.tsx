@@ -449,7 +449,7 @@ const Products = () => {
 		try {
 			setLoading(true)
 			const url = BASE_CITY
-				? `${BASE_API}/api/products?city=${BASE_CITY}`
+				? `${BASE_API}/api/products?city`
 				: `${BASE_API}/api/products`;
 
 			const response = await fetch(url, {

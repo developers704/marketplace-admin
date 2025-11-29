@@ -28,7 +28,12 @@ const LeftSidebar = () => {
 				{/* Brand Logo Light */}
 				<Link to="/" className="logo logo-light">
 					<span className="logo-lg">
-						<img src={logo} alt="logo" />
+						<img src={logo} alt="logo" 
+	 	
+						style={{
+    					filter: "brightness(0) invert(1)"
+  						}}
+	   					/>
 					</span>
 					<span className="logo-sm">
 						<img src={logoSm} alt="small logo" />

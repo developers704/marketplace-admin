@@ -41,7 +41,7 @@ const CertificateDisplayModal: React.FC<CertificateDisplayModalProps> = ({
 
                 const opt = {
                     margin: 0,
-                    filename: `certificate-${certificateData.certificateId || 'download'}.pdf`,
+                    filename: `certificate-${certificateData?.certificateId || 'download'}.pdf`,
                     image: { type: 'jpeg', quality: 1 },
                     html2canvas: {
                         scale: 2,
@@ -56,7 +56,7 @@ const CertificateDisplayModal: React.FC<CertificateDisplayModalProps> = ({
 
                 await html2pdf()
                     .set(opt)
-                    .from(certificateRef.current)
+                    .from(certificateRef?.current)
                     .save()
             }
         } catch (error) {
@@ -125,9 +125,9 @@ const CertificateDisplayModal: React.FC<CertificateDisplayModalProps> = ({
                                 textAlign: 'center',
                             }}
                         >
-                            {certificateData.userSignaturePath && !imageError.userSignature ? (
+                            {certificateData?.userSignaturePath && !imageError?.userSignature ? (
                                 <img
-                                    src={`${baseApiUrl}/${certificateData.userSignaturePath}`}
+                                    src={`${baseApiUrl}/${certificateData?.userSignaturePath}`}
                                     alt="Student Signature"
                                     style={{
                                         height: '80px',
@@ -161,9 +161,9 @@ const CertificateDisplayModal: React.FC<CertificateDisplayModalProps> = ({
                                 textAlign: 'center',
                             }}
                         >
-                            {certificateData.presidentSignaturePath && !imageError.presidentSignature ? (
+                            {certificateData?.presidentSignaturePath && !imageError?.presidentSignature ? (
                                 <img
-                                    src={`${baseApiUrl}/${certificateData.presidentSignaturePath}`}
+                                    src={`${baseApiUrl}/${certificateData?.presidentSignaturePath}`}
                                     alt="President Signature"
                                     style={{
                                         height: '80px',

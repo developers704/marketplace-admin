@@ -64,9 +64,9 @@ const AbondendCarts = () => {
 
     const filteredRecords = cartData
         .filter((record) =>
-            record.customer.username.toLowerCase().includes(searchTerm.toLowerCase())
+            record?.customer?.username.toLowerCase().includes(searchTerm.toLowerCase())
         )
-        .sort((a, b) => a.customer.username.localeCompare(b.customer.username))
+        .sort((a, b) => a?.customer?.username.localeCompare(b?.customer?.username))
     const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.checked) {
             setSelectedRows(cartData.map((record) => record._id))
@@ -76,7 +76,7 @@ const AbondendCarts = () => {
     }
     const handleSelectRow = (id: any) => {
         setSelectedRows((prev) =>
-            prev.includes(id) ? prev.filter((rowId) => rowId !== id) : [...prev, id]
+            prev?.includes(id) ? prev?.filter((rowId) => rowId !== id) : [...prev, id]
         )
     }
     const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -85,7 +85,7 @@ const AbondendCarts = () => {
     const handlePageChange = (page: number) => {
         setCurrentPage(page)
     }
-    const totalPages = Math.ceil(filteredRecords.length / itemsPerPage)
+    const totalPages = Math.ceil(filteredRecords?.length / itemsPerPage)
     const paginatedRecords = filteredRecords.slice(
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
@@ -209,7 +209,7 @@ const AbondendCarts = () => {
                                         <input
                                             type="checkbox"
                                             onChange={handleSelectAll}
-                                            checked={selectedRows.length === cartData.length}
+                                            checked={selectedRows?.length === cartData?.length}
                                         />{' '}
                                     </th>
                                     <th>User Name</th>
@@ -228,23 +228,23 @@ const AbondendCarts = () => {
                                     <TableRowSkeleton headers={warehouseHeaders} rowCount={3} />
                                 ) : paginatedRecords?.length > 0 ? (
                                     (paginatedRecords || []).map((record: CartItem, idx) => {
-                                        const isSelected = selectedRows.includes(record?._id)
+                                        const isSelected = selectedRows?.includes(record?._id)
                                         return (
                                             <tr key={idx}>
                                                 <td>
                                                     <input
                                                         type="checkbox"
                                                         checked={isSelected}
-                                                        onChange={() => handleSelectRow(record._id)}
+                                                        onChange={() => handleSelectRow(record?._id)}
                                                     />
                                                 </td>
-                                                <td>{record?.customer?.username}</td>
-                                                <td>{record?.customer?.email}</td>
-                                                <td>{record?.customer?.phone_number}</td>
+                                                <td>{record?.customer?.username || "-"}</td>
+                                                <td>{record?.customer?.email || "-"}</td>
+                                                <td>{record?.customer?.phone_number || "-"}</td>
                                                 <td>
                                                     {record.items.map((item, index) => (
-                                                        <div key={item._id}>
-                                                            {item?.item?.name}
+                                                        <div key={item?._id}>
+                                                            {item?.item?.name || "-"}
                                                             {index < record?.items?.length - 1 && ', '}
                                                         </div>
                                                     ))}
@@ -252,7 +252,7 @@ const AbondendCarts = () => {
                                                 <td>
                                                     {record?.items.map((item, index) => (
                                                         <div key={item?._id}>
-                                                            {item?.item?.sku}
+                                                            {item?.item?.sku || "-"}
                                                             {index < record?.items?.length - 1 && ', '}
                                                         </div>
                                                     ))}

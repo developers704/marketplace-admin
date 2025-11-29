@@ -265,7 +265,7 @@ const EcommerceOrder = () => {
 	const fetchOrders = async () => {
 		setLoading(true)
 		try {
-			const response = await fetch(`${BASE_API}/api/checkout/order`, {
+			const response = await fetch(`${BASE_API}/api/checkout/order?isMain=true`, {
 				headers: {
 					Authorization: `Bearer ${token}`,
 				},
@@ -405,7 +405,7 @@ const EcommerceOrder = () => {
 		setIsExporting(true)
 		try {
 			const response = await fetch(
-				`${BASE_API}/api/checkout/orders/download-data`,
+				`${BASE_API}/api/checkout/orders/download-data?isMain=true`,
 				{
 					headers: {
 						Authorization: `Bearer ${token}`,

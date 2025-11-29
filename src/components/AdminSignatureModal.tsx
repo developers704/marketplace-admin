@@ -62,15 +62,15 @@ const PresidentSignatureModal: React.FC<PresidentSignatureModalProps> = ({
 
         setSelectedFile(file)
         // Clear signature canvas if file is selected
-        if (signatureCanvasRef.current) {
-            signatureCanvasRef.current.clear()
+        if (signatureCanvasRef?.current) {
+            signatureCanvasRef?.current.clear()
             setSignatureDrawn(false)
         }
     }
 
     // Handle signature drawing
     const handleSignatureEnd = () => {
-        if (signatureCanvasRef.current && !signatureCanvasRef.current.isEmpty()) {
+        if (signatureCanvasRef?.current && !signatureCanvasRef?.current.isEmpty()) {
             setSignatureDrawn(true)
             setSelectedFile(null) // Clear file upload if signature is drawn
             setError(null)
@@ -79,8 +79,8 @@ const PresidentSignatureModal: React.FC<PresidentSignatureModalProps> = ({
 
     // Clear signature canvas
     const clearSignature = () => {
-        if (signatureCanvasRef.current) {
-            signatureCanvasRef.current.clear()
+        if (signatureCanvasRef?.current) {
+            signatureCanvasRef?.current.clear()
             setSignatureDrawn(false)
         }
     }
@@ -88,8 +88,8 @@ const PresidentSignatureModal: React.FC<PresidentSignatureModalProps> = ({
     // Convert signature canvas to blob
     const getSignatureBlob = (): Promise<Blob | null> => {
         return new Promise((resolve) => {
-            if (signatureCanvasRef.current && !signatureCanvasRef.current.isEmpty()) {
-                signatureCanvasRef.current.getCanvas().toBlob((blob) => {
+            if (signatureCanvasRef?.current && !signatureCanvasRef.current.isEmpty()) {
+                signatureCanvasRef?.current.getCanvas().toBlob((blob) => {
                     resolve(blob)
                 }, 'image/png', 1.0)
             } else {
@@ -109,8 +109,8 @@ const PresidentSignatureModal: React.FC<PresidentSignatureModalProps> = ({
         setSelectedFile(null)
         setSignatureDrawn(false)
         setError(null)
-        if (signatureCanvasRef.current) {
-            signatureCanvasRef.current.clear()
+        if (signatureCanvasRef?.current) {
+            signatureCanvasRef?.current.clear()
         }
     }
 
@@ -225,7 +225,7 @@ const PresidentSignatureModal: React.FC<PresidentSignatureModalProps> = ({
                                 <div className="row align-items-center">
                                     <div className="col-md-8">
                                         <img
-                                            src={`${baseApiUrl}/${existingSignature.signaturePath}`}
+                                            src={`${baseApiUrl}/${existingSignature?.signaturePath}`}
                                             alt="Current President Signature"
                                             style={{
                                                 maxHeight: '100px',
@@ -237,9 +237,9 @@ const PresidentSignatureModal: React.FC<PresidentSignatureModalProps> = ({
                                     </div>
                                     <div className="col-md-4">
                                         <div className="text-muted">
-                                            <small className="d-block"><strong>Name:</strong> {existingSignature.presidentName}</small>
-                                            <small className="d-block"><strong>Email:</strong> {existingSignature.presidentEmail}</small>
-                                            <small className="d-block"><strong>Updated:</strong> {new Date(existingSignature.updatedAt).toLocaleDateString()}</small>
+                                            <small className="d-block"><strong>Name:</strong> {existingSignature?.presidentName || "-"}</small>
+                                            <small className="d-block"><strong>Email:</strong> {existingSignature?.presidentEmail || "-"}</small>
+                                            <small className="d-block"><strong>Updated:</strong> {new Date(existingSignature?.updatedAt).toLocaleDateString()}</small>
                                         </div>
                                     </div>
                                 </div>
