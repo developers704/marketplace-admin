@@ -348,7 +348,6 @@ const CreateProduct = ({
 		if (metaDescription) formData.append('meta_description', metaDescription)
 		if (imageAltText) formData.append('image_alt_text', imageAltText)
 
-		// Add tags
 		if (productTags.length > 0) {
 			productTags.forEach((tag) => {
 				formData.append('tags[]', tag._id)
@@ -476,47 +475,48 @@ const CreateProduct = ({
 
 			if (isEditing && initialData) {
 				reset({
-					name: initialData.name,
-					sku: initialData.sku,
-					currency: initialData.currency,
-					videoLink: initialData.videoLink,
-					releaseDate: initialData.releaseDate,
+					name: initialData?.name,
+					sku: initialData?.sku,
+					currency: initialData?.currency,
+					videoLink: initialData?.videoLink,
+					releaseDate: initialData?.releaseDate,
+					brandId: initialData?.brandId,
 				})
 
-				setDescription(initialData.description || '')
-				setIsBestSeller(initialData.isBestSeller || false)
-				setSelectedBrand(initialData?.brandId?._id || '')
-				setProductStatus(initialData.lifecycleStage || 'active')
-				setIsShopByPet(initialData.isShopByPet || false)
-				setIsServiceProduct(initialData.isServiceProduct || false)
-				setIsNewArrival(initialData.isNewArrival || false)
-				setMetaTitle(initialData.meta_title || '')
-				setMetaDescription(initialData.meta_description || '')
-				setImageAltText(initialData.image_alt_text || '')
+				setDescription(initialData?.description || '')
+				setIsBestSeller(initialData?.isBestSeller || false)
+				setSelectedBrand(initialData?.brandId || '',)
+				setProductStatus(initialData?.lifecycleStage || 'active')
+				setIsShopByPet(initialData?.isShopByPet || false)
+				setIsServiceProduct(initialData?.isServiceProduct || false)
+				setIsNewArrival(initialData?.isNewArrival || false)
+				setMetaTitle(initialData?.meta_title || '')
+				setMetaDescription(initialData?.meta_description || '')
+				setImageAltText(initialData?.image_alt_text || '')
 
-				setSelectedCategories(initialData.categories?.map((cat: any) => cat._id) || [])
-				setSelectedSubCategories(initialData.subcategories?.map((subCat: any) => subCat._id) || [])
+				setSelectedCategories(initialData?.categories?.map((cat: any) => cat?._id) || [])
+				setSelectedSubCategories(initialData?.subcategories?.map((subCat: any) => subCat?._id) || [])
 				// setSelectedSubSubCategories(initialData.subsubcategories?.map((subSubCat: any) => subSubCat._id) || [])
 
-				if (initialData.tags?.length) {
+				if (initialData?.tags?.length) {
 					setProductTags(
-						initialData.tags.map((tag: any) => ({
-							_id: tag._id,
-							name: tag.name,
+						initialData?.tags.map((tag: any) => ({
+							_id: tag?._id,
+							name: tag?.name,
 						}))
 					)
 				}
 
-				if (initialData.prices?.length) {
+				if (initialData?.prices?.length) {
 					setAddedPrices(
-						initialData.prices.map((price: any) => ({
-							city: price.city._id,
-							cityName: price.city.name,
-							amount: price.amount,
-							salePrice: price.salePrice || ''
+						initialData?.prices?.map((price: any) => ({
+							city: price?.city?._id,
+							cityName: price?.city?.name,
+							amount: price?.amount,
+							salePrice: price?.salePrice || ''
 						}))
 					)
-					setLocalSalePrice(initialData.prices[0]?.salePrice || '')
+					setLocalSalePrice(initialData?.prices[0]?.salePrice || '')
 
 				}
 			}

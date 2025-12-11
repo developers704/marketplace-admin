@@ -152,7 +152,7 @@ const RequestedOrder = () => {
 
 
     const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchTerm(event.target.value)
+        setSearchTerm(event?.target?.value)
         setCurrentPage(1)
     }
 
@@ -177,10 +177,10 @@ const RequestedOrder = () => {
 
         // Apply Product Type filter - check if any item in the order matches the selected product type
         if (productTypeFilter !== 'all') {
-            const hasMatchingProductType = record.items.some(
+            const hasMatchingProductType = record?.items.some(
                 (item) =>
-                    item.itemType === productTypeFilter ||
-                    (item.product && item.product.type === productTypeFilter)
+                    item?.itemType === productTypeFilter ||
+                    (item?.product && item?.product?.type === productTypeFilter)
             )
 
             if (!hasMatchingProductType) {
@@ -209,12 +209,12 @@ const RequestedOrder = () => {
                 ?.includes(lowerSearchTerm)
 
             // Search in Product names
-            const matchesProductName = record.items.some((item) =>
-                item.product?.name?.toLowerCase()?.includes(lowerSearchTerm)
+            const matchesProductName = record?.items?.some((item) =>
+                item?.product?.name?.toLowerCase()?.includes(lowerSearchTerm)
             )
 
             // Search in specialized category or warehouse/store info
-            const matchesSpecialCategory = record.items.some((item) =>
+            const matchesSpecialCategory = record?.items?.some((item) =>
                 item?.product?.specialCategory?.toLowerCase()?.includes(lowerSearchTerm)
             )
 
@@ -235,7 +235,7 @@ const RequestedOrder = () => {
     const handlePageChange = (page: number) => {
         setCurrentPage(page)
     }
-    const totalPages = Math.ceil(filteredRecords.length / itemsPerPage)
+    const totalPages = Math.ceil(filteredRecords?.length / itemsPerPage)
     const paginatedRecords = filteredRecords.slice(
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
@@ -243,7 +243,7 @@ const RequestedOrder = () => {
 
     
     const truncateText = (text: string, maxLength: number = 15) => {
-        return text.length > maxLength ? text.substring(0, maxLength) + '...' : text
+        return text?.length > maxLength ? text.substring(0, maxLength) + '...' : text
     }
     const handleEditClick = (order: any) => {
         setSelectedOrder(order)
@@ -304,11 +304,11 @@ const RequestedOrder = () => {
         try {
             setApiLoading(true)
             const subtotal = orderItems.reduce(
-                (sum, item) => sum + item.quantity * item.price,
+                (sum, item) => sum + item?.quantity * item?.price,
                 0
             )
             const response = await fetch(
-                `${BASE_API}/api/checkout/admin/${selectedOrder._id}`,
+                `${BASE_API}/api/checkout/admin/${selectedOrder?._id}`,
                 {
                     method: 'PUT',
                     headers: {
@@ -317,10 +317,10 @@ const RequestedOrder = () => {
                     },
                     body: JSON.stringify({
                         subtotal: subtotal,
-                        shippingCost: Number(data.shippingCost),
+                        shippingCost: Number(data?.shippingCost),
                         grandTotal: subtotal,
-                        specialInstructions: data.specialInstructions,
-                        adminNotes: data.adminNotes,
+                        specialInstructions: data?.specialInstructions,
+                        adminNotes: data?.adminNotes,
                         items: orderItems,
                     }),
                 }
@@ -414,38 +414,38 @@ const RequestedOrder = () => {
         }
     }
 
-    const handleShippingStatusUpdate = async (orderId: string, newStatus: string) => {
-    try {
-        setApiLoading(true);
-        const response = await fetch(
-            `${BASE_API}/api/checkout/${orderId}/approve/request`,
-            {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    // action: 'APPROVE',
-                    shippingStatus: newStatus,
-                    // remarks: 'Shipping status updated',
-                }),
-            }
-        );
+//     const handleShippingStatusUpdate = async (orderId: string, newStatus: string) => {
+//     try {
+//         setApiLoading(true);
+//         const response = await fetch(
+//             `${BASE_API}/api/checkout/${orderId}/approve/request`,
+//             {
+//                 method: 'PATCH',
+//                 headers: {
+//                     'Content-Type': 'application/json',
+//                     Authorization: `Bearer ${token}`,
+//                 },
+//                 body: JSON.stringify({
+//                     // action: 'APPROVE',
+//                     shippingStatus: newStatus,
+//                     // remarks: 'Shipping status updated',
+//                 }),
+//             }
+//         );
 
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Failed to update shipping status');
-        }
+//         if (!response.ok) {
+//             const error = await response.json();
+//             throw new Error(error.message || 'Failed to update shipping status');
+//         }
 
-        toastService.success('Shipping status updated successfully!');
-        fetchOrders(); // Refresh orders
-    } catch (error: any) {
-        toastService.error(error.message || 'Error updating shipping status');
-    } finally {
-        setApiLoading(false);
-    }
-};
+//         toastService.success('Shipping status updated successfully!');
+//         fetchOrders(); // Refresh orders
+//     } catch (error: any) {
+//         toastService.error(error.message || 'Error updating shipping status');
+//     } finally {
+//         setApiLoading(false);
+//     }
+// };
 
     // ************************ useEffect Functions ********************************
     useEffect(() => {
@@ -574,9 +574,9 @@ const RequestedOrder = () => {
                                     style={{ zIndex: 1 }}
                                     className="mb-2 mb-sm-0">
                                     <option value="all">Filter By Order Status</option>
-                                    {orderStatuses.map((status) => (
-                                        <option key={status._id} value={status.name}>
-                                            {status.name}
+                                    {orderStatuses?.map((status) => (
+                                        <option key={status?._id} value={status?.name}>
+                                            {status?.name || "-"}
                                         </option>
                                     ))}
                                 </Form.Select>
@@ -584,12 +584,12 @@ const RequestedOrder = () => {
                                 <Form.Select
                                     value={paymentFilter}
                                     style={{ zIndex: 1 }}
-                                    onChange={(e) => setPaymentFilter(e.target.value)}
+                                    onChange={(e) => setPaymentFilter(e?.target?.value)}
                                     className="mb-2 mb-sm-0">
                                     <option value="all">Filter By Shipping Status</option>
                                     {paymentStatuses.map((status) => (
-                                        <option key={status._id} value={status.name}>
-                                            {status.name}
+                                        <option key={status?._id} value={status?.name}>
+                                            {status?.name}
                                         </option>
                                     ))}
                                 </Form.Select>
@@ -697,7 +697,7 @@ const RequestedOrder = () => {
                                 {loading ? (
                                     <TableRowSkeleton headers={orderHeaders} rowCount={5} />
                                 ) : paginatedRecords?.length > 0 ? (
-                                    paginatedRecords.map((record: any, idx: any) => (
+                                    paginatedRecords?.map((record: any, idx: any) => (
                                         <tr
                                             key={record?._id}
                                             style={{
@@ -750,7 +750,7 @@ const RequestedOrder = () => {
                                                 <span
                             
                                                     className={`badge bg-${statusColors[record?.shippingStatus] || 'secondary'}`}>
-                                                    {record?.shippingStatus.toUpperCase() || 'N/A'}
+                                                    {record?.shippingStatus?.toUpperCase() || 'N/A'}
                                                 </span>
                                             </td>
                                             {/* <td>
@@ -948,10 +948,11 @@ const RequestedOrder = () => {
     <>
 
       {(() => {
-        const shippingSteps = ["Pending", "Shipped", "OnTheWay", "Delivered"] as const;
-        const currentIndex = shippingSteps.indexOf(
-          selectedOrder.shippingStatus || "Pending"
-        );
+        
+        // const shippingSteps = ["Pending", "Shipped", "OnTheWay", "Delivered"] as const;
+        // const currentIndex = shippingSteps.indexOf(
+        //   selectedOrder.shippingStatus || "Pending"
+        // );
 
         return (
           <>
@@ -962,8 +963,8 @@ const RequestedOrder = () => {
                   <h4 className="fw-bold text-dark mb-1">Order Details</h4>
                   <p className="text-muted mb-0 fs-5">
                     Order ID: ORD-
-                    {selectedOrder._id
-                      ? selectedOrder._id.slice(-8).toUpperCase()
+                    {selectedOrder?._id
+                      ? selectedOrder?._id.slice(-8).toUpperCase()
                       : "N/A"}
                   </p>
                 </div>
@@ -972,19 +973,19 @@ const RequestedOrder = () => {
                     <div className="text-center">
                       <small className="text-muted d-block">Order Status</small>
                       <span className="badge bg-primary px-4 py-2 fs-6 fw-bold">
-                        {selectedOrder.orderStatus || "N/A"}
+                        {selectedOrder?.orderStatus || "N/A"}
                       </span>
                     </div>
                     <div className="text-center">
                       <small className="text-muted d-block">Payment</small>
                       <span
                         className={`badge ${
-                          selectedOrder.paymentStatus === "Paid"
+                          selectedOrder?.paymentStatus === "Paid"
                             ? "bg-success"
                             : "bg-warning text-dark"
                         } px-4 py-2 fs-6 fw-bold`}
                       >
-                        {selectedOrder.paymentStatus || "N/A"}
+                        {selectedOrder?.paymentStatus || "N/A"}
                       </span>
                     </div>
                     <div className="text-center">
@@ -992,7 +993,7 @@ const RequestedOrder = () => {
                         Grand Total
                       </small>
                       <h3 className="text-primary fw-bold mb-0">
-                        ${Number(selectedOrder.grandTotal || 0).toFixed(2)}
+                        ${Number(selectedOrder?.grandTotal || 0).toFixed(2)}
                       </h3>
                     </div>
                   </div>
@@ -1021,25 +1022,25 @@ const RequestedOrder = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {selectedOrder.items?.map((item: any, index: number) => (
+                        {selectedOrder?.items?.map((item: any, index: number) => (
                           <tr key={index}>
                             <td className="ps-4 fw-medium">
-                              {item.product?.name || "N/A"}
+                              {item?.product?.name || "N/A"}
                             </td>
-                            <td className="text-center">{item.quantity || 0}</td>
+                            <td className="text-center">{item?.quantity || 0}</td>
                             <td className="text-end">
-                              ${Number(item.price || 0).toFixed(2)}
+                              ${Number(item?.price || 0).toFixed(2)}
                             </td>
                             <td className="text-center">
                               <span className="badge bg-secondary-subtle text-dark px-3">
-                                {item.color || "N/A"}
+                                {item?.color || "N/A"}
                               </span>
                             </td>
                             <td className="text-end pe-4 fw-bold">
                               $
                               {(
-                                Number(item.quantity || 0) *
-                                Number(item.price || 0)
+                                Number(item?.quantity || 0) *
+                                Number(item?.price || 0)
                               ).toFixed(2)}
                             </td>
                           </tr>
@@ -1049,7 +1050,7 @@ const RequestedOrder = () => {
                             Subtotal
                           </td>
                           <td className="text-end fw-bold fs-5 text-primary">
-                            ${Number(selectedOrder.subtotal || 0).toFixed(2)}
+                            ${Number(selectedOrder?.subtotal || 0).toFixed(2)}
                           </td>
                         </tr>
                       </tbody>
@@ -1058,12 +1059,12 @@ const RequestedOrder = () => {
                 </div>
 
        
-                {selectedOrder.specialInstructions && (
+                {selectedOrder?.specialInstructions && (
                   <div className="mt-4">
                     <div className="alert alert-info border-0 rounded-4 shadow-sm p-4 bg-opacity-10">
                       <h6 className="fw-bold mb-2">Special Instructions</h6>
                       <p className="mb-0 text-dark">
-                        {selectedOrder.specialInstructions}
+                        {selectedOrder?.specialInstructions || "-"}
                       </p>
                     </div>
                   </div>
@@ -1082,18 +1083,18 @@ const RequestedOrder = () => {
                   <div className="card-body pt-3">
                     <div className="d-grid gap-4">
                       {[
-                        { label: "Name", value: selectedOrder.customer?.username },
-                        { label: "Email", value: selectedOrder.customer?.email },
-                        { label: "Phone", value: selectedOrder.customer?.phone_number },
-                        { label: "Store", value: selectedOrder.warehouse?.name },
+                        { label: "Name", value: selectedOrder?.customer?.username },
+                        { label: "Email", value: selectedOrder?.customer?.email },
+                        { label: "Phone", value: selectedOrder?.customer?.phone_number },
+                        { label: "Store", value: selectedOrder?.warehouse?.name },
                       ].map((field) => (
                         <div
-                          key={field.label}
+                          key={field?.label}
                           className="d-flex justify-content-between"
                         >
-                          <span className="text-muted">{field.label}</span>
+                          <span className="text-muted">{field?.label}</span>
                           <span className="fw-medium">
-                            {field.value || "N/A"}
+                            {field?.value || "N/A"}
                           </span>
                         </div>
                       ))}

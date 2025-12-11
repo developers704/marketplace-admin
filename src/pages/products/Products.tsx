@@ -599,10 +599,10 @@ const Products = () => {
 										className="d-flex align-items-center justify-content-center"
 										onClick={handleDeleteSelected}>
 										<MdDelete className="me-2" />
-										Delete {selectionType === 'all' ? 'All' : selectedRows.length} Selected
+										Delete {selectionType === 'all' ? 'All' : selectedRows?.length} Selected
 										{selectionType === 'all' && (
 											<span className="badge bg-light text-dark ms-2">
-												Total: {productData.length}
+												Total: {productData?.length}
 											</span>
 										)}
 									</Button>
@@ -675,12 +675,12 @@ const Products = () => {
 											checked={selectedRows.length > 0 &&
 												(selectionType === 'all' ||
 													(selectionType === 'page' &&
-														selectedRows.length === paginatedRecords.length))}
+														selectedRows?.length === paginatedRecords?.length))}
 											style={{ cursor: 'pointer' }}
 										/>
-										{selectedRows.length > 0 && (
+										{selectedRows?.length > 0 && (
 											<span className="ms-2 text-muted small">
-												{selectionType === 'all' ? 'All Selected' : `${selectedRows.length} Selected`}
+												{selectionType === 'all' ? 'All Selected' : `${selectedRows?.length} Selected`}
 											</span>
 										)}
 									</th>
@@ -711,7 +711,7 @@ const Products = () => {
 													<input
 														type="checkbox"
 														checked={isSelected}
-														onChange={() => handleSelectRow(record._id)}
+														onChange={() => handleSelectRow(record?._id)}
 														style={{ cursor: 'pointer' }}
 													/>
 												</td>
@@ -740,20 +740,20 @@ const Products = () => {
 														<Button
 															variant="info"
 															className="me-2"
-															onClick={() => handleViewProduct(record._id)}>
+															onClick={() => handleViewProduct(record?._id)}>
 															<MdRemoveRedEye />
 														</Button>
 														<Button
 															variant="secondary"
 															className="me-2"
-															onClick={() => handleUpdateClick(record._id)}>
+															onClick={() => handleUpdateClick(record?._id)}>
 															<MdEdit />
 														</Button>
 														<Button
 															variant="danger"
 															className="me-1"
 															onClick={() =>
-																handleDeleteConfirmation(record._id.toString())
+																handleDeleteConfirmation(record?._id?.toString())
 															}
 															disabled={!canDelete}>
 															<MdDelete />
@@ -849,7 +849,7 @@ const Products = () => {
 				</BootstrapOffcanvas.Header>
 				<BootstrapOffcanvas.Body>
 					{(() => {
-						const selectedProduct = productData.find(product => product._id === selectedProductId);
+						const selectedProduct = productData?.find(product => product?._id === selectedProductId);
 						if (!selectedProduct) return null;
 
 						return (
@@ -858,15 +858,15 @@ const Products = () => {
 								<div className="position-relative mb-4">
 									<div className="text-center">
 										<img
-											src={`${BASE_API}${selectedProduct.image}`}
-											alt={selectedProduct.image_alt_text || "Product"}
+											src={`${BASE_API}${selectedProduct?.image}`}
+											alt={selectedProduct?.image_alt_text || "Product"}
 											className="img-fluid rounded-3 shadow"
 											style={{ maxHeight: '300px', objectFit: 'cover', width: '100%' }}
 										/>
 									</div>
 									<div className="position-absolute top-0 end-0 p-3 d-flex gap-2">
-										<span className={`badge ${selectedProduct.lifecycleStage === 'active' ? 'bg-success' : 'bg-warning'}`}>
-											{selectedProduct.lifecycleStage}
+										<span className={`badge ${selectedProduct?.lifecycleStage === 'active' ? 'bg-success' : 'bg-warning'}`}>
+											{selectedProduct?.lifecycleStage || "-"}
 										</span>
 									</div>
 								</div>
@@ -874,16 +874,16 @@ const Products = () => {
 								{/* Basic Info Section */}
 								<div className="card shadow-sm mb-4">
 									<div className="card-body">
-										<h4 className="fw-bold mb-2">{selectedProduct.name}</h4>
+										<h4 className="fw-bold mb-2">{selectedProduct?.name || "-"}</h4>
 										<div className="d-flex justify-content-between align-items-center mb-3">
-											<span className="text-muted">SKU: {selectedProduct.sku}</span>
+											<span className="text-muted">SKU: {selectedProduct?.sku || "-"}</span>
 											<div className="d-flex gap-2">
 												<span className="badge bg-primary fs-6">
-													{selectedProduct.currency} {selectedProduct.prices[0]?.amount}
+													{selectedProduct?.currency || "-"} {selectedProduct?.prices[0]?.amount || "-"}
 												</span>
 												{selectedProduct.prices[0]?.salePrice && (
 													<span className="badge bg-danger fs-6">
-														Discount Price: {selectedProduct.currency} {selectedProduct.prices[0]?.salePrice}
+														Discount Price: {selectedProduct?.currency} {selectedProduct?.prices[0]?.salePrice || "-"}
 													</span>
 												)}
 											</div>
@@ -900,11 +900,11 @@ const Products = () => {
 											<div className="card-body">
 												<div className="d-flex align-items-center">
 													<div className="flex-shrink-0">
-														<i className={`ri-store-2-fill fs-4 me-2 ${selectedProduct.isOutOfStock ? 'text-danger' : 'text-success'}`}></i>
+														<i className={`ri-store-2-fill fs-4 me-2 ${selectedProduct?.isOutOfStock ? 'text-danger' : 'text-success'}`}></i>
 													</div>
 													<div className="flex-grow-1">
 														<div className="small text-muted">Stock Status</div>
-														<div className="fw-medium">{selectedProduct.isOutOfStock ? 'Out of Stock' : 'In Stock'}</div>
+														<div className="fw-medium">{selectedProduct?.isOutOfStock ? 'Out of Stock' : 'In Stock'}</div>
 													</div>
 												</div>
 											</div>
@@ -922,7 +922,7 @@ const Products = () => {
 												<div className="p-3 bg-light rounded-3">
 													<div className="small text-muted">Categories</div>
 													<div className="fw-medium">
-														{selectedProduct.category?.map((cat: any) => cat.name).join(', ') || '-'}
+														{selectedProduct?.category?.map((cat: any) => cat?.name).join(', ') || '-'}
 													</div>
 												</div>
 											</div>
@@ -930,14 +930,14 @@ const Products = () => {
 												<div className="p-3 bg-light rounded-3">
 													<div className="small text-muted">Subcategories</div>
 													<div className="fw-medium">
-														{selectedProduct.subcategory?.map((subCat: any) => subCat.name).join(', ') || '-'}
+														{selectedProduct?.subcategory?.map((subCat: any) => subCat?.name).join(', ') || '-'}
 													</div>
 												</div>
 											</div>
 											<div className="col-md-12">
 												<div className="p-3 bg-light rounded-3">
 													<div className="small text-muted">Brand</div>
-													<div className="fw-medium">{selectedProduct.brand?.name || '-'}</div>
+													<div className="fw-medium">{selectedProduct?.brand?.name || '-'}</div>
 												</div>
 											</div>
 										</div>
@@ -954,13 +954,13 @@ const Products = () => {
 											<div className="col-6">
 												<div className="p-3 bg-light rounded-3">
 													<div className="small text-muted">Quantity</div>
-													<div className="fw-medium">{selectedProduct.inventory?.quantity || 0}</div>
+													<div className="fw-medium">{selectedProduct?.inventory?.quantity || 0}</div>
 												</div>
 											</div>
 											<div className="col-6">
 												<div className="p-3 bg-light rounded-3">
 													<div className="small text-muted">VAT</div>
-													<div className="fw-medium">{selectedProduct.inventory?.vat || 0}%</div>
+													<div className="fw-medium">{selectedProduct?.inventory?.vat || 0}%</div>
 												</div>
 											</div>
 										</div>
@@ -972,7 +972,7 @@ const Products = () => {
 									<div className="card-body">
 										<h5 className="fw-bold mb-3">Description</h5>
 										<div className="bg-light p-3 rounded-3">
-											<div dangerouslySetInnerHTML={{ __html: selectedProduct.description || '' }} />
+											<div dangerouslySetInnerHTML={{ __html: selectedProduct?.description || '-' }} />
 										</div>
 									</div>
 								</div>
@@ -984,23 +984,23 @@ const Products = () => {
 										<div className="bg-light p-3 rounded-3">
 											<div className="mb-3">
 												<div className="small text-muted">Meta Title</div>
-												<div className="fw-medium">{selectedProduct.meta_title || '-'}</div>
+												<div className="fw-medium">{selectedProduct?.meta_title || '-'}</div>
 											</div>
 											<div>
 												<div className="small text-muted">Meta Description</div>
-												<div className="fw-medium">{selectedProduct.meta_description || '-'}</div>
+												<div className="fw-medium">{selectedProduct?.meta_description || '-'}</div>
 											</div>
 										</div>
 									</div>
 								</div>
 
 								{/* Gallery */}
-								{selectedProduct.gallery && selectedProduct.gallery.length > 0 && (
+								{selectedProduct?.gallery && selectedProduct?.gallery?.length > 0 && (
 									<div className="card shadow-sm mb-4">
 										<div className="card-body">
 											<h5 className="fw-bold mb-3">Gallery</h5>
 											<div className="row g-2">
-												{selectedProduct.gallery.map((image: any, index: number) => (
+												{selectedProduct?.gallery?.map((image: any, index: number) => (
 													<div className="col-4" key={index}>
 														<img
 															src={`${BASE_API}${image}`}
@@ -1022,14 +1022,14 @@ const Products = () => {
 								)}
 
 								{/* Tags */}
-								{selectedProduct.tags && selectedProduct.tags.length > 0 && (
+								{selectedProduct?.tags && selectedProduct?.tags?.length > 0 && (
 									<div className="card shadow-sm mb-4">
 										<div className="card-body">
 											<h5 className="fw-bold mb-3">Tags</h5>
 											<div className="d-flex flex-wrap gap-2">
-												{selectedProduct.tags.map((tag: any, index: number) => (
+												{selectedProduct?.tags?.map((tag: any, index: number) => (
 													<span key={index} className="badge bg-soft-primary text-primary rounded-pill px-3 py-2">
-														{tag.name}
+														{tag?.name || "-"}
 													</span>
 												))}
 											</div>
@@ -1046,7 +1046,7 @@ const Products = () => {
 												<div className="p-3 bg-light rounded-3">
 													<div className="small text-muted">Created At</div>
 													<div className="fw-medium">
-														{new Date(selectedProduct.createdAt).toLocaleString()}
+														{new Date(selectedProduct?.createdAt)?.toLocaleString()}
 													</div>
 												</div>
 											</div>
@@ -1054,7 +1054,7 @@ const Products = () => {
 												<div className="p-3 bg-light rounded-3">
 													<div className="small text-muted">Last Updated</div>
 													<div className="fw-medium">
-														{new Date(selectedProduct.updatedAt).toLocaleString()}
+														{new Date(selectedProduct?.updatedAt)?.toLocaleString()}
 													</div>
 												</div>
 											</div>

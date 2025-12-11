@@ -199,6 +199,15 @@ const ProductCategories = ({
             const data: TableRecord[] = await response.json()
             if (data) {
                 setBrands(data)
+
+            // ✅ Set initial brand after brands are loaded
+            if (initialBrand) {
+                const exists = data.find(b => b._id === initialBrand)
+                if (exists) {
+                    setSelectedBrand(initialBrand)
+                    onBrandChange(initialBrand)
+                }
+            }
             }
         } catch (error: any) {
             console.error('Error getting brands data :', error, loading)
@@ -483,6 +492,7 @@ const ProductCategories = ({
 
         }
     }, [initialData, categories, subCategories, subSubCategories])
+
 
     return (
         <>
