@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { PageBreadcrumb } from '@/components'
 import {
@@ -39,6 +39,9 @@ const ContactList = () => {
 	const [currentPage, setCurrentPage] = useState(1)
 	const [itemsPerPage, setItemsPerPage] = useState(15)
 	const [showDeleteButton, setShowDeleteButton] = useState(false)
+	const [isImporting, setIsImporting] = useState(false)
+    const fileInputRef = useRef<HTMLInputElement>(null)
+	
 	const [selectAll, setSelectAll] = useState(false)
 	const [loading, setLoading] = useState(false)
 	const [userData, setUserData] = useState<UserRecord[]>([])
@@ -239,6 +242,51 @@ const ContactList = () => {
 		{ width: '80px', type: 'number' },
 		{ width: '100px', type: 'actions' }
 	]
+
+const handleImportUsers = () => {
+    fileInputRef.current?.click()
+}
+
+const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    if (!file.name.endsWith('.csv')) {
+        Swal.fire({ title: 'Error', text: 'Please upload a CSV file', icon: 'error', timer: 1500 })
+        return
+    }
+
+    const formData = new FormData()
+    formData.append('csvFile', file)
+
+    try {
+        setIsImporting(true)
+        const response = await fetch(`${BASE_API}/api/users/bulk-upload-users`, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${user?.token}`,
+            },
+            body: formData,
+        })
+
+        if (!response.ok) {
+            const errorMessage = await response.json()
+            throw new Error(errorMessage.message || 'Failed to import products')
+        }
+
+     const result = await response.json()
+	 console.log("result", result);
+	 
+	 Swal.fire({ title: 'Success!', text: 'Users imported successfully!', icon: 'success', timer: 1500 })
+	 await fetchUserData()
+    } catch (error: any) {
+        Swal.fire({ title: 'Error', text: error.message || 'Failed to import products', icon: 'error', timer: 1500 })
+    } finally {
+        setIsImporting(false)
+        if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+}
+
 	return (
 		<>
 			<PageBreadcrumb title="Employee List" subName="User" />
@@ -253,7 +301,55 @@ const ContactList = () => {
 										A list of all registered users.
 									</p>
 								</div>
-								<div className="mt-3 mt-lg-0">
+								<div className="mt-3 mt-lg-0 d-flex gap-3">
+						<div className="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center">
+						<div className="d-flex flex-column flex-lg-row gap-2">
+						{/* <Button
+								className="d-flex align-items-center justify-content-center"
+								onClick={handleTemplateFileChange}
+								disabled={templateFile}
+								style={{ backgroundColor: 'orange', border: 'none' }}
+
+							>
+								{templateFile ? (
+									<>
+										<span className="spinner-border spinner-border-sm me-1" role="status" />
+										Template...
+									</>
+								) : (
+									<>
+										<i className="ri-download-2-line me-1"></i>
+										Template
+									</>
+								)}
+							</Button>							 */}
+							<Button
+								className="d-flex align-items-center justify-content-center"
+								onClick={handleImportUsers}
+								disabled={isImporting}
+								style={{ backgroundColor: 'red', border: 'none' }}
+							>
+								{isImporting ? (
+									<>
+										<span className="spinner-border spinner-border-sm me-1" role="status" />
+										Importing...
+									</>
+								) : (
+									<>
+										<i className="ri-upload-2-line me-1"></i>
+										Import Users
+									</>
+								)}
+							</Button>
+						</div>
+					</div>
+					<input
+				type="file"
+				accept=".csv"
+				ref={fileInputRef}
+				style={{ display: 'none' }}
+				onChange={handleFileChange}
+			/>
 									{showDeleteButton && (
 										<Button
 											variant="danger"

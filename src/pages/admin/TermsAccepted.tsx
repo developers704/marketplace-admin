@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useAuthContext } from '@/common'
 import { TableRowSkeleton } from '../other/SimpleLoader'
 import Select from 'react-select'
+import DOMPurify from 'dompurify'
 interface WarehouseRecord {
     _id: string
     name: string
@@ -262,6 +263,11 @@ const TermsAccepted = () => {
         { width: '150px', type: 'text' },
         { width: '120px', type: 'text' }
     ]
+
+        const safeTermsHTML = termsData?.data?.currentTerms?.content
+        ? DOMPurify.sanitize(termsData?.data?.currentTerms?.content)
+        : ''
+
 
     return (
         <>
@@ -608,7 +614,7 @@ const TermsAccepted = () => {
                                 >
                                     {termsData.data.currentTerms.content.length > 500 ? (
                                         <>
-                                            {termsData.data.currentTerms.content.substring(0, 500)}...
+                                           <div dangerouslySetInnerHTML={{ __html: safeTermsHTML }} />
                                             <div className="mt-2">
                                                 <Badge bg="secondary">Content truncated for preview</Badge>
                                             </div>

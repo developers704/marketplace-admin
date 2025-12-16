@@ -258,7 +258,7 @@ const MENU_ITEMS: MenuItemTypes[] = [
 		children: [
 			{
 				key: 'View',
-				label: 'Ecommerce Orders',
+				label: 'Stores Orders',
 				url: '/orders/ecommerce-orders',
 				parentKey: 'orders',
 			},

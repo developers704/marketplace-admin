@@ -602,7 +602,7 @@ const customPagesRoutes = {
 		// ****************** Orders Pages ****************************
 		{
 			path: '/orders/ecommerce-orders',
-			name: 'Ecommerce Orders',
+			name: 'Stores Orders',
 			element: (
 				<PrivateRoute requiredPermission="Orders" to_do="View">
 					<EcommerceOrders />
@@ -611,7 +611,7 @@ const customPagesRoutes = {
 		},
 		{
 			path: '/orders/requested-orders',
-			name: 'Ecommerce Orders',
+			name: 'Requested Orders',
 			element: (
 				<PrivateRoute requiredPermission="Orders" to_do="View">
 					<RequestedOrder />
