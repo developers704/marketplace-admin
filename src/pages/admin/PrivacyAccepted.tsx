@@ -602,7 +602,7 @@ const getPolicyTypeColor = (title?: string) => {
                                                             onClick={() => handleForcePolicy(acceptance.customer.id, acceptance.policy.id)}
                                                             title="Force Policy">
                                                             {/* <i className="bi bi-cloud-check-fill"></i> */}
-                                                            Forced Policy
+                                                            Reassign Policy
                                                         </Button>
                                                     </div>
                                                 </td>

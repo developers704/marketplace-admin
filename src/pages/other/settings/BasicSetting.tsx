@@ -31,6 +31,7 @@ const BasicSetting = () => {
 	const [showPasswordModal, setShowPasswordModal] = useState(false);
 	const [selectedIpId, setSelectedIpId] = useState<string>('');
 	const [adminPassword, setAdminPassword] = useState('');
+	const [isToggling, setIsToggling] = useState(false);
 	const [searchTerm, setSearchTerm] = useState('')
 	const { register, handleSubmit, reset, formState: { errors } } = useForm()
 
@@ -145,9 +146,10 @@ const BasicSetting = () => {
 		}
 	}
 
-	// Toggle 2FA status
 	const handle2FAToggle = async () => {
 		const newState = !isOtpEnabled
+		setIsOtpEnabled(newState)
+		setIsToggling(true)
 		try {
 			const response = await fetch(`${BASE_API}/api/users/toggle-2fa`, {
 				method: 'PUT',
@@ -161,21 +163,18 @@ const BasicSetting = () => {
 				const data = await response.json()
 				throw new Error(data.message)
 			}
-			setIsOtpEnabled(newState)
 			toastService.success('2FA status updated successfully')
 		} catch (error: any) {
+			setIsOtpEnabled(!newState)
 			toastService.error(error.message)
+		} finally {
+			setIsToggling(false)
 		}
 	}
 
-	// Update the useEffect to include 2FA status fetch
 	useEffect(() => {
 		fetchIPAddresses()
 		fetch2FAStatus()
-	}, [])
-
-	useEffect(() => {
-		fetchIPAddresses()
 	}, [])
 	const storeHeaders: any[] = [
 		{ width: '20px', type: 'checkbox' },
@@ -339,11 +338,12 @@ const BasicSetting = () => {
 										type="checkbox"
 										checked={isOtpEnabled}
 										onChange={handle2FAToggle}
-										disabled={!canUpdate}
+										disabled={!canUpdate || isToggling}
 									/>
-									<span className="slider"></span>
-									<span className="text on">ON</span>
-									<span className="text off">OFF</span>
+									<span className="slider cursor-pointer"></span>
+								
+									<span className="text on cursor-pointer">ON</span>
+									{/* <span className="text off">OFF</span> */}
 								</label>
 							</div>
 							<div className="info-text">

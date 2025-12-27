@@ -27,7 +27,8 @@ const additionalPermissions: any = {
     "Supplies": "Supplies",
     "Tool Finding": "Tool Finding",
     "GWP": "GWP",
-    "Add to Cart": "Cart"
+    "Add to Cart": "Cart",
+    "Special Order": "Special Order"
 };
 
 const Roles = () => {

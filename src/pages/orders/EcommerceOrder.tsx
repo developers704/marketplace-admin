@@ -1194,7 +1194,7 @@ const EcommerceOrder = () => {
             </div>
 
             {/* Shipping Management */}
-            <div className="mt-5">
+            {/* <div className="mt-5">
               <div className="card shadow-sm border-0 rounded-4">
                 <div className="card-header bg-transparent border-0 py-4">
                   <h5 className="mb-0 fw-bold text-dark">
@@ -1254,7 +1254,7 @@ const EcommerceOrder = () => {
                     </div>
                   </div>
 
-                  {/* Stepper */}
+              
                   {selectedOrder.shippingStatus !== "Returned" && (
                     <div className="position-relative">
                       <div className="d-flex justify-content-between align-items-center">
@@ -1293,10 +1293,10 @@ const EcommerceOrder = () => {
                           );
                         })}
                       </div>
-                      {/* Progress Line */}
+                    
                      <div className="position-relative my-4" style={{ height: "20px" }}>
 
-  	{/* Background Line */}
+  
   	<div
   	  style={{
   	    position: "absolute",
@@ -1311,7 +1311,7 @@ const EcommerceOrder = () => {
   	  }}
   	/>
 
- 	 {/* Progress Line */}
+ 	
   	<div
     style={{
       position: "absolute",
@@ -1321,14 +1321,14 @@ const EcommerceOrder = () => {
       height: "4px",
       background: "#28a745",
       borderRadius: "20px",
-    //   width: `${(currentIndex / (shippingSteps.length - 1)) * 100}%`,
+
       transform: "translateY(-50%)",
       zIndex: 1,
       transition: "width 0.3s ease",
     }}
   />
 
-  {/* Circles (Steps) */}
+
   <div className="d-flex justify-content-between" style={{ padding: "0 90px", position: "relative", zIndex: 2 }}>
     {shippingSteps.map((step, index) => (
       <div
@@ -1350,9 +1350,9 @@ const EcommerceOrder = () => {
                   )}
                 </div>
               </div>
-            </div>
+            </div> */}
 
-            {/* Approval History */}
+       
             {selectedOrder.approvalHistory &&
               selectedOrder.approvalHistory.length > 0 && (
                 <div className="mt-5">
