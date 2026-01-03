@@ -3,7 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { Card, Col, Row, Form, Button, Spinner, Alert } from 'react-bootstrap'
 import { useAuthContext } from '@/common'
-import ReactQuill from 'react-quill'
+import ReactQuill, { Quill } from 'react-quill';
+import ImageResize from 'quill-image-resize-module-react';
+Quill.register('modules/imageResize', ImageResize);
 import 'react-quill/dist/quill.snow.css'
 import { FormInput, PageBreadcrumb } from '@/components'
 import Select from 'react-select'
@@ -73,9 +75,7 @@ const UpdateCourses = () => {
 	const [rolesData, setRolesData] = useState<RoleRecord[]>([])
 	const [warehousesData, setWarehousesData] = useState<WarehouseRecord[]>([])
 	const [selectedRoles, setSelectedRoles] = useState<SelectOption[]>([])
-	const [selectedWarehouses, setSelectedWarehouses] = useState<SelectOption[]>(
-		[]
-	)
+	const [selectedWarehouses, setSelectedWarehouses] = useState<SelectOption[]>([])
 	const [chapters, setChapters] = useState<Chapter[]>([])
 	const [apiLoading, setApiLoading] = useState(false)
 	const [courseTypeValue, setCourseTypeValue] = useState('')
@@ -118,6 +118,28 @@ const UpdateCourses = () => {
 		value: role._id,
 		label: role.role_name,
 	}))
+
+	const modules = {
+		toolbar: [
+		[{ font: [] }],                 // Font family
+		[{ size: ['small', false, 'large', 'huge'] }], // Font size
+		['bold', 'italic', 'underline', 'strike'], 
+		[{ color: [] }, { background: [] }], // Text color & background
+		[{ script: 'sub' }, { script: 'super' }],    // Subscript / Superscript
+		[{ header: 1 }, { header: 2 }, { header: 3 }, false], // Headers
+		[{ list: 'ordered' }, { list: 'bullet' }],
+		[{ indent: '-1' }, { indent: '+1' }],       // Indent
+		[{ align: [] }],                             // Align text
+		['link', 'image', 'video'],                 // Media
+		['blockquote', 'code-block'],               // Block types
+		['clean']                                   // Remove formatting
+		],
+		imageResize: {
+			parchment: Quill.import('parchment'),
+			modules: ['Resize', 'DisplaySize'],
+		},
+		};
+		
 
 	// API Functions
 	const getRoles = async () => {
@@ -995,9 +1017,10 @@ const UpdateCourses = () => {
 																						}
 																						placeholder="Enter section introduction"
 																						style={{
-																							height: '120px',
+																							height: '320px',
 																							marginBottom: '50px',
 																						}}
+																						modules={modules}
 																					/>
 																				</Form.Group>
 																			</Col>
@@ -1017,9 +1040,10 @@ const UpdateCourses = () => {
 																						}
 																						placeholder="Enter section objective"
 																						style={{
-																							height: '120px',
+																							height: '320px',
 																							marginBottom: '50px',
 																						}}
+																						modules={modules}
 																					/>
 																				</Form.Group>
 																			</Col>

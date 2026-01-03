@@ -466,38 +466,38 @@ const EcommerceOrder = () => {
 		}
 	}
 
-	const handleShippingStatusUpdate = async (orderId: string, newStatus: string) => {
-    try {
-        setApiLoading(true);
-        const response = await fetch(
-            `${BASE_API}/api/checkout/${orderId}/approve`,
-            {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    // action: 'APPROVE',
-                    shippingStatus: newStatus,
-                    // remarks: 'Shipping status updated',
-                }),
-            }
-        );
+// 	const handleShippingStatusUpdate = async (orderId: string, newStatus: string) => {
+//     try {
+//         setApiLoading(true);
+//         const response = await fetch(
+//             `${BASE_API}/api/checkout/${orderId}/approve`,
+//             {
+//                 method: 'PATCH',
+//                 headers: {
+//                     'Content-Type': 'application/json',
+//                     Authorization: `Bearer ${token}`,
+//                 },
+//                 body: JSON.stringify({
+//                     // action: 'APPROVE',
+//                     shippingStatus: newStatus,
+//                     // remarks: 'Shipping status updated',
+//                 }),
+//             }
+//         );
 
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Failed to update shipping status');
-        }
+//         if (!response.ok) {
+//             const error = await response.json();
+//             throw new Error(error.message || 'Failed to update shipping status');
+//         }
 
-        toastService.success('Shipping status updated successfully!');
-        fetchOrders(); // Refresh orders
-    } catch (error: any) {
-        toastService.error(error.message || 'Error updating shipping status');
-    } finally {
-        setApiLoading(false);
-    }
-};
+//         toastService.success('Shipping status updated successfully!');
+//         fetchOrders(); // Refresh orders
+//     } catch (error: any) {
+//         toastService.error(error.message || 'Error updating shipping status');
+//     } finally {
+//         setApiLoading(false);
+//     }
+// };
 
 	// ************************ useEffect Functions ********************************
 	useEffect(() => {
@@ -1000,10 +1000,10 @@ const EcommerceOrder = () => {
     <>
       {/* Define shipping steps order for stepper */}
       {(() => {
-        const shippingSteps = ["Pending", "Shipped", "OnTheWay", "Delivered"] as const;
-        const currentIndex = shippingSteps.indexOf(
-          selectedOrder.shippingStatus || "Pending"
-        );
+        // const shippingSteps = ["Pending", "Shipped", "OnTheWay", "Delivered"] as const;
+        // const currentIndex = shippingSteps.indexOf(
+        //   selectedOrder.shippingStatus || "Pending"
+        // );
 
         return (
           <>

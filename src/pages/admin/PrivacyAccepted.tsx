@@ -72,6 +72,13 @@ interface PolicyAcceptance {
     acceptedAt: string
     policyVersion: string
     documentUrl: string
+    photoPath: string
+    warehouse: {
+        id: string
+        name: string
+        location: string
+    }
+
 }
 
 interface PolicyAcceptanceResponse {
@@ -93,6 +100,7 @@ const PrivacyAccepted = () => {
     const [policyData, setPolicyData] = useState<PolicyAcceptanceResponse | null>(null)
     const [showDocumentModal, setShowDocumentModal] = useState(false)
     const [selectedDocument, setSelectedDocument] = useState<string | null>(null)
+    const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null)
     const [selectedPolicy, setSelectedPolicy] = useState<PolicyAcceptance | null>(null)
     const [warehousesData, setWarehousesData] = useState<WarehouseRecord[]>([])
     const [departmentsData, setDepartmentsData] = useState<DepartmentRecord[]>([])
@@ -141,20 +149,20 @@ const PrivacyAccepted = () => {
     }
 
  const filteredAcceptances = policyData?.acceptances?.filter((acceptance) => {
-  if (!acceptance.customer || !acceptance.policy) return false;
+  if (!acceptance?.customer || !acceptance?.policy) return false;
 
   const searchTermLower = searchTerm.toLowerCase();
 
   const matchesSearch =
-    acceptance.customer.username?.toLowerCase().includes(searchTermLower) ||
-    acceptance.customer.email?.toLowerCase().includes(searchTermLower) ||
-    acceptance.policy.title?.toLowerCase().includes(searchTermLower) ||
-    acceptance.customer.phone_number?.toLowerCase().includes(searchTermLower) ||
-    acceptance.customer.warehouse?.name?.toLowerCase().includes(searchTermLower) ||
-    acceptance.customer.warehouse?.location?.toLowerCase().includes(searchTermLower);
+    acceptance?.customer?.username?.toLowerCase().includes(searchTermLower) ||
+    acceptance?.customer?.email?.toLowerCase().includes(searchTermLower) ||
+    acceptance?.policy?.title?.toLowerCase().includes(searchTermLower) ||
+    acceptance?.customer?.phone_number?.toLowerCase().includes(searchTermLower) ||
+    acceptance?.warehouse?.name?.toLowerCase().includes(searchTermLower) ||
+    acceptance?.warehouse?.location?.toLowerCase().includes(searchTermLower);
 
-  const matchesWarehouse = !selectedWarehouse || acceptance.customer.warehouse?.id === selectedWarehouse;
-  const matchesDepartment = !selectedDepartment || acceptance.customer.department?.id === selectedDepartment;
+  const matchesWarehouse = !selectedWarehouse || acceptance?.warehouse?.id === selectedWarehouse;
+  const matchesDepartment = !selectedDepartment || acceptance?.customer?.department?.id === selectedDepartment;
 
   return matchesSearch && matchesWarehouse && matchesDepartment;
 }) || [];
@@ -172,7 +180,8 @@ const PrivacyAccepted = () => {
 
     const handleViewDocument = (acceptance: PolicyAcceptance) => {
         setSelectedPolicy(acceptance)
-        setSelectedDocument(`${BASE_API}${acceptance.documentUrl}`)
+        setSelectedDocument(acceptance?.documentUrl ? `${BASE_API}${acceptance?.documentUrl}` : null)
+        setSelectedPhoto(acceptance?.photoPath ? `${BASE_API}${acceptance?.photoPath}`: null)
         setShowDocumentModal(true)
     }
 
@@ -537,10 +546,10 @@ const getPolicyTypeColor = (title?: string) => {
                                                 </td>
                                                 <td>
                                                     <div>
-                                                        <strong className="d-block text-truncate">{acceptance?.customer?.warehouse?.name || "-"}</strong>
+                                                        <strong className="d-block text-truncate">{acceptance?.warehouse?.name || "-"}</strong>
                                                         <small className="text-muted">
                                                             <i className="bi bi-geo-alt me-1"></i>
-                                                            {acceptance?.customer?.warehouse?.location || '-'}
+                                                            {acceptance?.warehouse?.location || '-'}
                                                         </small>
                                                     </div>
                                                 </td>
@@ -732,7 +741,7 @@ const getPolicyTypeColor = (title?: string) => {
                                 src={selectedDocument}
                                 alt="Policy Document"
                                 className="img-fluid border rounded"
-                                style={{ maxHeight: '500px', width: 'auto' }}
+                                style={{ maxHeight: '500px', width: '500px' }}
                                 onError={(e) => {
                                     const target = e.target as HTMLImageElement;
                                     target.style.display = 'none';
@@ -742,6 +751,22 @@ const getPolicyTypeColor = (title?: string) => {
                                     target.parentNode?.appendChild(errorDiv);
                                 }}
                             />
+                            {selectedPhoto && (
+                                <img
+                                    src={selectedPhoto}
+                                    alt="user image"
+                                    className="img-fluid border rounded mt-2"
+                                    style={{ maxHeight: '500px', width: '500px' }}
+                                    onError={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.style.display = 'none';
+                                        const errorDiv = document.createElement('div');
+                                        errorDiv.className = 'alert alert-warning';
+                                        errorDiv.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>Document could not be loaded. It may be in a different format or the file may be missing.';
+                                        target.parentNode?.appendChild(errorDiv);
+                                    }}
+                                />
+                            )}
                         </div>
                     )}
                 </Modal.Body>
@@ -755,7 +780,16 @@ const getPolicyTypeColor = (title?: string) => {
                             onClick={() => window.open(selectedDocument, '_blank')}
                         >
                             <i className="bi bi-download me-1"></i>
-                            Download
+                            Download signature
+                        </Button>
+                    )}
+                    {selectedPhoto && (
+                        <Button
+                            variant="primary"
+                            onClick={() => window.open(selectedPhoto, '_blank')}
+                        >
+                            <i className="bi bi-download me-1"></i>
+                            Download photo
                         </Button>
                     )}
                 </Modal.Footer>
