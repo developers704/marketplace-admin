@@ -5,7 +5,9 @@ import { useAuthContext } from '@/common'
 import { useForm } from 'react-hook-form'
 import Select from 'react-select'
 import { SingleFileUploader } from '@/components/FileUploader/SingleFileUploader'
-import ReactQuill from 'react-quill'
+import ReactQuill, { Quill } from 'react-quill';
+import ImageResize from 'quill-image-resize-module-react';
+Quill.register('modules/imageResize', ImageResize);
 import 'react-quill/dist/quill.snow.css'
 import { useNavigate } from 'react-router-dom'
 import Swal from 'sweetalert2'
@@ -94,6 +96,27 @@ const CreateCourse = () => {
 		control,
 		formState: { errors },
 	} = useForm<CourseFormData>()
+		
+	const modules = {
+		toolbar: [
+		[{ font: [] }],                 // Font family
+		[{ size: ['small', false, 'large', 'huge'] }], // Font size
+		['bold', 'italic', 'underline', 'strike'], 
+		[{ color: [] }, { background: [] }], // Text color & background
+		[{ script: 'sub' }, { script: 'super' }],    // Subscript / Superscript
+		[{ header: 1 }, { header: 2 }, { header: 3 }, false], // Headers
+		[{ list: 'ordered' }, { list: 'bullet' }],
+		[{ indent: '-1' }, { indent: '+1' }],       // Indent
+		[{ align: [] }],                             // Align text
+		['link', 'image', 'video'],                 // Media
+		['blockquote', 'code-block'],               // Block types
+		['clean']                                   // Remove formatting
+		],
+		imageResize: {
+			parchment: Quill.import('parchment'),
+			modules: ['Resize', 'DisplaySize'],
+		},
+		};
 
 	const courseTypes = [
 		{ value: 'Short Course', label: 'Short Course' },
@@ -830,6 +853,7 @@ const CreateCourse = () => {
 																	<ReactQuill
 																		theme="snow"
 																		value={section.introduction}
+																		modules={modules}
 																		onChange={(val) =>
 																			handleUpdateSection(
 																				chapterIndex,
@@ -840,7 +864,7 @@ const CreateCourse = () => {
 																		}
 																		placeholder="Enter section introduction"
 																		style={{
-																			height: '120px',
+																			height: '320px',
 																			marginBottom: '50px',
 																		}}
 																	/>
@@ -852,6 +876,7 @@ const CreateCourse = () => {
 																	<ReactQuill
 																		theme="snow"
 																		value={section.objective}
+																		modules={modules}
 																		onChange={(val) =>
 																			handleUpdateSection(
 																				chapterIndex,
@@ -862,7 +887,7 @@ const CreateCourse = () => {
 																		}
 																		placeholder="Enter section objective"
 																		style={{
-																			height: '120px',
+																			height: '320px',
 																			marginBottom: '50px',
 																		}}
 																	/>
