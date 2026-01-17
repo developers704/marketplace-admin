@@ -870,7 +870,7 @@ const CreateCourse = () => {
 																	/>
 																</Form.Group>
 															</Col>
-															<Col md={12}>
+															{/* <Col md={12}>
 																<Form.Group className="mb-3">
 																	<Form.Label>Objective</Form.Label>
 																	<ReactQuill
@@ -892,7 +892,7 @@ const CreateCourse = () => {
 																		}}
 																	/>
 																</Form.Group>
-															</Col>
+															</Col> */}
 															<Col md={12}>
 																<Form.Group className="mb-3">
 																	<Form.Label>Sequence</Form.Label>

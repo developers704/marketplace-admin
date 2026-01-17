@@ -56,7 +56,7 @@ const CreateQuiz = () => {
     const [coursesData, setCoursesData] = useState<CourseData[]>([])
     const [selectedCourse, setSelectedCourse] = useState<SelectOption | null>(null)
     const [selectedChapter, setSelectedChapter] = useState<SelectOption | null>(null)
-    const [selectedSection, setSelectedSection] = useState<SelectOption | null>(null)
+    // const [selectedSection, setSelectedSection] = useState<SelectOption | null>(null)
     const [enableSuffling, setEnableSuffling] = useState(true)
     const [enableTimer, setEnableTimer] = useState(true)
     const [formErrors, setFormErrors] = useState<any>({})
@@ -88,15 +88,15 @@ const CreateQuiz = () => {
     }
 
     // Get available sections based on selected chapter
-    const getSectionOptions = (): SelectOption[] => {
-        if (!selectedCourse || !selectedChapter) return []
-        const course = coursesData.find(c => c.courseId === selectedCourse.value)
-        const chapter = course?.chapters.find(ch => ch.chapterId === selectedChapter.value)
-        return chapter?.sections.map(section => ({
-            value: section.sectionId,
-            label: section.sectionName
-        })) || []
-    }
+    // const getSectionOptions = (): SelectOption[] => {
+    //     if (!selectedCourse || !selectedChapter) return []
+    //     const course = coursesData.find(c => c.courseId === selectedCourse.value)
+    //     const chapter = course?.chapters.find(ch => ch.chapterId === selectedChapter.value)
+    //     return chapter?.sections.map(section => ({
+    //         value: section.sectionId,
+    //         label: section.sectionName
+    //     })) || []
+    // }
 
     // Course options
     const courseOptions = coursesData.map(course => ({
@@ -108,19 +108,19 @@ const CreateQuiz = () => {
     const handleCourseChange = (option: SelectOption | null) => {
         setSelectedCourse(option)
         setSelectedChapter(null)
-        setSelectedSection(null)
+        // setSelectedSection(null)
     }
 
     // Handle chapter selection
     const handleChapterChange = (option: SelectOption | null) => {
         setSelectedChapter(option)
-        setSelectedSection(null)
+        // setSelectedSection(null)
     }
 
     // Handle section selection
-    const handleSectionChange = (option: SelectOption | null) => {
-        setSelectedSection(option)
-    }
+    // const handleSectionChange = (option: SelectOption | null) => {
+    //     setSelectedSection(option)
+    // }
 
     // Add new question
     const addQuestion = () => {
@@ -164,7 +164,7 @@ const CreateQuiz = () => {
 
         if (!selectedCourse) errors.course = 'Course is required'
         if (!selectedChapter) errors.chapter = 'Chapter is required'
-        if (!selectedSection) errors.section = 'Section is required'
+        // if (!selectedSection) errors.section = 'Section is required'
         if (!data.title?.trim()) errors.title = 'Title is required'
         if (!data.description?.trim()) errors.description = 'Description is required'
         if (!data.timeLimit || data.timeLimit <= 0) errors.timeLimit = 'Time limit must be greater than 0'
@@ -200,7 +200,7 @@ const CreateQuiz = () => {
             const quizData = {
                 courseId: selectedCourse?.value,
                 chapterId: selectedChapter?.value,
-                sectionId: selectedSection?.value,
+                // sectionId: selectedSection?.value,
                 title: formData.title,
                 description: formData.description,
                 timeLimit: formData.timeLimit,
@@ -254,7 +254,7 @@ const CreateQuiz = () => {
                     <Card.Body>
                         {/* Course, Chapter, Section Selection */}
                         <Row>
-                            <Col md={4}>
+                            <Col md={6}>
                                 <Form.Group className="mb-3">
                                     <Form.Label>Course <span className="text-danger">*</span></Form.Label>
                                     <Select
@@ -268,7 +268,7 @@ const CreateQuiz = () => {
                                     {formErrors.course && <div className="text-danger small">{formErrors.course}</div>}
                                 </Form.Group>
                             </Col>
-                            <Col md={4}>
+                            <Col md={6}>
                                 <Form.Group className="mb-3">
                                     <Form.Label>Chapter <span className="text-danger">*</span></Form.Label>
                                     <Select
@@ -283,7 +283,7 @@ const CreateQuiz = () => {
                                     {formErrors.chapter && <div className="text-danger small">{formErrors.chapter}</div>}
                                 </Form.Group>
                             </Col>
-                            <Col md={4}>
+                            {/* <Col md={4}>
                                 <Form.Group className="mb-3">
                                     <Form.Label>Section <span className="text-danger">*</span></Form.Label>
                                     <Select
@@ -297,7 +297,7 @@ const CreateQuiz = () => {
                                     />
                                     {formErrors.section && <div className="text-danger small">{formErrors.section}</div>}
                                 </Form.Group>
-                            </Col>
+                            </Col> */}
                         </Row>
 
                         {/* Title and Description */}
