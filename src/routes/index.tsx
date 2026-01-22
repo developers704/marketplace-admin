@@ -40,6 +40,9 @@ const AllRolesUser = React.lazy(() => import('../pages/other/All_Roles'))
 const RoleUpdates = React.lazy(() => import('../pages/other/RoleUpdate'))
 const Categories = React.lazy(() => import('../pages/products/Categories'))
 const Products = React.lazy(() => import('../pages/products/Products'))
+const VendorCatalogV2 = React.lazy(() => import('../pages/products/VendorCatalogV2'))
+const B2BPurchaseRequestsV2 = React.lazy(() => import('../pages/products/B2BPurchaseRequestsV2'))
+const StoreInventoryV2 = React.lazy(() => import('../pages/products/StoreInventoryV2'))
 const SubCategory = React.lazy(() => import('../pages/products/SubCategory'))
 const MainServices = React.lazy(() => import('../pages/other/settings/MainServices'))
 const DayCarePackages = React.lazy(() => import('../pages/other/settings/Packages'))
@@ -353,6 +356,33 @@ const customPagesRoutes = {
 			element: (
 				<PrivateRoute requiredPermission="Products">
 					<Products />
+				</PrivateRoute>
+			),
+		},
+		{
+			path: '/products/vendor-catalog-v2',
+			name: 'Vendor Catalog (v2)',
+			element: (
+				<PrivateRoute requiredPermission="Products" to_do="View">
+					<VendorCatalogV2 />
+				</PrivateRoute>
+			),
+		},
+		{
+			path: '/products/b2b-purchase-requests-v2',
+			name: 'B2B Purchase Requests (v2)',
+			element: (
+				<PrivateRoute requiredPermission="Products" to_do="View">
+					<B2BPurchaseRequestsV2 />
+				</PrivateRoute>
+			),
+		},
+		{
+			path: '/products/store-inventory-v2',
+			name: 'Store Inventory (v2)',
+			element: (
+				<PrivateRoute requiredPermission="Products" to_do="View">
+					<StoreInventoryV2 />
 				</PrivateRoute>
 			),
 		},

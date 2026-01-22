@@ -81,24 +81,49 @@ const MENU_ITEMS: MenuItemTypes[] = [
 		isTitle: false,
 		icon: MdProductionQuantityLimits,
 		children: [
-			{
-				key: 'View',
-				label: 'Items Management',
-				url: '/products/all-product',
-				parentKey: 'products',
-			},
-			{
-				key: 'View',
-				label: 'Categories',
-				url: '/products/categories',
-				parentKey: 'products',
-			},
-			{
-				key: 'View',
-				label: 'Sub-Categories',
-				url: '/products/sub-category',
-				parentKey: 'products',
-			},
+		
+				{
+					key: 'View',
+					label: 'Products (v2)',
+					url: '/products/vendor-catalog-v2',
+					parentKey: 'products',
+				},
+				{
+					key: 'View',
+					label: 'Product Reviews (v2)',
+					url: '/products/customer-reviews',
+					parentKey: 'products',
+				},
+				{
+					key: 'View',
+					label: 'Purchase Approval (v2)',
+					url: '/products/b2b-purchase-requests-v2',
+					parentKey: 'products',
+				},
+				{
+					key: 'View',
+					label: 'Store Inventory (v2)',
+					url: '/products/store-inventory-v2',
+					parentKey: 'products',
+				},
+				{
+					key: 'View',
+					label: 'Items Management',
+					url: '/products/all-product',
+					parentKey: 'products',
+				},
+				{
+					key: 'View',
+					label: 'Categories',
+					url: '/products/categories',
+					parentKey: 'products',
+				},
+				{
+					key: 'View',
+					label: 'Sub-Categories',
+					url: '/products/sub-category',
+					parentKey: 'products',
+				},
 			// {
 			// 	key: 'View',
 			// 	label: 'Sub Sub-Category',
@@ -123,12 +148,7 @@ const MENU_ITEMS: MenuItemTypes[] = [
 				url: '/products/tags',
 				parentKey: 'products',
 			},
-			{
-				key: 'View',
-				label: 'Product Reviews',
-				url: '/products/customer-reviews',
-				parentKey: 'products',
-			},
+			
 			{
 				key: 'View',
 				label: 'Special Products',

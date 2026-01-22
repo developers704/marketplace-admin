@@ -6,7 +6,7 @@ import {
     Table,
     Pagination as BootstrapPagination,
 } from 'react-bootstrap'
-import { MdDelete } from 'react-icons/md'
+import { MdDelete, MdCheckCircle, MdCancel, MdVisibility } from 'react-icons/md'
 import { useAuthContext } from '@/common'
 import Swal from 'sweetalert2'
 import { useToggle } from '@/hooks'
@@ -17,6 +17,10 @@ import { Modal } from 'react-bootstrap';
 import { MdEdit } from 'react-icons/md';
 import { FileUploader } from '@/components/FileUploader'
 import { MdReply } from 'react-icons/md';
+import { Badge } from 'react-bootstrap';
+import { Tabs, Tab } from 'react-bootstrap';
+import { PiStarThin } from "react-icons/pi";
+
 
 
 interface TableRecord {
@@ -50,6 +54,9 @@ const ProductReviews = () => {
     const [isReplyModalOpen, setIsReplyModalOpen] = useState(false);
     const [replyContent, setReplyContent] = useState('');
     const [selectedReviewId, setSelectedReviewId] = useState<string>('');
+    const [approvalFilter, setApprovalFilter] = useState<'all' | 'approved' | 'pending'>('pending');
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+    const [selectedReviewForView, setSelectedReviewForView] = useState<any>(null);
 
 
     const BASE_API = import.meta.env.VITE_BASE_API
@@ -59,12 +66,49 @@ const ProductReviews = () => {
         setValue,
     } = useForm()
 
+    // const filteredRecords = ScrollMsgData
+    //     ?.filter((record) => {
+    //         const matchesSearch = record?.customer?.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    //             record.product?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    //             (record.sku?.sku && record.sku.sku.toLowerCase().includes(searchTerm.toLowerCase()));
+            
+    //         const matchesApproval = approvalFilter === 'all' 
+    //             ? true 
+    //             : approvalFilter === 'approved' 
+    //                 ? record.isApproved === true 
+    //                 : record.isApproved !== true;
+            
+    //         return matchesSearch && matchesApproval;
+    //     })
+    //     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     const filteredRecords = ScrollMsgData
-        ?.filter((record) =>
-            record?.customer?.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            record.product?.name.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-        .sort((a, b) => a.content.localeCompare(b.content))
+  ?.filter((record) => {
+    const search = searchTerm.toLowerCase();
+
+    const customerName = record?.customer?.username?.toLowerCase() || '';
+    const productName = record?.product?.name?.toLowerCase() || '';
+    const skuCode = record?.sku?.sku?.toLowerCase() || '';
+
+    const matchesSearch =
+      customerName.includes(search) ||
+      productName.includes(search) ||
+      skuCode.includes(search);
+
+    const matchesApproval =
+      approvalFilter === 'all'
+        ? true
+        : approvalFilter === 'approved'
+        ? record.isApproved === true
+        : record.isApproved !== true;
+
+    return matchesSearch && matchesApproval;
+  })
+  .sort(
+    (a, b) =>
+      new Date(b.createdAt).getTime() -
+      new Date(a.createdAt).getTime()
+  );
+
     const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.checked) {
             setSelectedRows(ScrollMsgData.map((record) => record._id))
@@ -77,7 +121,43 @@ const ProductReviews = () => {
             prev.includes(id) ? prev.filter((rowId) => rowId !== id) : [...prev, id]
         )
     }
-    const deleteSelectedServices = async (serviceIds: (string | number)[]) => {
+    // Single delete function (Admin delete)
+    const deleteSingleReview = async (reviewId: string) => {
+        try {
+            const response = await fetch(
+                `${BASE_API}/api/reviews/admin/${reviewId}`,
+                {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            )
+
+            if (!response.ok) {
+                const errorData = await response.json()
+                throw new Error(errorData.message || 'Failed to delete review')
+            }
+
+            await getAllServices()
+            Swal.fire({
+                title: 'Deleted!',
+                text: 'Review deleted successfully.',
+                icon: 'success',
+                timer: 1500,
+            })
+        } catch (error: any) {
+            Swal.fire({
+                title: 'Error!',
+                text: error.message || 'Failed to delete review',
+                icon: 'error',
+            })
+        }
+    }
+
+    // Bulk delete function
+    const deleteBulkReviews = async (reviewIds: (string | number)[]) => {
         try {
             const response = await fetch(
                 `${BASE_API}/api/reviews/admin/bulk-delete`,
@@ -88,27 +168,33 @@ const ProductReviews = () => {
                         Authorization: `Bearer ${token}`,
                     },
                     body: JSON.stringify({
-                        ids: serviceIds.map(id => id.toString())
+                        reviewIds: reviewIds.map(id => id.toString())
                     }),
                 }
             )
 
             if (!response.ok) {
-                throw new Error('Failed to delete Messages')
+                const errorData = await response.json()
+                throw new Error(errorData.message || 'Failed to delete reviews')
             }
 
-            getAllServices()
+            await getAllServices()
             Swal.fire({
                 title: 'Deleted!',
-                text: `${serviceIds.length} Reviews(s) deleted successfully.`,
+                text: `${reviewIds.length} Review(s) deleted successfully.`,
                 icon: 'success',
                 timer: 1500,
             })
             setSelectedRows([])
         } catch (error: any) {
-            Swal.fire('Oops!', 'Messages deletion failed.', 'error')
+            Swal.fire({
+                title: 'Error!',
+                text: error.message || 'Failed to delete reviews',
+                icon: 'error',
+            })
         }
     }
+
     const handleBulkDelete = () => {
         Swal.fire({
             title: 'Are you sure?',
@@ -120,11 +206,12 @@ const ProductReviews = () => {
             confirmButtonText: 'Yes, delete them!',
         }).then((result) => {
             if (result.isConfirmed) {
-                deleteSelectedServices(selectedRows)
+                deleteBulkReviews(selectedRows)
             }
         })
     }
-    const handleSingleDelete = (serviceId: string) => {
+
+    const handleSingleDelete = (reviewId: string) => {
         Swal.fire({
             title: 'Are you sure?',
             text: 'This Review will be deleted!',
@@ -135,7 +222,7 @@ const ProductReviews = () => {
             confirmButtonText: 'Yes, delete it!',
         }).then((result) => {
             if (result.isConfirmed) {
-                deleteSelectedServices([serviceId])
+                deleteSingleReview(reviewId)
             }
         })
     }
@@ -154,7 +241,15 @@ const ProductReviews = () => {
     const getAllServices = async () => {
         try {
             setLoading(true)
-            const response = await fetch(`${BASE_API}/api/reviews/admin/all-reviews`, {
+            const url = new URL(`${BASE_API}/api/reviews/admin/all-reviews`);
+            // Include all reviews including unapproved
+            if (approvalFilter === 'approved') {
+                url.searchParams.set('isApproved', 'true');
+            } else if (approvalFilter === 'pending') {
+                url.searchParams.set('isApproved', 'false');
+            }
+            
+            const response = await fetch(url.toString(), {
                 method: 'GET',
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -175,6 +270,47 @@ const ProductReviews = () => {
             setLoading(false)
         }
     }
+
+    const handleApproveReview = async (reviewId: string, isApproved: boolean) => {
+        try {
+            setApiLoading(true);
+            const response = await fetch(
+                `${BASE_API}/api/reviews/admin/approve/${reviewId}`,
+                {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ isApproved }),
+                }
+            );
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to update review approval status');
+            }
+
+            await getAllServices();
+
+            Swal.fire({
+                title: 'Success!',
+                text: `Review ${isApproved ? 'approved' : 'rejected'} successfully`,
+                icon: 'success',
+                timer: 1500,
+                confirmButtonColor: "#9c5100",
+            });
+        } catch (error: any) {
+            Swal.fire({
+                title: 'Error',
+                text: error.message || 'Failed to update approval status',
+                icon: 'error',
+                confirmButtonColor: "#9c5100",
+            });
+        } finally {
+            setApiLoading(false);
+        }
+    };
     const handleUpdateReview = async (id: string) => {
         try {
             setApiLoading(true);
@@ -291,7 +427,7 @@ const ProductReviews = () => {
 
     useEffect(() => {
         getAllServices()
-    }, [])
+    }, [approvalFilter])
 
     useEffect(() => {
         setShowDeleteButton(selectedRows.length > 0)
@@ -314,12 +450,14 @@ const ProductReviews = () => {
     const warehouseHeaders: any[] = [
         { width: '20px', type: 'checkbox' },
         { width: '100px', type: 'text' },  // Customer
-        { width: '120px', type: 'text' },  // Product
+        { width: '120px', type: 'text' },  // Product/SKU
         { width: '80px', type: 'text' },   // Rating
         { width: '200px', type: 'text' },  // Review
-        { width: '100px', type: 'text' },  // Verified Purchase
+        { width: '100px', type: 'text' },  // Status
+        { width: '100px', type: 'text' },  // Seller Reply
+        { width: '100px', type: 'text' },  // Review Images
         { width: '100px', type: 'text' },  // Date
-        { width: '100px', type: 'actions' } // Action
+        { width: '150px', type: 'actions' } // Action
     ]
 
 
@@ -332,7 +470,7 @@ const ProductReviews = () => {
                         <div>
                             <h4 className="header-title">Product Reviews</h4>
                             <p className="text-muted mb-0">
-                                Add and Manage your all Product Reviews here.
+                                Manage and approve product reviews here.
                             </p>
                         </div>
                         <div className="mt-3 mt-lg-0 d-flex flex-column flex-sm-row align-items-start align-items-lg-center gap-2">
@@ -346,6 +484,27 @@ const ProductReviews = () => {
                                 </Button>
                             )}
                         </div>
+                    </div>
+                    {/* Approval Status Tabs */}
+                    <div className="mt-3">
+                        <Tabs
+                            activeKey={approvalFilter}
+                            onSelect={(k) => setApprovalFilter(k as 'all' | 'approved' | 'pending')}
+                            className="mb-3"
+                        >
+                            <Tab eventKey="pending" title={
+                                <span>
+                                    Pending Approval 
+                                    {ScrollMsgData.filter((r: any) => !r.isApproved).length > 0 && (
+                                        <Badge bg="danger" className="ms-2">
+                                            {ScrollMsgData.filter((r: any) => !r.isApproved).length}
+                                        </Badge>
+                                    )}
+                                </span>
+                            } />
+                            <Tab eventKey="approved" title="Approved Reviews" />
+                            <Tab eventKey="all" title="All Reviews" />
+                        </Tabs>
                     </div>
                     <div className="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center mt-3">
                         <div className="app-search d-none d-lg-block">
@@ -401,9 +560,10 @@ const ProductReviews = () => {
                                         />{' '}
                                     </th>
                                     <th>Customer</th>
-                                    <th>Product</th>
+                                    <th>Product / SKU</th>
                                     <th>Rating</th>
                                     <th>Review</th>
+                                    <th>Status</th>
                                     <th>Seller Reply</th>
                                     <th>Review Images</th>
                                     <th>Date</th>
@@ -426,12 +586,34 @@ const ProductReviews = () => {
                                                     />
                                                 </td>
                                                 <td>{record?.customer?.username}</td>
-                                                <td>{record?.product?.name}</td>
-                                                <td>{record?.rating} ⭐</td>
+                                                <td>
+                                                    <div>
+                                                        <div className="fw-bold ">{truncateText(record?.sku?.attributes?.descriptionname || record?.product?.title || 'N/A')}</div>
+                                                        {record?.sku && (
+                                                            <div className="text-muted small">
+                                                                SKU: {record?.sku?.sku}
+                                                                {record.sku.metalColor && ` (${record.sku.metalColor})`}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div className="d-flex align-items-center gap-1">
+                                                        {record?.rating} 
+                                                        <span style={{ color: '#ffc107' }}>⭐</span>
+                                                    </div>
+                                                </td>
                                                 <td title={record?.content} onClick={() => toggleMessage(record?._id)}
                                                     style={{ cursor: 'pointer' }}> {expandedMessages[record?._id]
                                                         ? record?.content
                                                         : truncateText(record?.content)}</td>
+                                                <td>
+                                                    {record?.isApproved ? (
+                                                        <Badge bg="success">Approved</Badge>
+                                                    ) : (
+                                                        <Badge bg="warning">Pending</Badge>
+                                                    )}
+                                                </td>
                                                 <td>
                                                     {record?.sellerResponse ? (
                                                         <span
@@ -477,36 +659,179 @@ const ProductReviews = () => {
                                                 <td>{new Date(record?.createdAt).toLocaleDateString()}</td>
 
                                                 <td>
-                                                    <div className="d-flex">
-                                                        <Button
-                                                            variant="info"
-                                                            className="me-2"
+                                                    <div className="d-flex flex-wrap gap-2 align-items-center">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setSelectedReviewForView(record);
+                                                                setIsViewModalOpen(true);
+                                                            }}
+                                                            title="View Product Details"
+                                                            className="btn btn-link p-0 text-primary d-flex align-items-center justify-content-center"
+                                                            style={{
+                                                                width: '36px',
+                                                                height: '36px',
+                                                                borderRadius: '50%',
+                                                                border: 'none',
+                                                                background: 'transparent',
+                                                                transition: 'all 0.2s ease'
+                                                            }}
+                                                            onMouseEnter={(e) => {
+                                                                e.currentTarget.style.background = 'rgba(13, 110, 253, 0.1)';
+                                                                e.currentTarget.style.transform = 'scale(1.1)';
+                                                            }}
+                                                            onMouseLeave={(e) => {
+                                                                e.currentTarget.style.background = 'transparent';
+                                                                e.currentTarget.style.transform = 'scale(1)';
+                                                            }}
+                                                        >
+                                                            <MdVisibility size={20} />
+                                                        </button>
+                                                        {!record?.isApproved && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleApproveReview(record?._id?.toString(), true)}
+                                                                disabled={apiLoading}
+                                                                title="Approve Review"
+                                                                className="btn btn-link p-0 text-success d-flex align-items-center justify-content-center"
+                                                                style={{
+                                                                    width: '36px',
+                                                                    height: '36px',
+                                                                    borderRadius: '50%',
+                                                                    border: 'none',
+                                                                    background: 'transparent',
+                                                                    transition: 'all 0.2s ease',
+                                                                    opacity: apiLoading ? 0.5 : 1
+                                                                }}
+                                                                onMouseEnter={(e) => {
+                                                                    if (!apiLoading) {
+                                                                        e.currentTarget.style.background = 'rgba(25, 135, 84, 0.1)';
+                                                                        e.currentTarget.style.transform = 'scale(1.1)';
+                                                                    }
+                                                                }}
+                                                                onMouseLeave={(e) => {
+                                                                    e.currentTarget.style.background = 'transparent';
+                                                                    e.currentTarget.style.transform = 'scale(1)';
+                                                                }}
+                                                            >
+                                                                <MdCheckCircle size={20} />
+                                                            </button>
+                                                        )}
+                                                        {record?.isApproved && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleApproveReview(record?._id?.toString(), false)}
+                                                                disabled={apiLoading}
+                                                                title="Reject Review"
+                                                                className="btn btn-link p-0 text-warning d-flex align-items-center justify-content-center"
+                                                                style={{
+                                                                    width: '36px',
+                                                                    height: '36px',
+                                                                    borderRadius: '50%',
+                                                                    border: 'none',
+                                                                    background: 'transparent',
+                                                                    transition: 'all 0.2s ease',
+                                                                    opacity: apiLoading ? 0.5 : 1
+                                                                }}
+                                                                onMouseEnter={(e) => {
+                                                                    if (!apiLoading) {
+                                                                        e.currentTarget.style.background = 'rgba(255, 193, 7, 0.1)';
+                                                                        e.currentTarget.style.transform = 'scale(1.1)';
+                                                                    }
+                                                                }}
+                                                                onMouseLeave={(e) => {
+                                                                    e.currentTarget.style.background = 'transparent';
+                                                                    e.currentTarget.style.transform = 'scale(1)';
+                                                                }}
+                                                            >
+                                                                <MdCancel size={20} />
+                                                            </button>
+                                                        )}
+                                                        <button
+                                                            type="button"
                                                             onClick={() => {
                                                                 setSelectedReviewId(record?._id?.toString());
                                                                 setIsReplyModalOpen(true);
                                                             }}
-                                                            title='Reply to Review'
+                                                            title="Reply to Review"
+                                                            className="btn btn-link p-0 text-info d-flex align-items-center justify-content-center"
+                                                            style={{
+                                                                width: '36px',
+                                                                height: '36px',
+                                                                borderRadius: '50%',
+                                                                border: 'none',
+                                                                background: 'transparent',
+                                                                transition: 'all 0.2s ease'
+                                                            }}
+                                                            onMouseEnter={(e) => {
+                                                                e.currentTarget.style.background = 'rgba(13, 202, 240, 0.1)';
+                                                                e.currentTarget.style.transform = 'scale(1.1)';
+                                                            }}
+                                                            onMouseLeave={(e) => {
+                                                                e.currentTarget.style.background = 'transparent';
+                                                                e.currentTarget.style.transform = 'scale(1)';
+                                                            }}
                                                         >
-                                                            <MdReply />
-                                                        </Button>
-                                                        <Button
-                                                            variant="secondary"
-                                                            className="me-2"
+                                                            <MdReply size={20} />
+                                                        </button>
+                                                        <button
+                                                            type="button"
                                                             onClick={() => {
                                                                 setSelectedReview(record);
                                                                 setUpdatedRating(record?.rating);
                                                                 setUpdatedContent(record?.content);
                                                                 setIsEditModalOpen(true);
-                                                            }}>
-                                                            <MdEdit />
-                                                        </Button>
-                                                        <Button
-                                                            variant="danger"
-                                                            className="me-2"
+                                                            }}
+                                                            title="Edit Review"
+                                                            className="btn btn-link p-0 text-secondary d-flex align-items-center justify-content-center"
+                                                            style={{
+                                                                width: '36px',
+                                                                height: '36px',
+                                                                borderRadius: '50%',
+                                                                border: 'none',
+                                                                background: 'transparent',
+                                                                transition: 'all 0.2s ease'
+                                                            }}
+                                                            onMouseEnter={(e) => {
+                                                                e.currentTarget.style.background = 'rgba(108, 117, 125, 0.1)';
+                                                                e.currentTarget.style.transform = 'scale(1.1)';
+                                                            }}
+                                                            onMouseLeave={(e) => {
+                                                                e.currentTarget.style.background = 'transparent';
+                                                                e.currentTarget.style.transform = 'scale(1)';
+                                                            }}
+                                                        >
+                                                            <MdEdit size={20} />
+                                                        </button>
+                                                        <button
+                                                            type="button"
                                                             onClick={() => handleSingleDelete(record?._id?.toString())}
-                                                            disabled={!canDelete}>
-                                                            <MdDelete />
-                                                        </Button>
+                                                            disabled={!canDelete}
+                                                            title="Delete Review"
+                                                            className="btn btn-link p-0 text-danger d-flex align-items-center justify-content-center"
+                                                            style={{
+                                                                width: '36px',
+                                                                height: '36px',
+                                                                borderRadius: '50%',
+                                                                border: 'none',
+                                                                background: 'transparent',
+                                                                transition: 'all 0.2s ease',
+                                                                opacity: !canDelete ? 0.3 : 1,
+                                                                cursor: !canDelete ? 'not-allowed' : 'pointer'
+                                                            }}
+                                                            onMouseEnter={(e) => {
+                                                                if (canDelete) {
+                                                                    e.currentTarget.style.background = 'rgba(220, 53, 69, 0.1)';
+                                                                    e.currentTarget.style.transform = 'scale(1.1)';
+                                                                }
+                                                            }}
+                                                            onMouseLeave={(e) => {
+                                                                e.currentTarget.style.background = 'transparent';
+                                                                e.currentTarget.style.transform = 'scale(1)';
+                                                            }}
+                                                        >
+                                                            <MdDelete size={20} />
+                                                        </button>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -514,7 +839,7 @@ const ProductReviews = () => {
                                     })
                                 ) : (
                                     <tr>
-                                        <td colSpan={9} className="text-center">
+                                        <td colSpan={10} className="text-center">
                                             No records found
                                         </td>
                                     </tr>
@@ -663,6 +988,202 @@ const ProductReviews = () => {
                         disabled={!replyContent.trim()}
                     >
                         {apiLoading ? "Submitting.." : "Submit Reply"}
+                    </Button>
+                </Modal.Footer>
+            </Modal>
+
+            {/* View Product Details Modal */}
+            <Modal show={isViewModalOpen} onHide={() => setIsViewModalOpen(false)} size="lg">
+                <Modal.Header closeButton>
+                    <Modal.Title>Product Details</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    {selectedReviewForView && (
+                        <div>
+                            {/* Product Information */}
+                            <div className="mb-4">
+                                <h5 className="mb-3 border-bottom pb-2">Product Information</h5>
+                                <div className="row">
+                                    <div className="col-md-6 mb-3">
+                                        <strong>Product Name:</strong>
+                                        <div className="text-muted">
+                                            {selectedReviewForView?.sku?.attributes?.descriptionname || 
+                                             selectedReviewForView?.product?.name || 
+                                             selectedReviewForView?.product?.title || 
+                                             'N/A'}
+                                        </div>
+                                    </div>
+                                    <div className="col-md-6 mb-3">
+                                        <strong>Vender Model:</strong>
+                                        <div className="text-muted">
+                                            <Badge bg="info">{selectedReviewForView?.product.vendorModel || 'N/A'}</Badge>
+                                        </div>
+                                    </div>
+                                    {selectedReviewForView?.product?._id && (
+                                        <div className="col-md-6 mb-3">
+                                            <strong>Product ID:</strong>
+                                            <div className="text-muted">{selectedReviewForView.product._id}</div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* SKU Information */}
+                            {selectedReviewForView?.sku && (
+                                <div className="mb-4">
+                                    <h5 className="mb-3 border-bottom pb-2">SKU Information</h5>
+                                    <div className="row">
+                                        <div className="col-md-6 mb-3">
+                                            <strong>SKU Code:</strong>
+                                            <div className="text-muted">{selectedReviewForView.sku.sku || 'N/A'}</div>
+                                        </div>
+                                        <div className="col-md-6 mb-3">
+                                            <strong>SKU ID:</strong>
+                                            <div className="text-muted">{selectedReviewForView.sku._id || 'N/A'}</div>
+                                        </div>
+                                        {selectedReviewForView.sku.metalColor && (
+                                            <div className="col-md-6 mb-3">
+                                                <strong>Metal Color:</strong>
+                                                <div className="text-muted">{selectedReviewForView.sku.metalColor}</div>
+                                            </div>
+                                        )}
+                                        {selectedReviewForView.sku.metalType && (
+                                            <div className="col-md-6 mb-3">
+                                                <strong>Metal Type:</strong>
+                                                <div className="text-muted">{selectedReviewForView.sku.metalType}</div>
+                                            </div>
+                                        )}
+                                        {selectedReviewForView.sku.size && (
+                                            <div className="col-md-6 mb-3">
+                                                <strong>Size:</strong>
+                                                <div className="text-muted">{selectedReviewForView.sku.size}</div>
+                                            </div>
+                                        )}
+                                        {selectedReviewForView.sku.price && (
+                                            <div className="col-md-6 mb-3">
+                                                <strong>Price:</strong>
+                                                <div className="text-muted">
+                                                    {selectedReviewForView.sku.currency || 'USD'} {selectedReviewForView.sku.price}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Product Attributes */}
+                            {selectedReviewForView?.sku?.attributes && (
+                                <div className="mb-4">
+                                    <h5 className="mb-3 border-bottom pb-2">Product Attributes</h5>
+                                    <div className="row">
+                                        {Object.entries(selectedReviewForView.sku.attributes).filter(([key]) => !['featureimageslink', 'galleryimagelink'].includes(key.toLowerCase())).map(([key, value]: [string, any]) => (
+                                            <div key={key} className="col-md-6 mb-3">
+                                                <strong>{key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}:</strong>
+                                                <div className="text-muted">
+                                                    {value || 'N/A'}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Review Information */}
+                            <div className="mb-4">
+                                <h5 className="mb-3 border-bottom pb-2">Review Information</h5>
+                                <div className="row">
+                                    <div className="col-md-6 mb-3">
+                                        <strong>Customer:</strong>
+                                        <div className="text-muted">{selectedReviewForView?.customer?.username || 'N/A'}</div>
+                                    </div>
+                                    <div className="col-md-6 mb-3">
+                                        <strong>Rating:</strong>
+                                        <div className="text-muted">
+                                            {selectedReviewForView?.rating} <PiStarThin size={24} color='#f2c80c' />
+                                        </div>
+                                    </div>
+                                    <div className="col-md-6 mb-3">
+                                        <strong>Status:</strong>
+                                        <div>
+                                            {selectedReviewForView?.isApproved ? (
+                                                <Badge bg="success">Approved</Badge>
+                                            ) : (
+                                                <Badge bg="warning">Pending</Badge>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="col-md-6 mb-3">
+                                        <strong>Verified Purchase:</strong>
+                                        <div>
+                                            {selectedReviewForView?.isVerifiedPurchase ? (
+                                                <Badge bg="success">Yes</Badge>
+                                            ) : (
+                                                <Badge bg="secondary">No</Badge>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="col-md-12 mb-3">
+                                        <strong>Review Content:</strong>
+                                        <div className="text-muted mt-1 p-2 bg-light rounded">
+                                            {selectedReviewForView?.content || 'N/A'}
+                                        </div>
+                                    </div>
+                                    <div className="col-md-6 mb-3">
+                                        <strong>Created At:</strong>
+                                        <div className="text-muted">
+                                            {new Date(selectedReviewForView?.createdAt).toLocaleString()}
+                                        </div>
+                                    </div>
+                                    <div className="col-md-6 mb-3">
+                                        <strong>Updated At:</strong>
+                                        <div className="text-muted">
+                                            {new Date(selectedReviewForView?.updatedAt).toLocaleString()}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Review Images */}
+                            {selectedReviewForView?.images && selectedReviewForView.images.length > 0 && (
+                                <div className="mb-4">
+                                    <h5 className="mb-3 border-bottom pb-2">Review Images</h5>
+                                    <div className="d-flex flex-wrap gap-2">
+                                        {selectedReviewForView.images.map((image: any, index: number) => (
+                                            <img
+                                                key={index}
+                                                src={`${BASE_API}/uploads/images/reviews/${image}`}
+                                                alt={`Review image ${index + 1}`}
+                                                style={{
+                                                    width: '150px',
+                                                    height: '150px',
+                                                    objectFit: 'cover',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid #ddd'
+                                                }}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Seller Response */}
+                            {selectedReviewForView?.sellerResponse && (
+                                <div className="mb-4">
+                                    <h5 className="mb-3 border-bottom pb-2">Seller Response</h5>
+                                    <div className="p-3 bg-light rounded">
+                                        <div className="mb-2">{selectedReviewForView.sellerResponse.content}</div>
+                                        <div className="text-muted small">
+                                            Responded: {new Date(selectedReviewForView.sellerResponse.respondedAt).toLocaleString()}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setIsViewModalOpen(false)}>
+                        Close
                     </Button>
                 </Modal.Footer>
             </Modal>

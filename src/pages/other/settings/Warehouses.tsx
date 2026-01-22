@@ -40,6 +40,16 @@ interface WarehouseRecord {
         updatedAt: string
         __v: number
     }
+    districtManager?: {
+        _id: string
+        name: string
+    } | null
+    corporateManager?: {
+        _id: string
+        name: string
+    } | null
+    requireDMApproval?: boolean
+    requireCMApproval?: boolean
 }
 
 const Stores = () => {
@@ -138,6 +148,10 @@ const Stores = () => {
         setValue('initialInventoryBalance', warehouse.inventoryWallet?.balance || 0)
         setValue('initialSuppliesBalance', warehouse.suppliesWallet?.balance || 0)
         setValue('description', warehouse.description || '')
+        setValue('districtManager', warehouse.districtManager?._id || '')
+        setValue('corporateManager', warehouse.corporateManager?._id || '')
+        setValue('requireDMApproval', warehouse.requireDMApproval !== false)
+        setValue('requireCMApproval', warehouse.requireCMApproval !== false)
         toggleModal()
     }
     const handleSort = () => {

@@ -32,6 +32,10 @@ interface StoreModalProps {
             _id: string
             name: string
         } | null
+
+        // B2B Approval Permission Flags (v2)
+        requireDMApproval?: boolean
+        requireCMApproval?: boolean
     } | null
 }
 
@@ -111,6 +115,8 @@ const StoreModal: React.FC<StoreModalProps> = ({
                     initialSuppliesBalance: parseFloat(storeData.initialSuppliesBalance) || 0,
                     districtManager: storeData.districtManager || null,
                     corporateManager: storeData.corporateManager || null,
+                    requireDMApproval: storeData.requireDMApproval !== false, // Default true
+                    requireCMApproval: storeData.requireCMApproval !== false, // Default true
                 }),
             })
 
@@ -170,6 +176,8 @@ const StoreModal: React.FC<StoreModalProps> = ({
             setValue('description', editingStore.description || '')
             setValue('districtManager', editingStore.districtManager || '')
             setValue('corporateManager', editingStore.corporateManager || '')
+            setValue('requireDMApproval', editingStore.requireDMApproval !== false)
+            setValue('requireCMApproval', editingStore.requireCMApproval !== false)
         } else if (show && !editingStore) {
             reset({
                 name: '',
@@ -206,34 +214,67 @@ const StoreModal: React.FC<StoreModalProps> = ({
                         />
                     </Form.Group>
                     <Form.Group className="mb-3">
-    <Form.Label>District Manager</Form.Label>
-    <Form.Select {...register("districtManager")}>
-        <option value="">Select District Manager</option>
-        {managers
-            .filter((m: any) => m.role?.role_name?.toLowerCase() === 'district manager')
-            .map((manager: any) => (
-                <option key={manager._id} value={manager._id}>
-                    {manager.username}
-                </option>
-            ))}
-    </Form.Select>
-</Form.Group>
+                    <Form.Label>District Manager</Form.Label>
+                    <Form.Select {...register("districtManager")}>
+                        <option value="">Select District Manager</option>
+                        {managers
+                            .filter((m: any) => m.role?.role_name?.toLowerCase() === 'district manager')
+                            .map((manager: any) => (
+                                <option key={manager._id} value={manager._id}>
+                                    {manager.username}
+                                </option>
+                            ))}
+                    </Form.Select>
+                    </Form.Group>
 
-<Form.Group className="mb-3">
-    <Form.Label>Corporate Manager</Form.Label>
-    <Form.Select {...register("corporateManager")}>
-        <option value="">Select Corporate Manager</option>
-        {managers
-            .filter((m: any) => m.role?.role_name?.toLowerCase() === 'corporate manager')
-            .map((manager: any) => (
-                <option key={manager._id} value={manager._id}>
-                    {manager.username}
-                </option>
-            ))}
-    </Form.Select>
-</Form.Group>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Corporate Manager</Form.Label>
+                            <Form.Select {...register("corporateManager")}>
+                                <option value="">Select Corporate Manager</option>
+                                {managers
+                                    .filter((m: any) => m.role?.role_name?.toLowerCase() === 'corporate manager')
+                                    .map((manager: any) => (
+                                        <option key={manager._id} value={manager._id}>
+                                            {manager.username}
+                                        </option>
+                                    ))}
+                            </Form.Select>
+                        </Form.Group>
 
-
+                    {/* B2B Approval Permission Switches (v2) */}
+                    <div className="mb-3 p-3 border rounded bg-light">
+                        <h6 className="mb-3">Purchase Approval Settings</h6>
+                        <Form.Group className="mb-2">
+                            <Form.Check
+                                type="switch"
+                                id="requireDMApproval"
+                                label="Require District Manager Approval"
+                                {...register('requireDMApproval')}
+                                defaultChecked={editingStore?.requireDMApproval !== false}
+                            />
+                            <Form.Text className="text-muted">
+                                If enabled, DM must approve before request proceeds to next stage
+                            </Form.Text>
+                        </Form.Group>
+                        <Form.Group className="mb-2">
+                            <Form.Check
+                                type="switch"
+                                id="requireCMApproval"
+                                label="Require Corporate Manager Approval"
+                                {...register('requireCMApproval')}
+                                defaultChecked={editingStore?.requireCMApproval !== false}
+                            />
+                            <Form.Text className="text-muted">
+                                If enabled, CM must approve before request proceeds to Admin
+                            </Form.Text>
+                        </Form.Group>
+                        <Form.Text className="text-muted d-block mt-2">
+                            <small>
+                                <strong>Note:</strong> If both switches are OFF, requests go directly to Admin. 
+                                Admin always has final approval authority.
+                            </small>
+                        </Form.Text>
+                    </div>
 
                     <Form.Group className="mb-3">
                         <FormInput
