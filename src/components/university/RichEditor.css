@@ -1,0 +1,572 @@
+/* RichEditor - Notion-style editor styles */
+
+.rich-editor-container {
+	position: relative;
+	width: 100%;
+	border: 1px solid #e5e7eb;
+	border-radius: 8px;
+	background: #ffffff !important;
+	box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+	transition: all 0.2s ease;
+}
+
+.rich-editor-container:focus-within {
+	border-color: #3b82f6;
+	box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.rich-editor-wrapper {
+	position: relative;
+	min-height: 300px;
+	max-height: 600px;
+	overflow-y: auto;
+	background: #ffffff !important;
+}
+
+.rich-editor-content {
+	outline: none;
+}
+
+/* Prose Editor Styles */
+.prose-editor {
+	outline: none;
+	padding: 16px 20px;
+	min-height: 300px;
+	font-size: 16px;
+	line-height: 1.6;
+	color: #000000 !important;
+	background: #ffffff !important;
+}
+
+.prose-editor p {
+	margin: 0.5em 0;
+	/* color: #000000 !important; */
+}
+
+.prose-editor p.is-editor-empty:first-child::before {
+	color: #9ca3af;
+	content: attr(data-placeholder);
+	float: left;
+	height: 0;
+	pointer-events: none;
+}
+
+/* Ensure all text elements default to black, but don't override inline colors */
+.prose-editor *:not([style*="color"]) {
+	color: #000000 !important;
+}
+
+/* Inline colors from TipTap will work naturally - inline styles have higher specificity */
+
+.prose-editor h1 {
+	font-size: 2em;
+	font-weight: 700;
+	margin: 0.75em 0 0.5em 0;
+	line-height: 1.2;
+	color: #111827;
+}
+
+.prose-editor h2 {
+	font-size: 1.5em;
+	font-weight: 600;
+	margin: 0.75em 0 0.5em 0;
+	line-height: 1.3;
+	color: #111827;
+}
+
+.prose-editor h3 {
+	font-size: 1.25em;
+	font-weight: 600;
+	margin: 0.75em 0 0.5em 0;
+	line-height: 1.4;
+	color: #111827;
+}
+
+.prose-editor ul,
+.prose-editor ol {
+	padding-left: 1.75em;
+	margin: 0.5em 0;
+	color: #000000 !important;
+}
+
+.prose-editor ul {
+	list-style-type: disc;
+}
+
+.prose-editor ul li::marker {
+	color: #000000 !important;
+}
+
+.prose-editor ol {
+	list-style-type: decimal;
+}
+
+.prose-editor ol li::marker {
+	color: #000000 !important;
+}
+
+.prose-editor li {
+	margin: 0.25em 0;
+	line-height: 1.6;
+	color: #000000 !important;
+}
+
+.prose-editor li p {
+	margin: 0;
+}
+
+.prose-editor strong {
+	font-weight: 600;
+	color: #111827;
+}
+
+.prose-editor em {
+	font-style: italic;
+}
+
+.prose-editor code {
+	background-color: #f3f4f6;
+	padding: 2px 6px;
+	border-radius: 4px;
+	font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+	font-size: 0.9em;
+	color: #dc2626;
+}
+
+.prose-editor pre {
+	background-color: #1f2937;
+	color: #f9fafb;
+	padding: 16px;
+	border-radius: 6px;
+	overflow-x: auto;
+	margin: 1em 0;
+	font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+	font-size: 0.9em;
+	line-height: 1.5;
+}
+
+.prose-editor pre code {
+	background-color: transparent;
+	padding: 0;
+	color: inherit;
+}
+
+.prose-editor blockquote {
+	border-left: 3px solid #3b82f6;
+	padding-left: 1em;
+	margin: 1em 0;
+	color: #6b7280;
+	font-style: italic;
+	background-color: #f9fafb;
+	padding: 12px 16px;
+	border-radius: 0 6px 6px 0;
+}
+
+.prose-editor a {
+	color: #3b82f6;
+	text-decoration: underline;
+	transition: color 0.2s;
+}
+
+.prose-editor a:hover {
+	color: #2563eb;
+}
+
+.prose-editor hr {
+	border: none;
+	border-top: 2px solid #e5e7eb;
+	margin: 1.5em 0;
+}
+
+/* Image Styles - Handled by ImageResizeNodeView */
+.prose-editor .image-resize-container {
+	margin: 1.5em 0;
+	display: block;
+}
+
+.prose-editor .image-resize-container[data-align="left"] {
+	text-align: left;
+}
+
+.prose-editor .image-resize-container[data-align="center"] {
+	text-align: center;
+}
+
+.prose-editor .image-resize-container[data-align="right"] {
+	text-align: right;
+}
+
+.prose-editor .image-resize-container[data-align="full"] {
+	width: 100%;
+	text-align: center;
+}
+
+/* Link Styles */
+.prose-editor a.editor-link {
+	color: #3b82f6;
+	text-decoration: none;
+	border-bottom: 1px solid #3b82f6;
+	transition: all 0.2s;
+}
+
+.prose-editor a.editor-link:hover {
+	color: #2563eb;
+	border-bottom-color: #2563eb;
+}
+
+/* Loading State */
+.rich-editor-container.loading {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 300px;
+}
+
+.rich-editor-loading {
+	text-align: center;
+	color: #6b7280;
+}
+
+.loading-spinner {
+	border: 3px solid #f3f4f6;
+	border-top: 3px solid #3b82f6;
+	border-radius: 50%;
+	width: 40px;
+	height: 40px;
+	animation: spin 1s linear infinite;
+	margin: 0 auto 12px;
+}
+
+@keyframes spin {
+	0% { transform: rotate(0deg); }
+	100% { transform: rotate(360deg); }
+}
+
+/* Bubble Menu - Floating toolbar on selection */
+.bubble-menu {
+	background: #ffffff;
+	border: 1px solid #e5e7eb;
+	border-radius: 8px;
+	box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+	padding: 4px;
+	display: flex;
+	gap: 2px;
+	z-index: 1000;
+}
+
+.bubble-menu-content {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+}
+
+.bubble-menu-button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	border: none;
+	background: transparent;
+	border-radius: 6px;
+	color: #6b7280;
+	cursor: pointer;
+	transition: all 0.15s ease;
+}
+
+.bubble-menu-button:hover {
+	background: #f3f4f6;
+	color: #111827;
+}
+
+.bubble-menu-button.is-active {
+	background: #3b82f6;
+	color: #ffffff;
+}
+
+.bubble-menu-divider {
+	width: 1px;
+	height: 24px;
+	background: #e5e7eb;
+	margin: 0 2px;
+}
+
+/* Top Toolbar */
+.editor-toolbar {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 0;
+	background: #ffffff;
+	border-bottom: 1px solid #e5e7eb;
+	border-radius: 8px 8px 0 0;
+	padding: 8px 12px;
+	box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+	z-index: 10;
+	flex-wrap: wrap;
+	width: 100%;
+}
+
+.editor-toolbar-top {
+	width: 100%;
+}
+
+.toolbar-group {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 2px;
+}
+
+.toolbar-button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	border: none;
+	background: transparent;
+	border-radius: 6px;
+	color: #6b7280;
+	cursor: pointer;
+	transition: all 0.15s ease;
+}
+
+.toolbar-button:hover:not(:disabled) {
+	background: #f3f4f6;
+	color: #111827;
+}
+
+.toolbar-button.is-active {
+	background: #3b82f6;
+	color: #ffffff;
+}
+
+.toolbar-button:disabled {
+	opacity: 0.4;
+	cursor: not-allowed;
+}
+
+.toolbar-text {
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.toolbar-font-group {
+	position: relative;
+}
+
+.toolbar-select {
+	padding: 6px 8px;
+	border: 1px solid #e5e7eb;
+	border-radius: 6px;
+	background: #ffffff;
+	color: #1f2937;
+	font-size: 13px;
+	cursor: pointer;
+	transition: all 0.15s ease;
+	min-width: 160px;
+	height: 36px;
+	appearance: none;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right 8px center;
+	padding-right: 32px;
+}
+
+.toolbar-color-input {
+	width: 36px;
+	height: 36px;
+	border: 1px solid #e5e7eb;
+	border-radius: 6px;
+	cursor: pointer;
+	padding: 2px;
+	background: #ffffff;
+	transition: all 0.15s ease;
+}
+
+.toolbar-color-input:hover {
+	border-color: #9ca3af;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.toolbar-color-input::-webkit-color-swatch-wrapper {
+	padding: 0;
+}
+
+.toolbar-color-input::-webkit-color-swatch {
+	border: none;
+	border-radius: 4px;
+}
+
+.toolbar-select:hover {
+	border-color: #3b82f6;
+	background: #f9fafb;
+}
+
+.toolbar-select:focus {
+	outline: none;
+	border-color: #3b82f6;
+	box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.toolbar-divider {
+	width: 1px;
+	height: 24px;
+	background: #e5e7eb;
+	margin: 0 8px;
+	flex-shrink: 0;
+}
+
+/* Override for top toolbar - horizontal divider */
+.editor-toolbar-top .toolbar-divider {
+	width: 1px;
+	height: 24px;
+	margin: 0 8px;
+}
+
+/* Dark Mode Classes - Force white background for consistency */
+.rich-editor-container.dark-mode {
+	background: #ffffff !important;
+	border-color: #e5e7eb;
+}
+
+.rich-editor-container.dark-mode .rich-editor-wrapper {
+	background: #ffffff !important;
+}
+
+.rich-editor-container.dark-mode .prose-editor {
+	color: #000000 !important;
+	background: #ffffff !important;
+}
+
+.rich-editor-container.dark-mode .prose-editor p {
+	color: #000000 !important;
+}
+
+.rich-editor-container.dark-mode .prose-editor li {
+	color: #000000 !important;
+}
+
+.rich-editor-container.dark-mode .prose-editor ul li::marker,
+.rich-editor-container.dark-mode .prose-editor ol li::marker {
+	color: #000000 !important;
+}
+
+.rich-editor-container.dark-mode .prose-editor h1,
+.rich-editor-container.dark-mode .prose-editor h2,
+.rich-editor-container.dark-mode .prose-editor h3,
+.rich-editor-container.dark-mode .prose-editor strong {
+	color: #111827;
+}
+
+.rich-editor-container.dark-mode .prose-editor code {
+	background-color: #f3f4f6;
+	color: #dc2626;
+}
+
+.rich-editor-container.dark-mode .prose-editor blockquote {
+	background-color: #f9fafb;
+	color: #4b5563;
+	border-left-color: #3b82f6;
+}
+
+.rich-editor-container.dark-mode .editor-toolbar {
+	background: #1f2937;
+	border-color: #374151;
+	border-bottom-color: #374151;
+}
+
+.rich-editor-container.dark-mode .toolbar-button {
+	color: #d1d5db;
+}
+
+.rich-editor-container.dark-mode .toolbar-button:hover:not(:disabled) {
+	background: #374151;
+	color: #f9fafb;
+}
+
+.rich-editor-container.dark-mode .toolbar-button.is-active {
+	background: #3b82f6;
+	color: #ffffff;
+}
+
+.rich-editor-container.dark-mode .toolbar-divider {
+	background: #374151;
+}
+
+.rich-editor-container.dark-mode .toolbar-select {
+	background: #1f2937;
+	border-color: #374151;
+	color: #f9fafb;
+}
+
+.rich-editor-container.dark-mode .toolbar-select:hover {
+	border-color: #60a5fa;
+	background: #374151;
+}
+
+.rich-editor-container.dark-mode .bubble-menu {
+	background: #1f2937;
+	border-color: #374151;
+}
+
+.rich-editor-container.dark-mode .bubble-menu-button {
+	color: #d1d5db;
+}
+
+.rich-editor-container.dark-mode .bubble-menu-button:hover {
+	background: #374151;
+	color: #f9fafb;
+}
+
+.rich-editor-container.dark-mode .bubble-menu-button.is-active {
+	background: #3b82f6;
+	color: #ffffff;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+	.rich-editor-container {
+		background: #1f2937;
+		border-color: #374151;
+	}
+
+	.rich-editor-wrapper {
+		background: #1f2937;
+	}
+
+	.prose-editor {
+		color: #f9fafb;
+	}
+
+	.prose-editor h1,
+	.prose-editor h2,
+	.prose-editor h3,
+	.prose-editor strong {
+		color: #ffffff;
+	}
+
+	.prose-editor code {
+		background-color: #374151;
+		color: #fca5a5;
+	}
+
+	.prose-editor blockquote {
+		background-color: #374151;
+		color: #d1d5db;
+	}
+
+	.bubble-menu,
+	.editor-toolbar {
+		background: #1f2937;
+		border-color: #374151;
+	}
+
+	.bubble-menu-button:hover,
+	.toolbar-button:hover:not(:disabled) {
+		background: #374151;
+		color: #f9fafb;
+	}
+}
+

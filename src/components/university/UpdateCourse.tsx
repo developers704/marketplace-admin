@@ -3,14 +3,11 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { Card, Col, Row, Form, Button, Spinner, Alert } from 'react-bootstrap'
 import { useAuthContext } from '@/common'
-import ReactQuill, { Quill } from 'react-quill';
-import ImageResize from 'quill-image-resize-module-react';
-Quill.register('modules/imageResize', ImageResize);
-import 'react-quill/dist/quill.snow.css'
 import { FormInput, PageBreadcrumb } from '@/components'
 import Select from 'react-select'
 import { SingleFileUploader } from '@/components/FileUploader/SingleFileUploader'
 import Swal from 'sweetalert2'
+import RichEditor from './RichEditor'
 // import { formatDateForInput } from '@/utils/dateUtils'
 
 interface SelectOption {
@@ -119,26 +116,6 @@ const UpdateCourses = () => {
 		label: role.role_name,
 	}))
 
-	const modules = {
-		toolbar: [
-		[{ font: [] }],                 // Font family
-		[{ size: ['small', false, 'large', 'huge'] }], // Font size
-		['bold', 'italic', 'underline', 'strike'], 
-		[{ color: [] }, { background: [] }], // Text color & background
-		[{ script: 'sub' }, { script: 'super' }],    // Subscript / Superscript
-		[{ header: 1 }, { header: 2 }, { header: 3 }, false], // Headers
-		[{ list: 'ordered' }, { list: 'bullet' }],
-		[{ indent: '-1' }, { indent: '+1' }],       // Indent
-		[{ align: [] }],                             // Align text
-		['link', 'image', 'video'],                 // Media
-		['blockquote', 'code-block'],               // Block types
-		['clean']                                   // Remove formatting
-		],
-		imageResize: {
-			parchment: Quill.import('parchment'),
-			modules: ['Resize', 'DisplaySize'],
-		},
-		};
 		
 
 	// API Functions
@@ -1004,9 +981,8 @@ const UpdateCourses = () => {
 																			<Col md={12}>
 																				<Form.Group className="mb-3">
 																					<Form.Label>Introduction</Form.Label>
-																					<ReactQuill
-																						theme="snow"
-																						value={section.introduction}
+																					<RichEditor
+																						value={section.introduction || ''}
 																						onChange={(val) =>
 																							handleUpdateSection(
 																								chapterIndex,
@@ -1015,12 +991,16 @@ const UpdateCourses = () => {
 																								val
 																							)
 																						}
-																						placeholder="Enter section introduction"
-																						style={{
-																							height: '320px',
-																							marginBottom: '50px',
+																						placeholder="Type '/' for commands or start writing..."
+																						uploadImageUrl={`${BASE_API}/api/courses/upload-quill-image`}
+																						uploadToken={token}
+																						maxImageSize={5 * 1024 * 1024}
+																						onFocus={() => {
+																							if (activeSectionIndex !== sectionIndex) {
+																								setActiveSectionIndex(sectionIndex);
+																							}
 																						}}
-																						modules={modules}
+																						className="mb-3"
 																					/>
 																				</Form.Group>
 																			</Col>

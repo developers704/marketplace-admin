@@ -29,7 +29,7 @@ type VendorProductListItem = {
 
 const VendorCatalogV2 = () => {
 	const BASE_API = import.meta.env.VITE_BASE_API
-	const { isSuperUser, permissions, user } = useAuthContext()
+	const { user } = useAuthContext()
 	const { token } = user
 
 	const [items, setItems] = useState<VendorProductListItem[]>([])
