@@ -102,7 +102,7 @@ const RichEditor: React.FC<RichEditorProps> = ({
 	// Sync external value changes
 	useEffect(() => {
 		if (editor && value !== editor.getHTML()) {
-			editor.commands.setContent(value, false);
+			editor.commands.setContent(value, { emitUpdate: false });
 		}
 	}, [value, editor]);
 
@@ -181,6 +181,7 @@ const RichEditor: React.FC<RichEditorProps> = ({
 
 			{/* Main Editor Content */}
 			<div className="rich-editor-wrapper">
+				{/* @ts-ignore - TipTap EditorContent type compatibility issue with React 18 */}
 				<EditorContent editor={editor} className="rich-editor-content" />
 			</div>
 		</div>

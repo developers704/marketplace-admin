@@ -4,6 +4,7 @@ export interface ProductFormData {
 	name: string
 	description?: string
 	sku: any
+	stock?: number
 	currency?: string
 	price?: any
 	IsBestSeller?: boolean

@@ -269,7 +269,7 @@ const SpecialsProducts = () => {
 
 		try {
 			setIsImporting(true)
-			const response = await fetch(`${BASE_API}/api/bulk-products/import`, {
+			const response = await fetch(`${BASE_API}/api/special-products/bulk-import`, {
 				method: 'POST',
 				headers: {
 					Authorization: `Bearer ${token}`,
@@ -311,7 +311,7 @@ const SpecialsProducts = () => {
 	  try{
 		setTemplateFile(true)
 		const encodedToken = encodeURIComponent(token)
-		const response = await axios.get(`${BASE_API}/api/bulk-other-products/template`, {
+		const response = await axios.get(`${BASE_API}/api/special-products/bulk-import/template`, {
 			headers: {
 				Authorization: `Bearer ${encodedToken}`,
 			},

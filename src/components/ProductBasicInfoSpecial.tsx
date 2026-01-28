@@ -75,7 +75,6 @@ const ProductBasicInfo = (
                         </Form.Group>
                     </Col>
 
-
                     <Col xs={12}>
                         <Form.Group className="mb-3">
                             <Form.Label>Description</Form.Label>

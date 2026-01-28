@@ -575,7 +575,7 @@ const ProductDetailTabs = ({
                             </Row>
 
                             <Row className="align-items-center">
-                                <Col xs={6}>
+                                <Col xs={12} md={6}>
                                     <Form.Group className="mb-4">
                                         <div className="d-flex align-items-center mb-1">
                                             <Form.Label className="mb-0">SKU <span className="text-danger">*</span></Form.Label>
@@ -594,7 +594,28 @@ const ProductDetailTabs = ({
                                         />
                                     </Form.Group>
                                 </Col>
-
+                                <Col xs={12} md={6}>
+                                    <Form.Group className="mb-4">
+                                        {/* <Form.Label className="d-flex align-items-center">
+                                            Stock <span className="text-danger ms-1">*</span>
+                                        </Form.Label> */}
+                                        <div className="d-flex align-items-center mb-1">
+                                            <Form.Label className="mb-0">Quantity <span className="text-danger">*</span></Form.Label>
+                                            {/* <span className="badge bg-info ms-2">Must be unique</span> */}
+                                        </div>
+                                        <p className="text-muted small mb-2">Add Item Qty</p>
+                                        <FormInput
+                                            type="number"
+                                            name="stock"
+                                            containerClass="mb-0"
+                                            register={register}
+                                            placeholder="Enter stock quantity..."
+                                            errors={errors}
+                                            control={control}
+                                            required
+                                        />
+                                    </Form.Group>
+                                </Col>
                             </Row>
                         </Tab.Pane>
                         <Tab.Pane eventKey="attribute">

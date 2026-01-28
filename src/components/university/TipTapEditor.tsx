@@ -66,7 +66,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
 	// Update editor content when value prop changes (but not from internal updates)
 	useEffect(() => {
 		if (editor && value !== editor.getHTML()) {
-			editor.commands.setContent(value, false); // false = don't trigger onUpdate
+			editor.commands.setContent(value, { emitUpdate: false }); 
 		}
 	}, [value, editor]);
 
@@ -152,6 +152,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
 
 			{/* Editor Content */}
 			<div className="bg-white" style={{ position: 'relative' }}>
+				{/* @ts-ignore - TipTap EditorContent type compatibility issue with React 18 */}
 				<EditorContent
 					editor={editor}
 					className="min-h-[300px] max-h-[500px] overflow-y-auto"

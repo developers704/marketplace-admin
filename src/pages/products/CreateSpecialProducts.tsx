@@ -82,11 +82,13 @@ const CreateSpecialProduct = ({
 				name: initialData?.name,
 				description: initialData?.description,
 				sku: initialData?.sku,
+				stock: initialData?.stock || 0,
 			}
 			: {
 				name: '',
 				description: '',
 				sku: '',
+				stock: 0,
 			},
 	})
 
@@ -123,6 +125,10 @@ const CreateSpecialProduct = ({
 		formData.append('name', data.name)
 		formData.append('sku', data.sku)
 		formData.append('type', productType);
+		// Stock
+		if (data.stock !== undefined && data.stock !== null) {
+			formData.append('stock', String(data.stock))
+		}
 		// Price object needs to be stringified
 		if (addedPrices && addedPrices.length > 0) {
 			addedPrices.forEach((price, index) => {
@@ -214,6 +220,10 @@ const CreateSpecialProduct = ({
 		formData.append('name', currentFormData.name)
 		formData.append('sku', currentFormData.sku) // Current SKU will be used
 		formData.append('type', productType);
+		// Stock
+		if (currentFormData.stock !== undefined && currentFormData.stock !== null) {
+			formData.append('stock', String(currentFormData.stock))
+		}
 
 
 		// Add prices
