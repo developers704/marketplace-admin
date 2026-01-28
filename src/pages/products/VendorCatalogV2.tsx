@@ -39,7 +39,7 @@ const VendorCatalogV2 = () => {
 	const [paginatorInfo, setPaginatorInfo] = useState<any>(null)
 	const [importingCatalog, setImportingCatalog] = useState(false)
 	const [importingInventory, setImportingInventory] = useState(false)
-	const [inventoryMode, setInventoryMode] = useState<'replace' | 'increment'>('replace')
+	const [inventoryMode, setInventoryMode] = useState<'replace' | 'increment' | 'merge'>('replace')
 	const [viewModal, setViewModal] = useState<{ show: boolean; product: VendorProductListItem | null }>({ show: false, product: null })
 	const [editModal, setEditModal] = useState<{ show: boolean; product: VendorProductListItem | null }>({ show: false, product: null })
 	const [productDetails, setProductDetails] = useState<any>(null)
@@ -47,6 +47,23 @@ const VendorCatalogV2 = () => {
 
 	const vendorFileInputRef = useRef<HTMLInputElement>(null)
 	const inventoryFileInputRef = useRef<HTMLInputElement>(null)
+
+	const downloadErrorReport = async (report: any, fallbackName: string) => {
+		try {
+			const url = report?.url ? `${BASE_API}${report.url}` : null
+			if (!url) return
+
+			// Try direct download via anchor
+			const a = document.createElement('a')
+			a.href = url
+			a.download = report?.filename || fallbackName
+			document.body.appendChild(a)
+			a.click()
+			document.body.removeChild(a)
+		} catch (e) {
+			console.error('Failed to download error report', e)
+		}
+	}
 
 	const fetchVendorProducts = async () => {
 		setLoading(true)
@@ -88,6 +105,22 @@ const VendorCatalogV2 = () => {
 			const data = await response.json()
 
 			if (!response.ok) {
+				// If backend returns an error report, still let admin download it
+				if (data?.errorReport?.url) {
+					await Swal.fire({
+						title: 'Import Failed',
+						icon: 'error',
+						html: `
+							<div style="text-align:left;">
+								<p><b>Message:</b> ${data?.message || 'Vendor catalog import failed'}</p>
+								<p><b>Errors:</b> ${(data?.errors || []).length}</p>
+								<p><b>Error Report:</b> <a href="${BASE_API}${data.errorReport.url}" target="_blank" rel="noreferrer">Download CSV</a></p>
+							</div>
+						`,
+					})
+					await downloadErrorReport(data.errorReport, 'vendor-catalog-errors.csv')
+					return
+				}
 				throw new Error(data?.message || 'Vendor catalog import failed')
 			}
 
@@ -98,11 +131,19 @@ const VendorCatalogV2 = () => {
           <div style="text-align:left;">
             <p><b>Rows:</b> ${data?.meta?.totalRows ?? 0}</p>
             <p><b>Vendor Models:</b> ${data?.meta?.vendorModels ?? 0}</p>
-            <p><b>Duration:</b> ${data?.meta?.durationMs ?? 0} ms</p>
+            <p><b>Duration:</b> ${((data?.meta?.durationMs ?? 0) / 60000).toFixed(2)} min</p>
             <p><b>Errors (shown):</b> ${(data?.errors || []).length}</p>
+						${
+							data?.errorReport?.url
+								? `<p><b>Error Report:</b> <a href="${BASE_API}${data.errorReport.url}" target="_blank" rel="noreferrer">Download CSV</a> (rows: ${data?.errorReport?.count ?? 0})</p>`
+								: ''
+						}
           </div>
         `,
 			})
+			if (data?.errorReport?.url) {
+				await downloadErrorReport(data.errorReport, 'vendor-catalog-errors.csv')
+			}
 
 			setPage(1)
 			await fetchVendorProducts()
@@ -133,6 +174,21 @@ const VendorCatalogV2 = () => {
 			const data = await response.json()
 
 			if (!response.ok) {
+				if (data?.errorReport?.url) {
+					await Swal.fire({
+						title: 'Inventory Import Failed',
+						icon: 'error',
+						html: `
+							<div style="text-align:left;">
+								<p><b>Message:</b> ${data?.message || 'SKU inventory import failed'}</p>
+								<p><b>Errors:</b> ${(data?.errors || []).length}</p>
+								<p><b>Error Report:</b> <a href="${BASE_API}${data.errorReport.url}" target="_blank" rel="noreferrer">Download CSV</a></p>
+							</div>
+						`,
+					})
+					await downloadErrorReport(data.errorReport, 'sku-inventory-errors.csv')
+					return
+				}
 				throw new Error(data?.message || 'SKU inventory import failed')
 			}
 
@@ -144,11 +200,22 @@ const VendorCatalogV2 = () => {
             <p><b>Rows:</b> ${data?.meta?.totalRows ?? 0}</p>
             <p><b>Resolved:</b> ${data?.meta?.resolvedRows ?? 0}</p>
             <p><b>Mode:</b> ${data?.meta?.mode ?? '-'}</p>
-            <p><b>Duration:</b> ${data?.meta?.durationMs ?? 0} ms</p>
+            <p><b>Created:</b> ${data?.meta?.createdCount ?? 0}</p>
+            <p><b>Updated:</b> ${data?.meta?.updatedCount ?? 0}</p>
+            <p><b>Merged:</b> ${data?.meta?.mergedCount ?? 0}</p>
+            <p><b>Duration:</b> ${((data?.meta?.durationMs ?? 0) / 60000).toFixed(2)} min</p>
             <p><b>Errors (shown):</b> ${(data?.errors || []).length}</p>
+						${
+							data?.errorReport?.url
+								? `<p><b>Error Report:</b> <a href="${BASE_API}${data.errorReport.url}" target="_blank" rel="noreferrer">Download CSV</a> (rows: ${data?.errorReport?.count ?? 0})</p>`
+								: ''
+						}
           </div>
         `,
 			})
+			if (data?.errorReport?.url) {
+				await downloadErrorReport(data.errorReport, 'sku-inventory-errors.csv')
+			}
 
 			await fetchVendorProducts()
 		} catch (error: any) {
@@ -476,6 +543,7 @@ const showSkuDeleteModal = async (product: VendorProductListItem) => {
 							>
 								<option value="replace">Inventory Mode: Replace</option>
 								<option value="increment">Inventory Mode: Increment</option>
+								<option value="merge">Inventory Mode: Merge (recommended)</option>
 							</Form.Select>
 
 							<Button
