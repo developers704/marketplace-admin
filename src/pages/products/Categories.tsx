@@ -461,13 +461,13 @@ const Categories = () => {
 		console.log('Updating Category Data:', categoryData)
 
 		const formData = new FormData()
-		formData.append('name', categoryData.name)
-		formData.append('description', categoryData.description)
+		formData.append('name', categoryData?.name)
+		formData.append('description', categoryData?.description)
 		if (selectedImage) {
 			formData.append('image', selectedImage)
 		}
-		if (categoryData.animal) {
-			formData.append('animal', categoryData.animal)
+		if (categoryData?.animal) {
+			formData.append('animal', categoryData?.animal)
 		}
 		setApiLoading(true)
 
@@ -488,9 +488,9 @@ const Categories = () => {
 				}
 			)
 
-			if (!response.ok) {
+			if (!response?.ok) {
 				const errorMessage = await response.json()
-				throw new Error(errorMessage.message || 'Failed to Update Category')
+				throw new Error(errorMessage?.message || 'Failed to Update Category')
 			}
 
 			const data_res = await response.json()
@@ -554,9 +554,9 @@ const Categories = () => {
 			if (response.ok) {
 				const data = await response.json();
 				const formattedCategories = data.map((cat: any) => ({
-					id: cat._id,
-					name: cat.name,
-					sortOrder: cat.smallAnimalsSortOrder,
+					id: cat?._id,
+					name: cat?.name,
+					sortOrder: cat?.smallAnimalsSortOrder,
 				}));
 				setAnimalCategories(formattedCategories);
 			}
@@ -577,9 +577,9 @@ const Categories = () => {
 			if (response.ok) {
 				const data = await response.json();
 				const formattedCategories = data.map((cat: any) => ({
-					id: cat._id,
-					name: cat.name,
-					sortOrder: cat.shopByLifestageSortOrder,
+					id: cat?._id,
+					name: cat?.name,
+					sortOrder: cat?.shopByLifestageSortOrder,
 				}));
 				setLifestageCategories(formattedCategories);
 			}
@@ -598,8 +598,8 @@ const Categories = () => {
 					Authorization: `Bearer ${token}`,
 				},
 				body: JSON.stringify({
-					categoryIds: categories.map(cat => cat.id),
-					sortOrders: categories.map(cat => cat.sortOrder)
+					categoryIds: categories?.map(cat => cat?.id),
+					sortOrders: categories?.map(cat => cat?.sortOrder)
 				})
 			});
 
@@ -618,7 +618,7 @@ const Categories = () => {
 		} catch (error: any) {
 			Swal.fire({
 				title: 'Error',
-				text: error.message,
+				text: error?.message,
 				icon: 'error'
 			});
 		} finally {
@@ -636,12 +636,12 @@ const Categories = () => {
 					Authorization: `Bearer ${token}`,
 				},
 				body: JSON.stringify({
-					categoryIds: categories.map(cat => cat.id),
-					sortOrders: categories.map(cat => cat.sortOrder)
+					categoryIds: categories?.map(cat => cat?.id),
+					sortOrders: categories?.map(cat => cat?.sortOrder)
 				})
 			});
 
-			if (!response.ok) {
+			if (!response?.ok) {
 				throw new Error('Failed to update lifestage categories');
 			}
 
@@ -656,7 +656,7 @@ const Categories = () => {
 		} catch (error: any) {
 			Swal.fire({
 				title: 'Error',
-				text: error.message,
+				text: error?.message,
 				icon: 'error'
 			});
 		} finally {
@@ -667,8 +667,8 @@ const Categories = () => {
 
 	const toggleEditModal = (category: TableRecord) => {
 		setEditingCategory(category)
-		setValue('name', category.name)
-		setValue('description', category.description || '')
+		setValue('name', category?.name)
+		setValue('description', category?.description || '')
 		toggleModal()
 	}
 	useEffect(() => {
@@ -684,7 +684,7 @@ const Categories = () => {
 		if (editingCategory) {
 			setValue('name', editingCategory.name)
 			setValue('description', editingCategory.description || '')
-			setValue('animal', editingCategory.animal || '')
+			setValue('animal', editingCategory?.animal || '')
 		} else {
 			reset({ name: '', description: '', animal: '' })
 		}
@@ -702,11 +702,11 @@ const Categories = () => {
 			if (response.ok) {
 				const data = await response.json()
 				const formattedCategories = data
-					.filter((cat: any) => cat.isOptionOne)
+					.filter((cat: any) => cat?.isOptionOne)
 					.map((cat: any) => ({
-						id: cat._id,
-						name: cat.name,
-						sortOrder: cat.sortOrderOptionOne,
+						id: cat?._id,
+						name: cat?.name,
+						sortOrder: cat?.sortOrderOptionOne,
 						isOptionOne: true
 					}))
 				setSelectedCategories(formattedCategories)
@@ -719,8 +719,8 @@ const Categories = () => {
 
 	const availableCategories = useMemo(() =>
 		categoryData.map(cat => ({
-			value: cat._id.toString(), // Convert number to string
-			label: cat.name
+			value: cat?._id.toString(), // Convert number to string
+			label: cat?.name
 		})),
 		[categoryData]
 	);
@@ -734,8 +734,8 @@ const Categories = () => {
 					Authorization: `Bearer ${token}`,
 				},
 				body: JSON.stringify({
-					categoryIds: categories.map(cat => cat.id),
-					sortOrders: categories.map(cat => cat.sortOrder)
+					categoryIds: categories?.map(cat => cat?.id),
+					sortOrders: categories?.map(cat => cat?.sortOrder)
 				})
 			});
 
@@ -754,7 +754,7 @@ const Categories = () => {
 		} catch (error: any) {
 			Swal.fire({
 				title: 'Error',
-				text: error.message,
+				text: error?.message,
 				icon: 'error'
 			});
 		} finally {
@@ -773,11 +773,11 @@ const Categories = () => {
 			if (response.ok) {
 				const data = await response.json();
 				const formattedCategories = data
-					.filter((cat: any) => cat.isOptionTwo)
+					.filter((cat: any) => cat?.isOptionTwo)
 					.map((cat: any) => ({
-						id: cat._id,
-						name: cat.name,
-						sortOrder: cat.sortOrderOptionTwo,
+						id: cat?._id,
+						name: cat?.name,
+						sortOrder: cat?.sortOrderOptionTwo,
 						isOptionTwo: true
 					}));
 				setSelectedSecondaryCategories(formattedCategories);
@@ -798,13 +798,13 @@ const Categories = () => {
 					Authorization: `Bearer ${token}`,
 				},
 				body: JSON.stringify({
-					categoryIds: categories.map(cat => cat.id),
-					sortOrders: categories.map(cat => cat.sortOrder)
+					categoryIds: categories?.map(cat => cat?.id),
+					sortOrders: categories?.map(cat => cat?.sortOrder)
 				})
 			});
 			const responseData = await response.json();
-			if (!response.ok) {
-				throw new Error(responseData.error || responseData.message || 'Failed to update secondary categories');
+			if (!response?.ok) {
+				throw new Error(responseData?.error || responseData?.message || 'Failed to update secondary categories');
 			}
 
 			Swal.fire({
@@ -1054,7 +1054,7 @@ const Categories = () => {
 										<input
 											type="checkbox"
 											onChange={handleSelectAll}
-											checked={selectedRows.length === categoryData.length}
+											checked={selectedRows?.length === categoryData?.length}
 										/>{' '}
 									</th>
 
@@ -1071,23 +1071,23 @@ const Categories = () => {
 							<tbody>
 								{loading ? (
 									<TableRowSkeleton headers={categoryHeaders} rowCount={6} />
-								) : paginatedRecords.length > 0 ? (
-									(paginatedRecords).map((record, idx) => {
-										const isSelected = selectedRows.includes(record._id)
+								) : paginatedRecords?.length > 0 ? (
+									(paginatedRecords)?.map((record, idx) => {
+										const isSelected = selectedRows.includes(record?._id)
 										return (
 											<tr key={idx}>
 												<td>
 													<input
 														type="checkbox"
 														checked={isSelected}
-														onChange={() => handleSelectRow(record._id)}
+														onChange={() => handleSelectRow(record?._id)}
 													/>
 												</td>
 
 												<td className="table-user">
 													{record?.image ? (
 														<img
-															src={`${BASE_API}/uploads/images/${record.image}`}
+															src={`${BASE_API}/uploads/images/${record?.image}`}
 															alt="category"
 															className="me-2 rounded-circle"
 														/>
@@ -1095,8 +1095,8 @@ const Categories = () => {
 														''
 													)}
 												</td>
-												<td>{record.name}</td>
-												<td>{record.description}</td>
+												<td>{record?.name || "-"}</td>
+												<td>{record?.description || "-"}</td>
 												<td>
 													<div className="d-flex">
 														<Button
@@ -1256,7 +1256,7 @@ const Categories = () => {
 									<div className="mt-3 d-flex flex-column ">
 										<Form.Label>Current Image</Form.Label>
 										<img
-											src={`${BASE_API}/uploads/images/${editingCategory.image}`}
+											src={`${BASE_API}/uploads/images/${editingCategory?.image}`}
 											alt="Category"
 											className="img-thumbnail mb-3"
 											style={{ width: '100px', height: '100px' }}
@@ -1351,13 +1351,13 @@ const SelectedCategoriesTable = memo(({
 		</thead>
 		<tbody>
 			{categories.map((category, idx) => (
-				<tr key={category.id}>
-					<td>{category.name}</td>
+				<tr key={category?.id}>
+					<td>{category?.name || "-"}</td>
 					<td>
 						<Form.Control
 							type="number"
 							min="1"
-							value={category.sortOrder}
+							value={category?.sortOrder}
 							onChange={(e) => onSortOrderChange(idx, parseInt(e.target.value))}
 							style={{ width: "80px" }}
 						/>
@@ -1366,7 +1366,7 @@ const SelectedCategoriesTable = memo(({
 						<Button
 							variant="danger"
 							size="sm"
-							onClick={() => onRemove(category.id)}>
+							onClick={() => onRemove(category?.id)}>
 							<MdDelete />
 						</Button>
 					</td>
@@ -1398,9 +1398,9 @@ const LandingPageModal = memo(({
 	const handleCategorySelect = useCallback((selected: any) => {
 		setLocalCategories(prev => {
 			const newCategories = selected.map((item: any, index: number) => ({
-				id: item.value,
-				name: item.label,
-				sortOrder: prev.length + index + 1,
+				id: item?.value,
+				name: item?.label,
+				sortOrder: prev?.length + index + 1,
 				isOptionOne: true
 			}));
 			return [...prev, ...newCategories];
@@ -1416,7 +1416,7 @@ const LandingPageModal = memo(({
 	}, []);
 
 	const handleRemoveCategory = useCallback((categoryId: string) => {
-		setLocalCategories(prev => prev.filter(cat => cat.id !== categoryId));
+		setLocalCategories(prev => prev?.filter(cat => cat?.id !== categoryId));
 	}, []);
 
 	const handleSave = useCallback(async () => {
@@ -1425,7 +1425,7 @@ const LandingPageModal = memo(({
 
 	const selectOptions = useMemo(() =>
 		availableCategories.filter(cat =>
-			!localCategories.find(sc => sc.id === cat.value)
+			!localCategories.find(sc => sc?.id === cat?.value)
 		),
 		[availableCategories, localCategories]
 	);

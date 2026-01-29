@@ -10,7 +10,10 @@ type VendorProductListItem = {
 	vendorModel: string
 	title: string
 	brand?: string
-	category?: string
+	category?: {
+		_id: string
+		name: string
+	}
 	skuCount?: number
 	totalInventory?: number
 	minPrice?: number
@@ -76,6 +79,7 @@ const VendorCatalogV2 = () => {
 			const data = await response.json()
 			setItems(data?.data || [])
 			setPaginatorInfo(data?.paginatorInfo || null)
+			console.log('Fetched vendor products', data)
 		} catch (error: any) {
 			console.error('Failed to fetch vendor products', error)
 			Swal.fire({ title: 'Error', text: error?.message || 'Failed to fetch vendor products', icon: 'error' })
@@ -182,7 +186,7 @@ const VendorCatalogV2 = () => {
 							<div style="text-align:left;">
 								<p><b>Message:</b> ${data?.message || 'SKU inventory import failed'}</p>
 								<p><b>Errors:</b> ${(data?.errors || []).length}</p>
-								<p><b>Error Report:</b> <a href="${BASE_API}${data.errorReport.url}" target="_blank" rel="noreferrer">Download CSV</a></p>
+								<p><b>Error Report:</b> <a href="${BASE_API}${data?.errorReport?.url}" target="_blank" rel="noreferrer">Download CSV</a></p>
 							</div>
 						`,
 					})
@@ -253,7 +257,7 @@ const VendorCatalogV2 = () => {
 
 	// View product
 	const handleView = async (product: VendorProductListItem) => {
-		const details = await fetchProductDetails(product._id)
+		const details = await fetchProductDetails(product?._id)
 		if (details) {
 			setViewModal({ show: true, product })
 		}
@@ -261,7 +265,7 @@ const VendorCatalogV2 = () => {
 
 	// Edit product
 	const handleEdit = async (product: VendorProductListItem) => {
-		const details = await fetchProductDetails(product._id)
+		const details = await fetchProductDetails(product?._id)
 		if (details) {
 			setEditModal({ show: true, product })
 		}
@@ -520,6 +524,8 @@ const showSkuDeleteModal = async (product: VendorProductListItem) => {
 		}
 	}
 
+	// console.log(items, '===>>> vendor products')
+
 	return (
 		<>
 			<PageBreadcrumb title="Vendor Catalog (v2)" subName="Products" />
@@ -629,23 +635,23 @@ const showSkuDeleteModal = async (product: VendorProductListItem) => {
 									<tr>
 										<td colSpan={8}>Loading…</td>
 									</tr>
-								) : items.length === 0 ? (
+								) : items?.length === 0 ? (
 									<tr>
 										<td colSpan={8}>No vendor products found.</td>
 									</tr>
 								) : (
 									items.map((p) => (
-										<tr key={p._id}>
-											<td>{p.vendorModel}</td>
-											<td>{p.title}</td>
-											<td>{p.brand || '—'}</td>
-											<td>{p.category || '—'}</td>
-											<td className="text-end">{p.skuCount ?? 0}</td>
-											<td className="text-end">{p.totalInventory ?? 0}</td>
+										<tr key={p?._id}>
+											<td>{p?.vendorModel}</td>
+											<td>{p?.title}</td>
+											<td>{p?.brand || '—'}</td>
+											<td>{p?.category?.name || '—'}</td>
+											<td className="text-end">{p?.skuCount ?? 0}</td>
+											<td className="text-end">{p?.totalInventory ?? 0}</td>
 											<td className="text-end">
-												{(p.minPrice ?? 0) === (p.maxPrice ?? 0)
-													? `$${p.minPrice ?? 0}`
-													: `$${p.minPrice ?? 0} - $${p.maxPrice ?? 0}`}
+												{(p?.minPrice ?? 0) === (p?.maxPrice ?? 0)
+													? `$${p?.minPrice ?? 0}`
+													: `$${p?.minPrice ?? 0} - $${p?.maxPrice ?? 0}`}
 											</td>
 											<td className="text-center">
 												<div className="d-flex gap-1 justify-content-center">
@@ -664,7 +670,7 @@ const showSkuDeleteModal = async (product: VendorProductListItem) => {
 														<MdEdit />
 													</Button>
 													<Dropdown>
-														<Dropdown.Toggle variant="danger" size="sm" id={`dropdown-${p._id}`}>
+														<Dropdown.Toggle variant="danger" size="sm" id={`dropdown-${p?._id}`}>
 														<MdDelete size={20}/>
 														</Dropdown.Toggle>
 														<Dropdown.Menu>
@@ -705,7 +711,7 @@ const showSkuDeleteModal = async (product: VendorProductListItem) => {
 			</Card>
 
 			{/* View Modal */}
-			<Modal show={viewModal.show} onHide={() => setViewModal({ show: false, product: null })} size="lg">
+			<Modal show={viewModal?.show} onHide={() => setViewModal({ show: false, product: null })} size="lg">
 				<Modal.Header closeButton>
 					<Modal.Title>View Vendor Product</Modal.Title>
 				</Modal.Header>
@@ -719,37 +725,37 @@ const showSkuDeleteModal = async (product: VendorProductListItem) => {
 								<tbody>
 									<tr>
 										<th style={{ width: '30%' }}>Vendor Model</th>
-										<td>{productDetails.product?.vendorModel || '—'}</td>
+										<td>{productDetails?.product?.vendorModel || '—'}</td>
 									</tr>
 									<tr>
 										<th>Title</th>
-										<td>{productDetails.product?.title || '—'}</td>
+										<td>{productDetails?.product?.title || '—'}</td>
 									</tr>
 									<tr>
 										<th>Brand</th>
-										<td>{productDetails.product?.brand || '—'}</td>
+										<td>{productDetails?.product?.brand || '—'}</td>
 									</tr>
 									<tr>
 										<th>Category</th>
-										<td>{productDetails.product?.category || '—'}</td>
+										<td>{productDetails?.product?.category?.name || '—'}</td>
 									</tr>
 									<tr>
 										<th>Description</th>
-										<td>{productDetails.product?.description || '—'}</td>
+										<td>{productDetails?.product?.description || '—'}</td>
 									</tr>
 									<tr>
 										<th>SKU Count</th>
-										<td>{productDetails.product?.skuCount || 0}</td>
+										<td>{productDetails?.product?.skuCount || 0}</td>
 									</tr>
 									<tr>
 										<th>Total Inventory</th>
-										<td>{productDetails.product?.totalInventory || 0}</td>
+										<td>{productDetails?.product?.totalInventory || 0}</td>
 									</tr>
 								</tbody>
 							</Table>
 
-							<h5 className="mt-4">SKUs ({productDetails.skus?.length || 0})</h5>
-							{productDetails.skus && productDetails.skus.length > 0 ? (
+							<h5 className="mt-4">SKUs ({productDetails?.skus?.length || 0})</h5>
+							{productDetails?.skus && productDetails?.skus?.length > 0 ? (
 								<Table bordered size="sm">
 									<thead>
 										<tr>
@@ -763,13 +769,13 @@ const showSkuDeleteModal = async (product: VendorProductListItem) => {
 									</thead>
 									<tbody>
 										{productDetails.skus.map((sku: any) => (
-											<tr key={sku._id}>
-												<td>{sku.sku}</td>
-												<td>{sku.metalColor || '—'}</td>
-												<td>{sku.metalType || '—'}</td>
-												<td>{sku.size || '—'}</td>
-												<td className="text-end">${sku.price || 0} {sku.currency || 'USD'}</td>
-												<td className="text-end">{sku.totalQuantity || 0}</td>
+											<tr key={sku?._id}>
+												<td>{sku?.sku}</td>
+												<td>{sku?.metalColor || '—'}</td>
+												<td>{sku?.metalType || '—'}</td>
+												<td>{sku?.size || '—'}</td>
+												<td className="text-end">${sku?.price || 0} {sku?.currency || 'USD'}</td>
+												<td className="text-end">{sku?.totalQuantity || 0}</td>
 											</tr>
 										))}
 									</tbody>
@@ -790,7 +796,7 @@ const showSkuDeleteModal = async (product: VendorProductListItem) => {
 			</Modal>
 
 			{/* Edit Modal */}
-			<Modal show={editModal.show} onHide={() => { setEditModal({ show: false, product: null }); setProductDetails(null); }}>
+			<Modal show={editModal?.show} onHide={() => { setEditModal({ show: false, product: null }); setProductDetails(null); }}>
 				<Modal.Header closeButton>
 					<Modal.Title>Edit Vendor Product</Modal.Title>
 				</Modal.Header>
@@ -809,7 +815,7 @@ const showSkuDeleteModal = async (product: VendorProductListItem) => {
 									category: formData.get('category'),
 									description: formData.get('description'),
 								}
-								handleUpdate(editModal.product!._id, updateData)
+								handleUpdate(editModal?.product!._id, updateData)
 							}}
 						>
 							<Form.Group className="mb-3">
@@ -817,7 +823,7 @@ const showSkuDeleteModal = async (product: VendorProductListItem) => {
 								<Form.Control
 									type="text"
 									name="vendorModel"
-									defaultValue={productDetails.product?.vendorModel || ''}
+									defaultValue={productDetails?.product?.vendorModel || ''}
 									required
 								/>
 							</Form.Group>
@@ -826,7 +832,7 @@ const showSkuDeleteModal = async (product: VendorProductListItem) => {
 								<Form.Control
 									type="text"
 									name="title"
-									defaultValue={productDetails.product?.title || ''}
+									defaultValue={productDetails?.product?.title || ''}
 									required
 								/>
 							</Form.Group>
@@ -835,7 +841,7 @@ const showSkuDeleteModal = async (product: VendorProductListItem) => {
 								<Form.Control
 									type="text"
 									name="brand"
-									defaultValue={productDetails.product?.brand || ''}
+									defaultValue={productDetails?.product?.brand || ''}
 									required
 								/>
 							</Form.Group>
@@ -844,7 +850,7 @@ const showSkuDeleteModal = async (product: VendorProductListItem) => {
 								<Form.Control
 									type="text"
 									name="category"
-									defaultValue={productDetails.product?.category || ''}
+									defaultValue={productDetails?.product?.category?.name || ''}
 									required
 								/>
 							</Form.Group>
@@ -854,7 +860,7 @@ const showSkuDeleteModal = async (product: VendorProductListItem) => {
 									as="textarea"
 									rows={3}
 									name="description"
-									defaultValue={productDetails.product?.description || ''}
+									defaultValue={productDetails?.product?.description || ''}
 								/>
 							</Form.Group>
 							<div className="d-flex gap-2 justify-content-end">

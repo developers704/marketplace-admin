@@ -54,8 +54,7 @@ const schema = yup.object().shape({
 	role_name: yup.string().required('Please select a Role'),
 	warehouseId: yup
 		.array()
-		.of(yup.string())
-		.min(1, 'Please select at least one Store'),
+		.of(yup.string()).optional(),
 	department: yup.string().required('Please select a Department'),
 })
 

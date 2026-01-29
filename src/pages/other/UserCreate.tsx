@@ -27,7 +27,7 @@ const schemaResolver = yupResolver(
 		phone_number: yup.string()
 			.required('Please enter Phone Number'),
 		role_name: yup.string().required('Please select a Role'),
-		storeId: yup.array().of(yup.string()).min(1, 'Please select at least one Store'),
+		storeId: yup.array().of(yup.string()).optional(),
 		department: yup.string().required('Please select a Department'),
 	})
 )
