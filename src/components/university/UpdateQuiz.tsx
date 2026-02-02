@@ -79,6 +79,7 @@ interface QuizResponse {
         questionNumber: number
         question: string
         options: string[]
+        correctAnswer: number
         points: number
     }[]
     createdAt: string
@@ -253,10 +254,10 @@ const UpdateQuiz = () => {
                     maxAttempts: quizData.maxAttempts,
                     weightage: quizData.weightage,
                     passingScore: quizData.passingScore,
-                    questions: quizData.questions.map(q => ({
+                    questions: quizData.questions.map((q: QuizResponse['questions'][0]) => ({
                         question: q.question,
                         options: q.options,
-                        correctAnswer: 0, // We'll need to determine this from the original data
+                        correctAnswer: q.correctAnswer !== undefined ? q.correctAnswer : 0,
                         points: q.points
                     }))
                 })
@@ -282,10 +283,10 @@ const UpdateQuiz = () => {
                 // })
 
                 // Replace questions array
-                const formattedQuestions = quizData.questions.map(q => ({
+                const formattedQuestions = quizData.questions.map((q: QuizResponse['questions'][0]) => ({
                     question: q.question,
                     options: q.options,
-                    correctAnswer: 0, // Default to first option, user can change
+                    correctAnswer: q.correctAnswer !== undefined ? q.correctAnswer : 0,
                     points: q.points
                 }))
                 replace(formattedQuestions)

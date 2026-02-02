@@ -42,6 +42,7 @@ interface ChapterSection {
 	sequence: number
 	introduction: string
 	objective: string
+	requiredTime?: number | null
 	content: ChapterContent[]
 	_id?: string
 }
@@ -976,6 +977,30 @@ const UpdateCourses = () => {
 																						}
 																						placeholder="Enter section title"
 																					/>
+																				</Form.Group>
+																			</Col>
+																			<Col md={6}>
+																				<Form.Group className="mb-3">
+																					<Form.Label>
+																						Required Time (seconds) <span className="text-muted">(Optional)</span>
+																					</Form.Label>
+																					<Form.Control
+																						type="number"
+																						value={section.requiredTime || ''}
+																						onChange={(e) =>
+																							handleUpdateSection(
+																								chapterIndex,
+																								sectionIndex,
+																								'requiredTime',
+																								e.target.value ? parseInt(e.target.value) : null
+																							)
+																						}
+																						placeholder="Enter time in seconds"
+																						min="0"
+																					/>
+																					<Form.Text className="text-muted">
+																						Time required before videos/content are shown. Leave empty if not needed.
+																					</Form.Text>
 																				</Form.Group>
 																			</Col>
 																			<Col md={12}>
