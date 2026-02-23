@@ -29,7 +29,9 @@ const additionalPermissions: any = {
     "GWP": "GWP",
     "Add to Cart": "Cart",
     "Special Order": "Special Order",
-    "My inventory":" My inventory",
+    "My inventory":"My inventory",
+    "Request order":"Request order",
+
 };
 
 const Roles = () => {

@@ -1,9 +1,11 @@
 import { PageBreadcrumb } from '@/components'
 import { Button, Card, Form, Table, Pagination as BootstrapPagination, Modal, Dropdown } from 'react-bootstrap'
 import { useAuthContext } from '@/common'
-import { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import Swal from 'sweetalert2'
 import { MdDelete, MdEdit, MdVisibility } from 'react-icons/md'
+import { FaAngleRight ,FaAngleDown  } from "react-icons/fa6";
+import './VendorCatalogViewModal.css'
 
 type VendorProductListItem = {
 	_id: string
@@ -47,9 +49,13 @@ const VendorCatalogV2 = () => {
 	const [editModal, setEditModal] = useState<{ show: boolean; product: VendorProductListItem | null }>({ show: false, product: null })
 	const [productDetails, setProductDetails] = useState<any>(null)
 	const [loadingDetails, setLoadingDetails] = useState(false)
+	const [expandedSku ,setExpandedSku ] = useState<string | null>(null)
 
 	const vendorFileInputRef = useRef<HTMLInputElement>(null)
 	const inventoryFileInputRef = useRef<HTMLInputElement>(null)
+	const toggleSku = (id:string) => {
+		setExpandedSku(prev => (prev ===id ? null : id))
+	}
 
 	const downloadErrorReport = async (report: any, fallbackName: string) => {
 		try {
@@ -71,7 +77,7 @@ const VendorCatalogV2 = () => {
 	const fetchVendorProducts = async () => {
 		setLoading(true)
 		try {
-			const response = await fetch(`${BASE_API}/api/v2/products?page=${page}&limit=${limit}`, {
+			const response = await fetch(`${BASE_API}/api/v2/products/admin?page=${page}&limit=${limit}`, {
 				headers: {
 					Authorization: `Bearer ${token}`,
 				},
@@ -711,85 +717,135 @@ const showSkuDeleteModal = async (product: VendorProductListItem) => {
 			</Card>
 
 			{/* View Modal */}
-			<Modal show={viewModal?.show} onHide={() => setViewModal({ show: false, product: null })} size="lg">
+			<Modal show={viewModal?.show} onHide={() => { setViewModal({ show: false, product: null }); setExpandedSku(null); }} size="lg" className="vendor-catalog-view-modal">
 				<Modal.Header closeButton>
 					<Modal.Title>View Vendor Product</Modal.Title>
 				</Modal.Header>
-				<Modal.Body>
+				<Modal.Body className="p-4">
 					{loadingDetails ? (
-						<div className="text-center py-4">Loading...</div>
+						<div className="text-center py-5 text-muted">Loading...</div>
 					) : productDetails ? (
 						<div>
-							<h5>Product Information</h5>
-							<Table bordered size="sm" className="mb-4">
-								<tbody>
-									<tr>
-										<th style={{ width: '30%' }}>Vendor Model</th>
-										<td>{productDetails?.product?.vendorModel || '—'}</td>
-									</tr>
-									<tr>
-										<th>Title</th>
-										<td>{productDetails?.product?.title || '—'}</td>
-									</tr>
-									<tr>
-										<th>Brand</th>
-										<td>{productDetails?.product?.brand || '—'}</td>
-									</tr>
-									<tr>
-										<th>Category</th>
-										<td>{productDetails?.product?.category?.name || '—'}</td>
-									</tr>
-									<tr>
-										<th>Description</th>
-										<td>{productDetails?.product?.description || '—'}</td>
-									</tr>
-									<tr>
-										<th>SKU Count</th>
-										<td>{productDetails?.product?.skuCount || 0}</td>
-									</tr>
-									<tr>
-										<th>Total Inventory</th>
-										<td>{productDetails?.product?.totalInventory || 0}</td>
-									</tr>
+							<h5 className="section-product text-dark mb-3 pb-2 border-bottom border-2">Product Information</h5>
+							<Table bordered size="sm" className="product-info-table mb-4 table-hover align-middle" style={{ borderRadius: 8, overflow: 'hidden' }}>
+								<tbody className="bg-white">
+									<tr><th style={{ width: '28%' }}>Vendor Model</th><td>{productDetails?.product?.vendorModel || '—'}</td></tr>
+									<tr><th>Title</th><td>{productDetails?.product?.title || '—'}</td></tr>
+									<tr><th>Brand</th><td>{productDetails?.product?.brand || '—'}</td></tr>
+									<tr><th>Category</th><td>{productDetails?.product?.category?.name || '—'}</td></tr>
+									<tr><th>Description</th><td>{productDetails?.product?.description || '—'}</td></tr>
+									<tr><th>SKU Count</th><td>{productDetails?.product?.skuCount ?? 0}</td></tr>
+									<tr><th>Total Inventory</th><td className="fw-semibold">{productDetails?.product?.totalInventory ?? 0}</td></tr>
 								</tbody>
 							</Table>
 
-							<h5 className="mt-4">SKUs ({productDetails?.skus?.length || 0})</h5>
-							{productDetails?.skus && productDetails?.skus?.length > 0 ? (
-								<Table bordered size="sm">
-									<thead>
-										<tr>
-											<th>SKU</th>
-											<th>Metal Color</th>
-											<th>Metal Type</th>
-											<th>Size</th>
-											<th className="text-end">Price</th>
-											<th className="text-end">Inventory</th>
-										</tr>
-									</thead>
-									<tbody>
-										{productDetails.skus.map((sku: any) => (
-											<tr key={sku?._id}>
-												<td>{sku?.sku}</td>
-												<td>{sku?.metalColor || '—'}</td>
-												<td>{sku?.metalType || '—'}</td>
-												<td>{sku?.size || '—'}</td>
-												<td className="text-end">${sku?.price || 0} {sku?.currency || 'USD'}</td>
-												<td className="text-end">{sku?.totalQuantity || 0}</td>
+							<h5 className="section-sku mt-4 mb-3 text-dark pb-2 border-bottom border-2">SKUs ({productDetails?.skus?.length || 0})</h5>
+							<p className="text-muted small mb-3">Click a row to expand or collapse warehouse inventory.</p>
+
+							{productDetails?.skus?.length > 0 ? (
+								<div className="sku-table-wrapper">
+									<Table bordered size="sm" className="sku-table mb-0 align-middle">
+										<thead>
+											<tr>
+												<th style={{ width: 44 }} className="text-center"> </th>
+												<th>SKU</th>
+												<th>Metal Color</th>
+												<th>Metal Type</th>
+												<th>Size</th>
+												<th className="text-end">Price</th>
+												<th className="text-end">Total Qty</th>
 											</tr>
-										))}
-									</tbody>
-								</Table>
+										</thead>
+										<tbody>
+											{productDetails?.skus?.map((sku: any) => {
+												const isExpanded = expandedSku === sku?._id
+												return (
+													<React.Fragment key={sku._id}>
+														<tr
+															role="button"
+															tabIndex={0}
+															onClick={() => toggleSku(sku._id)}
+															onKeyDown={(e) => e.key === 'Enter' && toggleSku(sku._id)}
+															className={`sku-row align-middle ${isExpanded ? 'sku-row-expanded' : ''}`}
+														>
+															<td className="text-center py-2">
+																<span className="sku-chevron d-inline-block">
+																	{isExpanded ? <FaAngleDown  size={21} /> : <FaAngleRight size={21} />}
+																</span>
+															</td>
+															<td className="fw-medium">{sku?.sku || "-"}</td>
+															<td>{sku?.metalColor || '—'}</td>
+															<td>{sku?.metalType || '—'}</td>
+															<td>{sku?.size || '—'}</td>
+															<td className="text-end">${Number(sku?.price || 0).toLocaleString()} {sku?.currency || 'USD'}</td>
+															<td className="text-end fw-semibold">{sku?.totalQuantity ?? 0}</td>
+														</tr>
+														{isExpanded && (
+															<tr className="sku-expanded-row">
+																<td colSpan={7} className="p-0 align-top">
+																	<div className="inventory-inner p-2">
+																		<div className="small  mb-1 fw-bold">Warehouse inventory</div>
+																		<Table bordered size="sm" className="mb-0 bg-white shadow-sm">
+																			<thead>
+																				<tr >
+																					<th>Warehouse</th>
+																					<th>Stock Alert</th>
+																					<th>Barcode</th>
+																					<th>Last Restocked</th>
+																					<th className="text-end">Quantity</th>
+																				</tr>
+																			</thead>
+																			<tbody>
+																				{sku.inventories?.length ? (
+																					sku?.inventories.map((inv: any) => (
+																						<tr className='cursor-pointer' key={inv?._id}>
+																							<td>
+																								{inv?.warehouse?.name || '—'}
+																								{inv?.warehouse?.isMain && (
+																									<span className="badge badge-main ms-2">Main</span>
+																								)}
+																							</td>
+																							<td>{inv?.stockAlertThreshold ?? '—'}</td>
+																							<td>{inv?.barcode || '—'}</td>
+																							<td>
+																								{inv?.lastRestocked
+																									? new Date(inv?.lastRestocked).toLocaleString('en-PK', {
+																										day: '2-digit',
+																										month: 'short',
+																										year: 'numeric',
+																										hour: '2-digit',
+																										minute: '2-digit'
+																									})
+																									: '—'}
+																							</td>
+																							<td className="text-end fw-medium">{inv?.quantity ?? 0}</td>
+																						</tr>
+																					))
+																				) : (
+																					<tr><td colSpan={5} className="text-muted text-center py-3">No inventory found</td></tr>
+																				)}
+																			</tbody>
+																		</Table>
+																	</div>
+																</td>
+															</tr>
+														)}
+													</React.Fragment>
+												)
+											})}
+										</tbody>
+									</Table>
+								</div>
 							) : (
 								<p className="text-muted">No SKUs found</p>
 							)}
 						</div>
 					) : (
-						<div className="text-center py-4 text-muted">No data available</div>
+						<div className="text-center py-5 text-muted">No data available</div>
 					)}
 				</Modal.Body>
 				<Modal.Footer>
-					<Button variant="secondary" onClick={() => setViewModal({ show: false, product: null })}>
+					<Button variant="secondary" onClick={() => { setViewModal({ show: false, product: null }); setExpandedSku(null); }}>
 						Close
 					</Button>
 				</Modal.Footer>

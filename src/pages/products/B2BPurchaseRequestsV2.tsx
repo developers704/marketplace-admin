@@ -4,6 +4,9 @@ import { useAuthContext } from '@/common'
 import { useEffect, useMemo, useState } from 'react'
 import Swal from 'sweetalert2'
 import { FaWarehouse, FaSearch, FaExclamationTriangle } from 'react-icons/fa'
+import { LuRefreshCw } from "react-icons/lu";
+import { SlRefresh } from "react-icons/sl";
+
 
 type B2BPurchaseRequest = {
 	_id: string
@@ -277,9 +280,16 @@ const B2BPurchaseRequestsV2 = () => {
 								On Admin approval, vendor SKU inventory is deducted and store inventory is incremented.
 							</div>
 						</div>
-						<Button variant="outline-primary" onClick={() => fetchRequests(activeKey)} disabled={loading}>
-							{loading ? 'Refreshing…' : 'Refresh'}
+						<Button
+						variant="outline-primary"
+						onClick={() => fetchRequests(activeKey)}
+						disabled={loading}
+						className="d-flex align-items-center  px-1 py-1 "
+						style={{ transition: 'all 0.2s ease-in-out' }}
+						>
+						{loading ? <SlRefresh className="spin-icon font-bold" size={24} /> : <LuRefreshCw className="font-bold"  size={24}/>}
 						</Button>
+
 					</div>
 
 					{/* Filters */}

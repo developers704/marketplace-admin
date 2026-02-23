@@ -43,6 +43,8 @@ const Products = React.lazy(() => import('../pages/products/Products'))
 const VendorCatalogV2 = React.lazy(() => import('../pages/products/VendorCatalogV2'))
 const B2BPurchaseRequestsV2 = React.lazy(() => import('../pages/products/B2BPurchaseRequestsV2'))
 const StoreInventoryV2 = React.lazy(() => import('../pages/products/StoreInventoryV2'))
+const SpecialOrders = React.lazy(() => import('../pages/products/SpecialOrders'))
+const SpecialOrderView = React.lazy(() => import('../pages/products/SpecialOrderView'))
 const SubCategory = React.lazy(() => import('../pages/products/SubCategory'))
 const MainServices = React.lazy(() => import('../pages/other/settings/MainServices'))
 const DayCarePackages = React.lazy(() => import('../pages/other/settings/Packages'))
@@ -383,6 +385,24 @@ const customPagesRoutes = {
 			element: (
 				<PrivateRoute requiredPermission="Products" to_do="View">
 					<StoreInventoryV2 />
+				</PrivateRoute>
+			),
+		},
+		{
+			path: '/products/special-orders',
+			name: 'Special Orders',
+			element: (
+				<PrivateRoute requiredPermission="Products" to_do="View">
+					<SpecialOrders />
+				</PrivateRoute>
+			),
+		},
+		{
+			path: '/products/special-orders/:id',
+			name: 'Special Order View',
+			element: (
+				<PrivateRoute requiredPermission="Products" to_do="View">
+					<SpecialOrderView />
 				</PrivateRoute>
 			),
 		},

@@ -1,0 +1,181 @@
+/* VendorCatalog View Modal - Luxury UI */
+.vendor-catalog-view-modal .modal-content {
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.15);
+}
+
+.vendor-catalog-view-modal .modal-header {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: #f8fafc;
+  border-bottom: none;
+  border-radius: 16px 16px 0 0;
+  padding: 1rem 1.5rem;
+}
+
+.vendor-catalog-view-modal .modal-title {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.vendor-catalog-view-modal .modal-header .btn-close {
+  filter: brightness(0) invert(1);
+  opacity: 0.8;
+}
+
+.vendor-catalog-view-modal .modal-header .btn-close:hover {
+  opacity: 1;
+}
+
+/* Section headings */
+.vendor-catalog-view-modal .section-product {
+  color: #0f172a;
+  border-color: #0d9488 !important;
+  font-weight: 600;
+}
+
+.vendor-catalog-view-modal .section-sku {
+  color: #0f172a;
+  border-color: #64748b !important;
+  font-weight: 600;
+}
+
+/* Product info table */
+.vendor-catalog-view-modal .product-info-table th {
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%) !important;
+  color: #334155 !important;
+  font-weight: 600;
+  transition: background 0.25s ease;
+}
+
+.vendor-catalog-view-modal .product-info-table tbody tr {
+  transition: background 0.2s ease;
+}
+
+.vendor-catalog-view-modal .product-info-table tbody tr:hover {
+  background: #f8fafc !important;
+}
+
+/* SKU table - main */
+.vendor-catalog-view-modal .sku-table-wrapper {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+}
+
+.vendor-catalog-view-modal .sku-table thead th {
+  background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%) !important;
+  color: #334155 !important;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.75rem 1rem;
+}
+
+/* SKU row - luxury hover & active */
+.vendor-catalog-view-modal .sku-row {
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.vendor-catalog-view-modal .sku-row:hover {
+  background: linear-gradient(90deg, #f0fdfa 0%, #ccfbf1 50%, #f0fdfa 100%) !important;
+}
+
+.vendor-catalog-view-modal .sku-row:active {
+  transform: scale(0.998);
+  background: #99f6e4 !important;
+}
+
+.vendor-catalog-view-modal .sku-row.sku-row-expanded {
+  background: linear-gradient(90deg, #ccfbf1 0%, #99f6e4 50%, #ccfbf1 100%) !important;
+  box-shadow: inset 0 2px 4px rgba(13, 148, 136, 0.08);
+}
+
+.vendor-catalog-view-modal .sku-row.sku-row-expanded:hover {
+  background: linear-gradient(90deg, #99f6e4 0%, #5eead4 50%, #99f6e4 100%) !important;
+}
+
+/* Chevron animation */
+.vendor-catalog-view-modal .sku-chevron {
+  color: #0d9488;
+  transition: transform 0.25s ease, color 0.2s ease;
+}
+
+.vendor-catalog-view-modal .sku-row:hover .sku-chevron {
+  color: #0f766e;
+  transform: scale(1.15);
+}
+
+.vendor-catalog-view-modal .sku-row.sku-row-expanded .sku-chevron {
+  color: #0f766e;
+}
+
+/* Expanded inventory block - fade in */
+.vendor-catalog-view-modal .sku-expanded-row {
+  animation: skuExpandFade 0.3s ease-out;
+}
+
+@keyframes skuExpandFade {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.vendor-catalog-view-modal .inventory-inner {
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.vendor-catalog-view-modal .inventory-inner .table {
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.vendor-catalog-view-modal .inventory-inner thead th {
+  background: linear-gradient(180deg, #64748b 0%, #475569 100%) !important;
+  color: #f8fafc !important;
+  font-weight: 500;
+  font-size: 0.75rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.vendor-catalog-view-modal .inventory-inner tbody tr {
+  transition: background 0.15s ease;
+}
+
+.vendor-catalog-view-modal .inventory-inner tbody tr:hover {
+  background: #e2e8f0 !important;
+}
+
+/* Main warehouse badge */
+.vendor-catalog-view-modal .badge-main {
+  background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%) !important;
+}
+
+/* Modal footer */
+.vendor-catalog-view-modal .modal-footer {
+  border-top: 1px solid #e2e8f0;
+  padding: 1rem 1.5rem;
+}
+
+.vendor-catalog-view-modal .modal-footer .btn-secondary {
+  background: #64748b;
+  border: none;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.vendor-catalog-view-modal .modal-footer .btn-secondary:hover {
+  background: #475569;
+  transform: translateY(-1px);
+}
+
+.vendor-catalog-view-modal .modal-footer .btn-secondary:active {
+  transform: translateY(0);
+}

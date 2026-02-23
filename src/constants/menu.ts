@@ -108,6 +108,12 @@ const MENU_ITEMS: MenuItemTypes[] = [
 				},
 				{
 					key: 'View',
+					label: 'Special Orders',
+					url: '/products/special-orders',
+					parentKey: 'products',
+				},
+				{
+					key: 'View',
 					label: 'Items Management',
 					url: '/products/all-product',
 					parentKey: 'products',
