@@ -7,7 +7,7 @@ import {
   Pagination as BootstrapPagination,
   Spinner,
 } from 'react-bootstrap'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { MdEdit, MdDelete } from 'react-icons/md'
 import { useForm } from 'react-hook-form'
 import Swal from 'sweetalert2'
@@ -41,10 +41,10 @@ const SpecialOrderEmailRecipients = () => {
   const [togglingId, setTogglingId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
-  const [editingUser, setEditingUser] = useState<SpoReceiverRecord | null>(null)
+  // const [editingUser, setEditingUser] = useState<SpoReceiverRecord | null>(null)
   const [isOpen, toggleModal] = useToggle()
 
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  // const fileInputRef = useRef<HTMLInputElement>(null)
   const { reset, setValue } = useForm()
 
   const getAllUsers = async () => {
@@ -161,7 +161,7 @@ const SpecialOrderEmailRecipients = () => {
   }
 
   const handleToggleEditModal = (rec: SpoReceiverRecord | null = null) => {
-    setEditingUser(rec)
+    // setEditingUser(rec)
     if (rec) {
       setValue('name', rec?.name)
       setValue('email', rec?.email)

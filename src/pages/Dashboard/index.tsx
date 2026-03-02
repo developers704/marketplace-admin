@@ -120,7 +120,7 @@ const Dashboard = () => {
 					<Statistics
 						title="Daily Visits"
 						change={"0%"}
-						stats={stats?.dailyVisits}
+						stats={(stats?.dailyVisits ?? 0).toString()}
 						icon="ri-eye-line"
 						variant="text-bg-success"
 					>
