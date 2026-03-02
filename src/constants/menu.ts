@@ -84,40 +84,40 @@ const MENU_ITEMS: MenuItemTypes[] = [
 		
 				{
 					key: 'View',
-					label: 'Products (v2)',
+					label: 'Products',
 					url: '/products/vendor-catalog-v2',
 					parentKey: 'products',
 				},
 				{
 					key: 'View',
-					label: 'Product Reviews (v2)',
+					label: 'Product Reviews',
 					url: '/products/customer-reviews',
 					parentKey: 'products',
 				},
+				// {
+				// 	key: 'View',
+				// 	label: 'Purchase Approval',
+				// 	url: '/products/b2b-purchase-requests-v2',
+				// 	parentKey: 'products',
+				// },
 				{
 					key: 'View',
-					label: 'Purchase Approval (v2)',
-					url: '/products/b2b-purchase-requests-v2',
-					parentKey: 'products',
-				},
-				{
-					key: 'View',
-					label: 'Store Inventory (v2)',
+					label: 'Store Inventory',
 					url: '/products/store-inventory-v2',
 					parentKey: 'products',
 				},
 				{
 					key: 'View',
-					label: 'Special Orders',
+					label: 'Special Orders (SPO)',
 					url: '/products/special-orders',
 					parentKey: 'products',
 				},
-				{
-					key: 'View',
-					label: 'Items Management',
-					url: '/products/all-product',
-					parentKey: 'products',
-				},
+				// {
+				// 	key: 'View',
+				// 	label: 'Items Management',
+				// 	url: '/products/all-product',
+				// 	parentKey: 'products',
+				// },
 				{
 					key: 'View',
 					label: 'Categories',
@@ -136,34 +136,34 @@ const MENU_ITEMS: MenuItemTypes[] = [
 			// 	url: '/products/sub-sub-category',
 			// 	parentKey: 'products',
 			// },
-			{
-				key: 'View',
-				label: 'Brands',
-				url: '/products/brand',
-				parentKey: 'products',
-			},
-			{
-				key: 'View',
-				label: 'Product Attributes',
-				url: '/products/variation',
-				parentKey: 'products',
-			},
-			{
-				key: 'View',
-				label: 'Product Tags',
-				url: '/products/tags',
-				parentKey: 'products',
-			},
+			// {
+			// 	key: 'View',
+			// 	label: 'Brands',
+			// 	url: '/products/brand',
+			// 	parentKey: 'products',
+			// },
+			// {
+			// 	key: 'View',
+			// 	label: 'Product Attributes',
+			// 	url: '/products/variation',
+			// 	parentKey: 'products',
+			// },
+			// {
+			// 	key: 'View',
+			// 	label: 'Product Tags',
+			// 	url: '/products/tags',
+			// 	parentKey: 'products',
+			// },
 			
 			{
 				key: 'View',
-				label: 'Special Products',
+				label: 'Special Products Supplies',
 				url: '/products/specials-products',
 				parentKey: 'products',
 			},
 			{
 				key: 'View',
-				label: 'Special Categories',
+				label: 'Special Categories Supplies',
 				url: '/products/specials-categories',
 				parentKey: 'products',
 			},
@@ -195,20 +195,20 @@ const MENU_ITEMS: MenuItemTypes[] = [
 	// 		},
 	// 	],
 	// },
-	{
-		key: 'inventory',
-		label: 'Inventory',
-		isTitle: false,
-		icon: FaWarehouse,
-		children: [
-			{
-				key: 'View',
-				label: 'All Inventory',
-				url: '/inventory/all-inventory',
-				parentKey: 'inventory',
-			},
-		],
-	},
+	// {
+	// 	key: 'inventory',
+	// 	label: 'Inventory',
+	// 	isTitle: false,
+	// 	icon: FaWarehouse,
+	// 	children: [
+	// 		{
+	// 			key: 'View',
+	// 			label: 'All Inventory',
+	// 			url: '/inventory/all-inventory',
+	// 			parentKey: 'inventory',
+	// 		},
+	// 	],
+	// },
 	// {
 	// 	key: 'services',
 	// 	label: 'Services',
@@ -282,12 +282,20 @@ const MENU_ITEMS: MenuItemTypes[] = [
 		icon: MdOutlineRequestQuote,
 
 		children: [
-			{
-				key: 'View',
-				label: 'Stores Orders',
-				url: '/orders/ecommerce-orders',
-				parentKey: 'orders',
-			},
+
+			// {
+			// 	key: 'View',
+			// 	label: 'Stores Orders',
+			// 	url: '/orders/ecommerce-orders',
+			// 	parentKey: 'orders',
+			// },
+
+				{
+					key: 'View',
+					label: 'Purchase Approval',
+					url: '/products/b2b-purchase-requests-v2',
+					parentKey: 'orders',
+				},
 			{
 				key: 'View',
 				label: 'Requested Orders',
@@ -647,6 +655,12 @@ export const ECOMMERCE_SETTINGS: MenuItemTypes[] = [
 		key: 'payment-status',
 		label: 'Payment Status',
 		url: '/settings/payment-status',
+		icon: MdPayment, // Import from react-icons
+	},
+	{
+		key: 'special-order-email-recipients',
+		label: 'Special Order Email Recipients',
+		url: '/settings/special-order-email-recipients',
 		icon: MdPayment, // Import from react-icons
 	},
 ]

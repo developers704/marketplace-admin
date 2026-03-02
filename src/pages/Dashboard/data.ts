@@ -1,7 +1,7 @@
 import profilePic from '@/assets/images/users/avatar-1.jpg'
 import profilePic2 from '@/assets/images/users/avatar-5.jpg'
 
-interface Statistic {
+export interface Statistic {
 	title: string
 	stats: string
 	change: string
@@ -9,73 +9,37 @@ interface Statistic {
 	variant: string
 }
 
-interface ProjectData {
-	id: number
+export interface ProjectData {
+	id: string
 	projectName: string
 	dueDate: string
 	status: string
 	variant: string
+	role?: string
 }
-export const statistics: Statistic[] = [
-	{
-		title: 'Daily Visits',
-		stats: '12,450',
-		change: '5.30%',
-		icon: 'ri-eye-line',
-		variant: 'text-bg-pink',
-	},
-	{
-		title: 'Courses',
-		stats: '325',
-		change: '10.20%',
-		icon: 'ri-calendar-check-line',
-		variant: 'text-bg-success',
-	},
 
-	{
-		title: 'Revenue',
-		stats: '$  15,320.75',
-		change: '12.45%',
-		icon: 'ri-wallet-2-line',
-		variant: 'text-bg-purple',
-	},
-	{
-		title: 'Total Orders',
-		stats: '1,145',
-		change: '3.75%',
-		icon: 'ri-shopping-basket-line',
-		variant: 'text-bg-info',
-	},
+export interface DashboardUser {
+	_id: string
+	username?: string
+	email?: string
+	role?: { role_name?: string }
+	createdAt?: string
+	updatedAt?: string
+	is_superuser?: boolean
+}
 
-	{
-		title: 'Returning Customers',
-		stats: '712',
-		change: '6.15%',
-		icon: 'ri-user-heart-line',
-		variant: 'text-bg-warning',
-	},
-	{
-		title: 'Products in Stock',
-		stats: '2,345',
-		change: '-2.25%',
-		icon: 'ri-store-line',
-		variant: 'text-bg-danger',
-	},
-	{
-		title: 'New Users',
-		stats: '185',
-		change: '15.30%',
-		icon: 'ri-user-add-line',
-		variant: 'text-bg-primary',
-	},
-	{
-		title: 'Departments',
-		stats: '15',
-		change: '-1.80%',
-		icon: 'ri-close-circle-line',
-		variant: 'text-bg-secondary',
-	},
-]
+export interface DashboardStats {
+	totalUsers: number
+	totalCustomer: number
+	totalOrders: number
+	totalSpoOrders: number
+	productsInStock: number
+	totalCourses: number
+	revenue: number
+	dailyVisits: number
+	totalVisits: number
+
+}
 
 export const chatMessages = [
 	{
@@ -115,54 +79,12 @@ export const chatMessages = [
 	},
 ]
 
-export const projects: ProjectData[] = [
-	{
-		id: 1,
-		projectName: 'Asad Iqbal',
-		dueDate: '26/04/2015',
-		status: 'Active',
-		variant: 'info',
-	},
-	{
-		id: 2,
-		projectName: 'Waqas Ali',
-		dueDate: '26/04/2015',
-		status: 'Active',
-		variant: 'info',
-	},
-	{
-		id: 3,
-		projectName: 'Usman Shekh',
-		dueDate: '26/04/2015',
-		status: 'Active',
-		variant: 'info',
-	},
-	{
-		id: 4,
-		projectName: 'Hassan Ali',
-		dueDate: '31/05/2015',
-		status: 'De-active',
-		variant: 'danger',
-	},
-	{
-		id: 5,
-		projectName: 'Hamza ',
-		dueDate: '31/05/2015',
-		status: 'Active',
-		variant: 'info',
-	},
-	{
-		id: 6,
-		projectName: 'Ali',
-		dueDate: '31/05/2015',
-		status: 'Active',
-		variant: 'info',
-	},
-	{
-		id: 7,
-		projectName: 'Azeem',
-		dueDate: '31/05/2015',
-		status: 'De-Active',
-		variant: 'danger',
-	},
+/** Stat card config (order and display) – stats values come from API */
+export const STATISTICS_CONFIG: { title: string; icon: string; variant: string; key: keyof DashboardStats }[] = [
+  { title: 'Total Orders', icon: 'ri-shopping-basket-line', variant: 'text-bg-info', key: 'totalOrders' },
+  { title: 'Total Customer', icon: 'ri-book-open-line', variant: 'text-bg-purple', key: 'totalCustomer' },
+  { title: 'Total SPO Orders', icon: 'ri-shopping-basket-line', variant: 'text-bg-info', key: 'totalSpoOrders' },
+  { title: 'Products in Stock', icon: 'ri-store-line', variant: 'text-bg-danger', key: 'productsInStock' },
+  { title: 'Total Users', icon: 'ri-user-add-line', variant: 'text-bg-primary', key: 'totalUsers' },
+  { title: 'Total Courses', icon: 'ri-book-open-line', variant: 'text-bg-primary', key: 'totalCourses' },
 ]

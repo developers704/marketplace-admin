@@ -1,121 +1,120 @@
-import { Card, Col, Row } from 'react-bootstrap'
+import { useEffect, useState } from 'react'
+import { Card, Col, Row, Spinner } from 'react-bootstrap'
 import { ApexOptions } from 'apexcharts'
 import ReactApexChart from 'react-apexcharts'
-
-// components
 import { CustomCardPortlet } from '@/components'
+import { useAuthContext } from '@/common'
 
-const UsChart = () => {
-	const usChartOpts: ApexOptions = {
-		series: [44, 55, 13, 43],
+const BASE_API = import.meta.env.VITE_BASE_API
 
-		chart: {
-			width: 80,
-			type: 'pie',
-		},
-		dataLabels: {
-			enabled: false,
-		},
-		legend: {
-			show: false,
-		},
-		colors: ['#1a2942', '#f13c6e', '#3bc0c3', '#d1d7d973'],
-		labels: ['Team A', 'Team B', 'Team C', 'Team D'],
-	}
-	return (
-		<Card>
-			<Card.Body>
-				<div className="d-flex align-items-center">
-					<div className="flex-grow-1 overflow-hidden">
-						<h4 className="fs-22 fw-semibold">69.25%</h4>
-						<p className="text-uppercase fw-medium text-muted text-truncate mb-0">
-							{' '}
-							US Dollar Share
-						</p>
-					</div>
-					<div className="flex-shrink-0" dir="ltr">
-						<ReactApexChart
-							height={90}
-							width={80}
-							options={usChartOpts}
-							series={usChartOpts.series}
-							type="pie"
-							className="apex-charts"
-						/>
-					</div>
-				</div>
-			</Card.Body>
-		</Card>
-	)
+interface YearlyData {
+	year: number
+	categories: string[]
+	revenueSeries: number[]
+	ordersSeries: number[]
+	totalRevenue: number
+	totalOrders: number
 }
+
 const YearlySelesChart = () => {
+	const { user } = useAuthContext()
+	const token = user?.token
+	const [data, setData] = useState<YearlyData | null>(null)
+	const [loading, setLoading] = useState(true)
+
+	useEffect(() => {
+		const fetchYearly = async () => {
+			if (!token) return
+			try {
+				const res = await fetch(`${BASE_API}/api/dashboard/yearly-sales`, {
+					headers: { Authorization: `Bearer ${token}` },
+				})
+				const json = await res.json()
+				if (json?.data) setData(json.data)
+			} catch (e) {
+				console.error('Yearly sales:', e)
+			} finally {
+				setLoading(false)
+			}
+		}
+		fetchYearly()
+	}, [token])
+
+	const categories = data?.categories ?? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+	const revenueSeries = data?.revenueSeries ?? Array(12).fill(0)
+	const ordersSeries = data?.ordersSeries ?? Array(12).fill(0)
+	const totalRevenue = data?.totalRevenue ?? 0
+	const totalOrders = data?.totalOrders ?? 0
+	const year = data?.year ?? new Date().getFullYear()
+
 	const yearlyChartOpts: ApexOptions = {
 		series: [
-			{
-				name: 'Mobile',
-				data: [25, 15, 25, 36, 32, 42, 45],
-			},
-			{
-				name: 'Desktop',
-				data: [20, 10, 20, 31, 27, 37, 40],
-			},
+			{ name: 'Revenue', data: revenueSeries },
+			{ name: 'Orders', data: ordersSeries },
 		],
 		chart: {
 			height: 250,
 			type: 'line',
-			toolbar: {
-				show: false,
-			},
+			toolbar: { show: false },
 		},
-		colors: ['#3bc0c3', '#1a2942', '#d1d7d973'],
-
-		stroke: {
-			curve: 'smooth',
-			width: [3, 3],
-		},
-		markers: {
-			size: 3,
-		},
-		xaxis: {
-			categories: ['2017', '2018', '2019', '2020', '2021', '2022', '2023'],
-		},
-		legend: {
-			show: false,
-		},
+		colors: ['#3bc0c3', '#1a2942'],
+		stroke: { curve: 'smooth', width: [3, 3] },
+		markers: { size: 3 },
+		xaxis: { categories },
+		legend: { show: false },
 	}
+
+	const q1 = revenueSeries.slice(0, 3).reduce((a, b) => a + b, 0)
+	const q2 = revenueSeries.slice(3, 6).reduce((a, b) => a + b, 0)
 
 	return (
 		<>
-			<CustomCardPortlet
-				cardTitle="Yearly Sales Report"
-				titleClass="header-title"
-			>
-				<div dir="ltr">
-					<ReactApexChart
-						height={250}
-						options={yearlyChartOpts}
-						series={yearlyChartOpts.series}
-						type="line"
-						className="apex-charts"
-					/>
-				</div>
-				<Row className="text-center">
-					<Col>
-						<p className="text-muted mt-3 mb-2">Quarter 1</p>
-						<h4 className="mb-0">$.56.2k</h4>
-					</Col>
-					<Col>
-						<p className="text-muted mt-3 mb-2">Quarter 2</p>
-						<h4 className="mb-0">$.42.5k</h4>
-					</Col>
-					<Col>
-						<p className="text-muted mt-3 mb-2">All Time</p>
-						<h4 className="mb-0">$.102.03k</h4>
-					</Col>
-				</Row>
+			<CustomCardPortlet cardTitle={`Yearly Sales Report (${year})`} titleClass="header-title">
+				{loading ? (
+					<div className="text-center py-5">
+						<Spinner animation="border" />
+					</div>
+				) : (
+					<>
+						<div dir="ltr">
+							<ReactApexChart
+								height={250}
+								options={yearlyChartOpts}
+								series={yearlyChartOpts.series as ApexAxisChartSeries}
+								type="line"
+								className="apex-charts"
+							/>
+						</div>
+						<Row className="text-center">
+							<Col>
+								<p className="text-muted mt-3 mb-2">Quarter 1</p>
+								<h4 className="mb-0">$ {q1.toLocaleString()}</h4>
+							</Col>
+							<Col>
+								<p className="text-muted mt-3 mb-2">Quarter 2</p>
+								<h4 className="mb-0">$ {q2.toLocaleString()}</h4>
+							</Col>
+							<Col>
+								<p className="text-muted mt-3 mb-2">All Time ({year})</p>
+								<h4 className="mb-0">$ {totalRevenue.toLocaleString()}</h4>
+							</Col>
+						</Row>
+					</>
+				)}
 			</CustomCardPortlet>
 
-			<UsChart />
+			<Card>
+				<Card.Body>
+					<div className="d-flex align-items-center">
+						<div className="flex-grow-1 overflow-hidden">
+							<h4 className="fs-22 fw-semibold">{totalOrders}</h4>
+							<p className="text-uppercase fw-medium text-muted text-truncate mb-0">
+								Total Orders ({year})
+							</p>
+						</div>
+					</div>
+				</Card.Body>
+			</Card>
 		</>
 	)
 }

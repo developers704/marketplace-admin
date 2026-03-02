@@ -7,6 +7,7 @@ interface StatisticWidget {
 	change: string
 	icon: string
 	variant: string
+	children?: React.ReactNode
 }
 const Statistics = ({
 	title,
@@ -14,6 +15,7 @@ const Statistics = ({
 	stats,
 	variant,
 	change,
+	children,
 }: StatisticWidget) => {
 	const { role } = useAuthContext()
 	if (role !== 'Doctor' || title === 'Appointments') {
@@ -27,11 +29,18 @@ const Statistics = ({
 						{title}
 					</h6>
 					<h2 className="my-2">{stats}</h2>
-					<p className="mb-0">
-						<span className="badge bg-white bg-opacity-10 me-1">{change}</span>
-						&nbsp;
-						<span className="text-nowrap">Since last month</span>
-					</p>
+					{children ? (
+						children
+					) : (
+						change && (
+							<p className="mb-0">
+								<span className="badge bg-white bg-opacity-10 me-1">
+									{change}
+								</span>
+								{/* <span className="text-nowrap">Since last month</span> */}
+							</p>
+						)
+					)}
 				</Card.Body>
 			</Card>
 		)

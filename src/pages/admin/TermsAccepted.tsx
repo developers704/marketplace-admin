@@ -387,7 +387,7 @@ const TermsAccepted = () => {
                                     <th>Email</th>
                                     <th>Phone Number</th>
                                     <th>Department</th>
-                                    <th>Store</th>
+                                    {/* <th>Store</th> */}
                                     <th>Acceptance Date</th>
                                     <th>Time Since</th>
                                 </tr>
@@ -426,7 +426,7 @@ const TermsAccepted = () => {
                                                             )}
                                                         </div>
                                                         <div>
-                                                            <strong className="text-truncate d-block">{user.username}</strong>
+                                                            <strong className="text-truncate d-block">{user?.username || '-'}</strong>
                                                             <Badge bg="success" className="badge-sm">
                                                                 <i className="bi bi-check-circle me-1"></i>
                                                                 Accepted
@@ -434,14 +434,14 @@ const TermsAccepted = () => {
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="text-truncate">{user.email}</td>
-                                                <td>{user.phone_number || 'N/A'}</td>
+                                                <td className="text-truncate">{user?.email || "-"}</td>
+                                                <td>{user?.phone_number || 'N/A'}</td>
                                                 <td>
                                                     <div>
                                                         <strong className="d-block text-truncate">
-                                                            {user.department?.name || 'N/A'}
+                                                            {user?.department?.name || 'N/A'}
                                                         </strong>
-                                                        {user.department?.name && (
+                                                        {user?.department?.name && (
                                                             <small className="text-muted">
                                                                 <i className="bi bi-building me-1"></i>
                                                                 Department
@@ -449,7 +449,7 @@ const TermsAccepted = () => {
                                                         )}
                                                     </div>
                                                 </td>
-                                                <td>
+                                                {/* <td>
                                                     <div>
                                                         <strong className="d-block text-truncate">
                                                             {user.warehouse?.name || 'N/A'}
@@ -461,27 +461,27 @@ const TermsAccepted = () => {
                                                             </small>
                                                         )}
                                                     </div>
-                                                </td>
+                                                </td> */}
                                                 <td>
                                                     <div>
                                                         <strong className="d-block">{formatDate(user.termsAcceptedDate)}</strong>
                                                         <small className="text-muted">
                                                             <i className="bi bi-calendar-check me-1"></i>
-                                                            {new Date(user.termsAcceptedDate).toLocaleDateString()}
+                                                            {new Date(user?.termsAcceptedDate).toLocaleDateString()}
                                                         </small>
                                                     </div>
                                                 </td>
                                                 <td>
                                                     <Badge
                                                         bg={
-                                                            getTimeSinceAcceptance(user.termsAcceptedDate).includes('minutes') ||
-                                                                getTimeSinceAcceptance(user.termsAcceptedDate).includes('hours') ? 'success' :
-                                                                getTimeSinceAcceptance(user.termsAcceptedDate).includes('day') ? 'info' :
-                                                                    getTimeSinceAcceptance(user.termsAcceptedDate).includes('month') ? 'warning' : 'secondary'
+                                                            getTimeSinceAcceptance(user?.termsAcceptedDate).includes('minutes') ||
+                                                                getTimeSinceAcceptance(user?.termsAcceptedDate).includes('hours') ? 'success' :
+                                                                getTimeSinceAcceptance(user?.termsAcceptedDate).includes('day') ? 'info' :
+                                                                    getTimeSinceAcceptance(user?.termsAcceptedDate).includes('month') ? 'warning' : 'secondary'
                                                         }
                                                         className="badge-sm"
                                                     >
-                                                        {getTimeSinceAcceptance(user.termsAcceptedDate)}
+                                                        {getTimeSinceAcceptance(user?.termsAcceptedDate)}
                                                     </Badge>
                                                 </td>
                                             </tr>
@@ -561,8 +561,8 @@ const TermsAccepted = () => {
                         <Row>
                             <Col md={6}>
                                 <small className="text-muted">
-                                    Showing {paginatedUsers.length} of {filteredUsers.length} users
-                                    {searchTerm && ` (filtered from ${termsData?.data.totalAccepted || 0} total)`}
+                                    Showing {paginatedUsers.length} of {filteredUsers?.length} users
+                                    {searchTerm && ` (filtered from ${termsData?.data?.totalAccepted || 0} total)`}
                                 </small>
                             </Col>
                             <Col md={6} className="text-end">
@@ -577,7 +577,7 @@ const TermsAccepted = () => {
             </Card>
 
             {/* Terms Content Preview */}
-            {termsData?.data.currentTerms && (
+            {termsData?.data?.currentTerms && (
                 <Card className="mt-4">
                     <Card.Header>
                         <div className="d-flex justify-content-between align-items-center">
@@ -593,11 +593,11 @@ const TermsAccepted = () => {
                                 <Row>
                                     <Col md={6}>
                                         <small className="text-muted d-block">Created Date:</small>
-                                        <strong>{formatDate(termsData.data.currentTerms.createdAt)}</strong>
+                                        <strong>{formatDate(termsData?.data?.currentTerms?.createdAt)}</strong>
                                     </Col>
                                     <Col md={6}>
                                         <small className="text-muted d-block">Last Updated:</small>
-                                        <strong>{formatDate(termsData.data.currentTerms.updatedAt)}</strong>
+                                        <strong>{formatDate(termsData?.data?.currentTerms?.updatedAt)}</strong>
                                     </Col>
                                 </Row>
                             </div>
@@ -612,7 +612,7 @@ const TermsAccepted = () => {
                                         lineHeight: '1.5'
                                     }}
                                 >
-                                    {termsData.data.currentTerms.content.length > 500 ? (
+                                    {termsData?.data?.currentTerms?.content?.length > 500 ? (
                                         <>
                                            <div dangerouslySetInnerHTML={{ __html: safeTermsHTML }} />
                                             <div className="mt-2">
@@ -620,7 +620,7 @@ const TermsAccepted = () => {
                                             </div>
                                         </>
                                     ) : (
-                                        termsData.data.currentTerms.content
+                                        termsData?.data?.currentTerms?.content
                                     )}
                                 </div>
                             </div>

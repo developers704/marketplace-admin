@@ -4,6 +4,7 @@ import { Route, RouteProps } from 'react-router-dom'
 // components
 import PrivateRoute from './PrivateRoute'
 import Customers from '@/pages/ui/Customers'
+import SpecialOrderEmailRecipients from '@/pages/other/settings/specialOrderEmailRecipients'
 
 // lazy load all the views
 
@@ -885,6 +886,13 @@ const customPagesRoutes = {
 			name: "Payment Status",
 			element: <PrivateRoute requiredPermission="Settings" to_do="View">
 				<PaymentStatus />
+			</PrivateRoute>
+		},
+		{
+			path: "/settings/special-order-email-recipients",
+			name: "Special Order Email Recipients",
+			element: <PrivateRoute requiredPermission="Settings" to_do="View">
+				<SpecialOrderEmailRecipients />
 			</PrivateRoute>
 		},
 		{
