@@ -48,6 +48,8 @@ interface Chapter {
 	// deadline: string
 	sequence: number
 	sections: ChapterSection[]
+	chapterImage?: string
+	chapterImageFile?: File
 }
 
 interface CourseFormData {
@@ -184,9 +186,14 @@ const CreateCourse = () => {
 			courseData.append('courseType', courseTypeValue)
 
 			// Prepare chapters with video file references
-			const chaptersWithVideoRefs = chapters.map((chapter, chapterIdx) => ({
-				...chapter,
-				sections: chapter.sections.map((section, sectionIdx) => ({
+			const chaptersWithVideoRefs = chapters.map((chapter, chapterIdx) => {
+				const { chapterImageFile, ...chapterRest } = chapter
+				if (chapterImageFile) {
+					courseData.append(`chapterImage_${chapterIdx}`, chapterImageFile)
+				}
+				return {
+					...chapterRest,
+					sections: chapter.sections.map((section, sectionIdx) => ({
 					...section,
 					content: section.content.map((content, contentIdx) => {
 						let videoKey = ''
@@ -199,7 +206,8 @@ const CreateCourse = () => {
 						return { ...rest, videoKey }
 					}),
 				})),
-			}))
+			}
+			})
 			courseData.append('chapters', JSON.stringify(chaptersWithVideoRefs))
 
 			// Access control
@@ -717,6 +725,24 @@ const CreateCourse = () => {
 													}
 													placeholder="Enter chapter title"
 												/>
+											</Form.Group>
+										</Col>
+										<Col md={12}>
+											<Form.Group className="mb-3">
+												<Form.Label>Chapter Image</Form.Label>
+												<Form.Control
+													type="file"
+													accept="image/*"
+													onChange={(e) => {
+														const file = (e.target as HTMLInputElement).files?.[0]
+														if (file) handleUpdateChapter(chapterIndex, 'chapterImageFile', file)
+													}}
+												/>
+												{chapter.chapterImageFile && (
+													<small className="text-muted d-block mt-1">
+														Selected: {chapter.chapterImageFile.name}
+													</small>
+												)}
 											</Form.Group>
 										</Col>
 										{/* <Col md={12}>

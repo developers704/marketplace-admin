@@ -39,11 +39,14 @@ const VendorCatalogV2 = () => {
 
 	const [items, setItems] = useState<VendorProductListItem[]>([])
 	const [loading, setLoading] = useState(false)
+	const [searchTerm, setSearchTerm] = useState('')
+	const [debouncedSearch, setDebouncedSearch] = useState('')
 	const [page, setPage] = useState(1)
 	const [limit] = useState(20)
 	const [paginatorInfo, setPaginatorInfo] = useState<any>(null)
 	const [importingCatalog, setImportingCatalog] = useState(false)
 	const [importingInventory, setImportingInventory] = useState(false)
+	const [exportingProducts, setExportingProducts] = useState(false)
 	const [inventoryMode, setInventoryMode] = useState<'replace' | 'increment' | 'merge'>('replace')
 	const [viewModal, setViewModal] = useState<{ show: boolean; product: VendorProductListItem | null }>({ show: false, product: null })
 	const [editModal, setEditModal] = useState<{ show: boolean; product: VendorProductListItem | null }>({ show: false, product: null })
@@ -77,7 +80,15 @@ const VendorCatalogV2 = () => {
 	const fetchVendorProducts = async () => {
 		setLoading(true)
 		try {
-			const response = await fetch(`${BASE_API}/api/v2/products/admin?page=${page}&limit=${limit}`, {
+			const params = new URLSearchParams({
+				page: String(page),
+				limit: String(limit),
+			})
+			if (debouncedSearch) {
+				params.set('search', debouncedSearch)
+			}
+
+			const response = await fetch(`${BASE_API}/api/v2/products/admin?${params.toString()}`, {
 				headers: {
 					Authorization: `Bearer ${token}`,
 				},
@@ -97,7 +108,19 @@ const VendorCatalogV2 = () => {
 	useEffect(() => {
 		fetchVendorProducts()
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [page])
+	}, [page, debouncedSearch])
+
+	useEffect(() => {
+		const timeout = setTimeout(() => {
+			setDebouncedSearch(searchTerm.trim())
+		}, 350)
+
+		return () => clearTimeout(timeout)
+	}, [searchTerm])
+
+	useEffect(() => {
+		setPage(1)
+	}, [debouncedSearch])
 
 	const uploadVendorCatalog = async (file: File) => {
 		const formData = new FormData()
@@ -530,6 +553,42 @@ const showSkuDeleteModal = async (product: VendorProductListItem) => {
 		}
 	}
 
+	const exportProductsCsv = async () => {
+		setExportingProducts(true)
+		try {
+			const params = new URLSearchParams()
+			if (debouncedSearch) params.set('search', debouncedSearch)
+
+			const response = await fetch(`${BASE_API}/api/v2/products/export?${params.toString()}`, {
+				headers: {
+					Authorization: `Bearer ${token}`,
+				},
+			})
+			if (!response.ok) {
+				let message = 'Failed to export products'
+				try {
+					const data = await response.json()
+					message = data?.message || message
+				} catch (_) {}
+				throw new Error(message)
+			}
+
+			const blob = await response.blob()
+			const url = window.URL.createObjectURL(blob)
+			const a = document.createElement('a')
+			a.href = url
+			a.download = `vendor-products-export-${new Date().toISOString().slice(0, 10)}.csv`
+			document.body.appendChild(a)
+			a.click()
+			window.URL.revokeObjectURL(url)
+			document.body.removeChild(a)
+		} catch (error: any) {
+			Swal.fire({ title: 'Error', text: error?.message || 'Failed to export products', icon: 'error' })
+		} finally {
+			setExportingProducts(false)
+		}
+	}
+
 	// console.log(items, '===>>> vendor products')
 
 	return (
@@ -572,6 +631,15 @@ const showSkuDeleteModal = async (product: VendorProductListItem) => {
 								onClick={() => downloadTemplate('sku-inventory')}
 							>
 								 Download Inventory Template
+							</Button>
+
+							<Button
+								variant="outline-primary"
+								size="sm"
+								disabled={exportingProducts}
+								onClick={exportProductsCsv}
+							>
+								{exportingProducts ? 'Exporting…' : 'Export Products CSV'}
 							</Button>
 
 							<Button
@@ -623,6 +691,18 @@ const showSkuDeleteModal = async (product: VendorProductListItem) => {
 					/>
 
 					<div className="mt-4">
+						<div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+							<Form.Control
+								type="text"
+								placeholder="Search by vendor model or SKU"
+								value={searchTerm}
+								onChange={(e) => setSearchTerm(e.target.value)}
+								style={{ maxWidth: 360 }}
+							/>
+							<div className="text-muted small">
+								Showing {items.length} of {paginatorInfo?.total ?? items.length} items
+							</div>
+						</div>
 						<Table hover responsive>
 							<thead>
 								<tr>
@@ -643,7 +723,7 @@ const showSkuDeleteModal = async (product: VendorProductListItem) => {
 									</tr>
 								) : items?.length === 0 ? (
 									<tr>
-										<td colSpan={8}>No vendor products found.</td>
+										<td colSpan={8}>No vendor products found for this search.</td>
 									</tr>
 								) : (
 									items.map((p) => (

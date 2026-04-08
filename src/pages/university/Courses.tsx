@@ -277,7 +277,8 @@ const Courses = () => {
                                 variant="success"
                                 onClick={handleCreateCourse}
                                 className="mb-2 mb-sm-0">
-                                <i className="bi bi-plus"></i> Create Course
+                                <i className="bi bi-plus"></i> 
+                                Create Course
                             </Button>
                             {showDeleteButton && (
                                 <Button

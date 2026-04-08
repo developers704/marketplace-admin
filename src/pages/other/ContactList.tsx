@@ -19,6 +19,7 @@ interface UserRecord {
 	id_ui: number
 	id: string
 	name: string
+	userId: string
 	email: string
 	role: string
 	phone: string
@@ -40,6 +41,7 @@ const ContactList = () => {
 	const [itemsPerPage, setItemsPerPage] = useState(15)
 	const [showDeleteButton, setShowDeleteButton] = useState(false)
 	const [isImporting, setIsImporting] = useState(false)
+	const [downloadingTemplate, setDownloadingTemplate] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
 	
 	const [selectAll, setSelectAll] = useState(false)
@@ -80,6 +82,7 @@ const ContactList = () => {
 				id_ui: index + 1,
 				id: item._id,
 				name: item.username || 'No Name',
+				userId: item.userId || 'N/A',
 				email: item.email || 'No Email',
 				role: item.role ? item.role.role_name : 'No Role',
 				phone: item.phone_number || 'No Phone Number',
@@ -235,6 +238,7 @@ const ContactList = () => {
 		{ width: '20px', type: 'checkbox' },
 		{ width: '100px', type: 'text' },
 		{ width: '100px', type: 'text' },
+		{ width: '100px', type: 'text' },
 		{ width: '80px', type: 'number' },
 		{ width: '80px', type: 'number' },
 		{ width: '80px', type: 'number' },
@@ -245,6 +249,40 @@ const ContactList = () => {
 
 const handleImportUsers = () => {
     fileInputRef.current?.click()
+}
+
+const handleDownloadTemplate = async () => {
+	try {
+		setDownloadingTemplate(true)
+		const response = await fetch(`${BASE_API}/api/users/bulk-upload-users/template`, {
+			method: 'GET',
+			headers: {
+				Authorization: `Bearer ${user?.token}`,
+			},
+		})
+		if (!response.ok) {
+			throw new Error('Failed to download template')
+		}
+
+		const blob = await response.blob()
+		const url = window.URL.createObjectURL(blob)
+		const link = document.createElement('a')
+		link.href = url
+		link.download = 'bulk-users-template.csv'
+		document.body.appendChild(link)
+		link.click()
+		document.body.removeChild(link)
+		window.URL.revokeObjectURL(url)
+	} catch (error: any) {
+		Swal.fire({
+			title: 'Error',
+			text: error?.message || 'Failed to download template',
+			icon: 'error',
+			timer: 1500,
+		})
+	} finally {
+		setDownloadingTemplate(false)
+	}
 }
 
 const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -323,6 +361,24 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
 									</>
 								)}
 							</Button>							 */}
+							<Button
+								className="d-flex align-items-center justify-content-center"
+								onClick={handleDownloadTemplate}
+								disabled={downloadingTemplate}
+								style={{ backgroundColor: 'orange', border: 'none' }}
+							>
+								{downloadingTemplate ? (
+									<>
+										<span className="spinner-border spinner-border-sm me-1" role="status" />
+										Template...
+									</>
+								) : (
+									<>
+										<i className="ri-download-2-line me-1"></i>
+										Template
+									</>
+								)}
+							</Button>
 							<Button
 								className="d-flex align-items-center justify-content-center"
 								onClick={handleImportUsers}
@@ -423,7 +479,7 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
 													checked={selectAll}
 												/>
 											</th>
-											{['S No', 'Name', 'Email', 'Role', "Store", "Department", 'Phone Number', 'Action'].map(
+											{['S No', 'Name', 'User ID', 'Email', 'Role', "Store", "Department", 'Phone Number', 'Action'].map(
 												(header) => (
 													<th key={header}>
 														<span>
@@ -451,6 +507,7 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
 														</td>
 														<td>{(currentPage - 1) * itemsPerPage + idx + 1}</td>
 														<td>{record.name}</td>
+														<td>{record.userId}</td>
 														<td>{record.email}</td>
 														<td>{record.role}</td>
 														<td>{record?.warehouse}</td>
@@ -478,7 +535,7 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
 												))
 											) : (
 												<tr>
-													<td colSpan={7} className="text-center">
+													<td colSpan={9} className="text-center">
 														No users found
 													</td>
 												</tr>

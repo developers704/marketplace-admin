@@ -29,6 +29,7 @@ interface SelectOption {
 
 interface UpdateUserFormData {
 	username: string;
+	userId: string;
 	email: string;
 	phone_number: string;
 	userRoleId: string;
@@ -39,7 +40,16 @@ interface UpdateUserFormData {
 
 // Schema for form validation
 const schema = yup.object().shape({
-	username: yup.string().required('Please enter Username'),
+	username: yup
+		.string()
+		.trim()
+		.min(2, 'Username must be at least 2 characters')
+		.required('Please enter Username'),
+	userId: yup
+		.string()
+		.trim()
+		.min(2, 'User ID must be at least 2 characters')
+		.required('Please enter User ID'),
 	email: yup
 		.string()
 		.email('Please enter a valid email')
@@ -77,6 +87,7 @@ const UserUpdate = () => {
 		resolver: yupResolver(schema),
 		defaultValues: {
 			username: '',
+			userId: '',
 			email: '',
 			phone_number: '',
 			role_name: '',
@@ -182,6 +193,7 @@ const UserUpdate = () => {
 
 				const userData = await userResponse.json()
 				setValue('username', userData.username)
+				setValue('userId', userData.userId || '')
 				setValue('email', userData.email)
 				setValue('phone_number', userData.phone_number)
 
@@ -228,6 +240,7 @@ const UserUpdate = () => {
 
 			const formattedData: UpdateUserFormData = {
 				username: data.username,
+				userId: data.userId,
 				email: data.email,
 				phone_number: data.phone_number,
 				userRoleId: data.role_name, // Send _id instead of role_name
@@ -344,6 +357,7 @@ const UserUpdate = () => {
 						<Row>
 							<Col lg={6}>
 								<FormInput
+									required
 									label="Name"
 									type="text"
 									name="username"
@@ -351,8 +365,24 @@ const UserUpdate = () => {
 									containerClass="mb-3"
 									register={register}
 									errors={errors}
+									minLength={2}
 								/>
 							</Col>
+							<Col lg={6}>
+								<FormInput
+									required
+									label="User ID"
+									type="text"
+									name="userId"
+									placeholder="Enter User ID"
+									containerClass="mb-3"
+									register={register}
+									errors={errors}
+									minLength={2}
+								/>
+							</Col>
+						</Row>
+						<Row>
 							<Col lg={6}>
 								<Form.Group className="mb-3">
 									<Form.Label>Role</Form.Label>
@@ -379,6 +409,17 @@ const UserUpdate = () => {
 										</Form.Control.Feedback>
 									)}
 								</Form.Group>
+							</Col>
+							<Col lg={6}>
+								<FormInput
+									label="Phone Number"
+									type="number"
+									name="phone_number"
+									placeholder="Enter Your Phone Number"
+									register={register}
+									containerClass="mb-3"
+									errors={errors}
+								/>
 							</Col>
 						</Row>
 						<Row>
@@ -546,19 +587,6 @@ const UserUpdate = () => {
 							</Col>
 							<Col lg={6}>
 								<FormInput
-									label="Phone Number"
-									type="number"
-									name="phone_number"
-									placeholder="Enter Your Phone Number"
-									register={register}
-									containerClass="mb-3"
-									errors={errors}
-								/>
-							</Col>
-						</Row>
-						<Row>
-							<Col lg={6}>
-								<FormInput
 									label="Password"
 									type="password"
 									name="password"
@@ -569,6 +597,9 @@ const UserUpdate = () => {
 								/>
 							</Col>
 						</Row>
+						{/* <Row>
+							
+						</Row> */}
 						<Button
 							type="submit"
 							variant="success"

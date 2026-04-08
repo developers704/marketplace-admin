@@ -15,7 +15,16 @@ import { useToggle } from '@/hooks'
 import DepartmentModal from '@/components/modals/DepartmentModal'
 const schemaResolver = yupResolver(
 	yup.object().shape({
-		username: yup.string().required('Please enter Username'),
+		username: yup
+			.string()
+			.trim()
+			.min(2, 'Username must be at least 2 characters')
+			.required('Please enter Username'),
+		userId: yup
+			.string()
+			.trim()
+			.min(2, 'User ID must be at least 2 characters')
+			.required('Please enter User ID'),
 		email: yup
 			.string()
 			.email('Please enter a valid email')
@@ -177,6 +186,7 @@ const UserCreate = () => {
 
 			const formattedData = {
 				username: data.username,
+				userId: data.userId,
 				email: data.email,
 				password: data.password,
 				phone_number: data.phone_number,
@@ -212,6 +222,7 @@ const UserCreate = () => {
 			})
 			reset({
 				username: '',
+				userId: '',
 				email: '',
 				password: '',
 				phone_number: '',
@@ -273,8 +284,26 @@ const UserCreate = () => {
 									key="username"
 									errors={errors}
 									control={control}
+									// minLength={2}
 								/>
 							</Col>
+							<Col lg={6}>
+								<FormInput
+									required
+									label="User ID"
+									type="text"
+									name="userId"
+									placeholder="Enter User ID"
+									containerClass="mb-3"
+									register={register}
+									key="userId"
+									errors={errors}
+									control={control}
+									minLength={2}
+								/>
+							</Col>
+						</Row>
+						<Row>
 							<Col lg={6}>
 								<Form.Group className="mb-3">
 									<Form.Label>Role</Form.Label>
@@ -300,6 +329,22 @@ const UserCreate = () => {
   							)}
 								</Form.Group>
 							</Col>
+								<Col lg={6}>
+								<FormInput
+									required
+									label="Phone Number"
+									type="number"
+									name="phone_number"
+									placeholder="Enter Your Phone Number"
+									containerClass="mb-3"
+									register={register}
+									key="phone_number"
+									errors={errors}
+									control={control}
+								/>
+							</Col>
+
+
 
 						</Row>
 						<Row>
@@ -472,23 +517,6 @@ const UserCreate = () => {
 							</Col>
 							<Col lg={6}>
 								<FormInput
-									required
-									label="Phone Number"
-									type="number"
-									name="phone_number"
-									placeholder="Enter Your Phone Number"
-									containerClass="mb-3"
-									register={register}
-									key="phone_number"
-									errors={errors}
-									control={control}
-								/>
-							</Col>
-
-						</Row>
-						<Row>
-							<Col lg={6}>
-								<FormInput
 									label="Password"
 									type="password"
 									name="password"
@@ -501,8 +529,12 @@ const UserCreate = () => {
 								/>
 							</Col>
 
-
 						</Row>
+						{/* <Row>
+						
+
+
+						</Row> */}
 
 						<Button
 							type="submit"
