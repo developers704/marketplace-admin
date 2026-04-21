@@ -1,8 +1,19 @@
 import { PageBreadcrumb } from '@/components'
-import { Button, Card, Form, Table, Pagination as BootstrapPagination, Modal, Dropdown } from 'react-bootstrap'
+import {
+	Button,
+	Card,
+	Form,
+	Table,
+	Pagination as BootstrapPagination,
+	Modal,
+	Dropdown,
+	ProgressBar,
+	Alert,
+} from 'react-bootstrap'
 import { useAuthContext } from '@/common'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import Swal from 'sweetalert2'
+import { io, type Socket } from 'socket.io-client'
 import { MdDelete, MdEdit, MdVisibility } from 'react-icons/md'
 import { FaAngleRight ,FaAngleDown  } from "react-icons/fa6";
 import './VendorCatalogViewModal.css'
@@ -32,6 +43,70 @@ type VendorProductListItem = {
 	}
 }
 
+/** Live vendor CSV import (matches backend Socket.IO + ImportJob API) */
+type CatalogImportLive = {
+	jobId: string
+	status: string
+	totalRows: number
+	validRows: number
+	processedRows: number
+	failedRows: number
+	progressPercent: number
+	errorMessage?: string | null
+	errorReportUrl?: string | null
+	/** Original uploaded import file (kept on server for audit) */
+	sourceCsvUrl?: string | null
+	/** Which bulk job is running (for labels + completion download name) */
+	importKind?: 'vendor' | 'sku'
+}
+
+const importKindFromJobType = (t?: string | null): 'vendor' | 'sku' | undefined => {
+	if (!t) return undefined
+	const s = String(t)
+	if (s.includes('sku-inventory')) return 'sku'
+	return 'vendor'
+}
+
+const getSocketOrigin = (baseApi: string) => {
+	const raw = String(baseApi || '').trim().replace(/\/$/, '')
+	try {
+		return new URL(raw).origin
+	} catch {
+		return raw
+	}
+}
+
+/** Survives client-side navigation (same tab); cleared when import finishes or job is gone */
+const ACTIVE_IMPORT_STORAGE_KEY = 'vendorCatalogV2_activeImportJobId'
+
+const persistActiveImportJobId = (jobId: string) => {
+	try {
+		sessionStorage.setItem(ACTIVE_IMPORT_STORAGE_KEY, jobId)
+	} catch {
+		/* private mode / quota */
+	}
+}
+
+const clearActiveImportJobId = () => {
+	try {
+		sessionStorage.removeItem(ACTIVE_IMPORT_STORAGE_KEY)
+	} catch {
+		/* ignore */
+	}
+}
+
+/** One Swal / refresh per job (socket + poll + remount / Strict Mode) */
+const tryClaimImportCompletionUi = (jobId: string): boolean => {
+	try {
+		const k = `${ACTIVE_IMPORT_STORAGE_KEY}:uiHandled:${jobId}`
+		if (sessionStorage.getItem(k)) return false
+		sessionStorage.setItem(k, '1')
+		return true
+	} catch {
+		return true
+	}
+}
+
 const VendorCatalogV2 = () => {
 	const BASE_API = import.meta.env.VITE_BASE_API
 	const { user } = useAuthContext()
@@ -45,6 +120,7 @@ const VendorCatalogV2 = () => {
 	const [limit] = useState(20)
 	const [paginatorInfo, setPaginatorInfo] = useState<any>(null)
 	const [importingCatalog, setImportingCatalog] = useState(false)
+	const [catalogImportProgress, setCatalogImportProgress] = useState<CatalogImportLive | null>(null)
 	const [importingInventory, setImportingInventory] = useState(false)
 	const [exportingProducts, setExportingProducts] = useState(false)
 	const [inventoryMode, setInventoryMode] = useState<'replace' | 'increment' | 'merge'>('replace')
@@ -56,6 +132,9 @@ const VendorCatalogV2 = () => {
 
 	const vendorFileInputRef = useRef<HTMLInputElement>(null)
 	const inventoryFileInputRef = useRef<HTMLInputElement>(null)
+	const socketRef = useRef<Socket | null>(null)
+	const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+	const catalogImportProgressRef = useRef<CatalogImportLive | null>(null)
 	const toggleSku = (id:string) => {
 		setExpandedSku(prev => (prev ===id ? null : id))
 	}
@@ -77,11 +156,12 @@ const VendorCatalogV2 = () => {
 		}
 	}
 
-	const fetchVendorProducts = async () => {
+	const fetchVendorProducts = async (overridePage?: number) => {
 		setLoading(true)
 		try {
+			const pageToUse = overridePage ?? page
 			const params = new URLSearchParams({
-				page: String(page),
+				page: String(pageToUse),
 				limit: String(limit),
 			})
 			if (debouncedSearch) {
@@ -104,6 +184,226 @@ const VendorCatalogV2 = () => {
 			setLoading(false)
 		}
 	}
+
+	const fetchVendorProductsRef = useRef(fetchVendorProducts)
+	useEffect(() => {
+		fetchVendorProductsRef.current = fetchVendorProducts
+	})
+
+	useEffect(() => {
+		catalogImportProgressRef.current = catalogImportProgress
+	}, [catalogImportProgress])
+
+	const runImportCompletion = useCallback(
+		async (live: CatalogImportLive) => {
+			if (!tryClaimImportCompletionUi(live.jobId)) return
+			clearActiveImportJobId()
+
+			if (pollRef.current) {
+				clearInterval(pollRef.current)
+				pollRef.current = null
+			}
+			if (socketRef.current) {
+				socketRef.current.disconnect()
+				socketRef.current = null
+			}
+
+			setCatalogImportProgress(null)
+			setPage(1)
+
+			await fetchVendorProductsRef.current(1)
+
+			const kindLabel = live.importKind === 'sku' ? 'SKU inventory' : 'Vendor catalog'
+
+			if (live.status === 'failed') {
+				await Swal.fire({
+					title: `${kindLabel} import failed`,
+					icon: 'error',
+					text: live.errorMessage || 'The import job failed after retries.',
+				})
+				return
+			}
+
+			const errUrl = live.errorReportUrl
+			const errName =
+				live.importKind === 'sku' ? 'sku-inventory-errors.csv' : 'vendor-catalog-errors.csv'
+			await Swal.fire({
+				title: `${kindLabel} import complete`,
+				icon: 'success',
+				html: `
+					<div style="text-align:left">
+						<p><b>Total rows (file):</b> ${live.totalRows}</p>
+						<p><b>Valid rows:</b> ${live.validRows}</p>
+						<p><b>Failed rows (validation):</b> ${live.failedRows}</p>
+						${
+							errUrl
+								? `<p><a href="${BASE_API}${errUrl}" target="_blank" rel="noreferrer">Download error report CSV</a></p>`
+								: ''
+						}
+					</div>
+				`,
+			})
+			if (errUrl) {
+				await downloadErrorReport({ url: errUrl, filename: errName }, errName)
+			}
+		},
+		[BASE_API]
+	)
+
+	/** Restore in-progress import after navigating away and back (state is lost on unmount) */
+	useEffect(() => {
+		if (!token) return
+		let cancelled = false
+
+		const mapJob = (j: Record<string, unknown>, jobId: string): CatalogImportLive => {
+			const type = String(j.type ?? '')
+			const importKind: 'vendor' | 'sku' = type.includes('sku-inventory') ? 'sku' : 'vendor'
+			return {
+				jobId: String(j.jobId || jobId),
+				status: String(j.status ?? 'queued'),
+				totalRows: Number(j.totalRows) || 0,
+				validRows: Number(j.validRows) || 0,
+				processedRows: Number(j.processedRows) || 0,
+				failedRows: Number(j.failedRows) || 0,
+				progressPercent: Math.min(100, Math.max(0, Number(j.progressPercent) || 0)),
+				errorMessage: (j.errorMessage as string) ?? null,
+				errorReportUrl: (j.errorReportUrl as string) ?? null,
+				sourceCsvUrl: (j.sourceCsvUrl as string) ?? null,
+				importKind,
+			}
+		}
+
+		const hydrate = async () => {
+			let storedJobId: string | null = null
+			try {
+				storedJobId = sessionStorage.getItem(ACTIVE_IMPORT_STORAGE_KEY)
+			} catch {
+				return
+			}
+			if (!storedJobId?.trim()) return
+
+			try {
+				const r = await fetch(
+					`${BASE_API}/api/v2/bulk/vendor-catalog/import/jobs/${encodeURIComponent(storedJobId)}`,
+					{ headers: { Authorization: `Bearer ${token}` } }
+				)
+				const data = await r.json()
+				if (cancelled) return
+
+				if (!r.ok || !data?.success || !data?.job) {
+					clearActiveImportJobId()
+					return
+				}
+
+				const live = mapJob(data.job as Record<string, unknown>, storedJobId)
+
+				if (live.status === 'completed' || live.status === 'failed') {
+					clearActiveImportJobId()
+					void runImportCompletion(live)
+					return
+				}
+
+				setCatalogImportProgress(live)
+			} catch {
+				if (!cancelled) clearActiveImportJobId()
+			}
+		}
+
+		void hydrate()
+		return () => {
+			cancelled = true
+		}
+	}, [token, BASE_API, runImportCompletion])
+
+	/** Socket.IO + polling for vendor CSV import job */
+	useEffect(() => {
+		const jobId = catalogImportProgress?.jobId
+		if (!jobId || !token) return
+
+		const origin = getSocketOrigin(BASE_API)
+		const socket = io(origin, {
+			transports: ['websocket', 'polling'],
+			auth: { token },
+		})
+		socketRef.current = socket
+
+		const applyPayload = (p: Partial<CatalogImportLive> & { jobId?: string; type?: string | null }) => {
+			if (!p?.jobId || p.jobId !== jobId) return
+			const prev = catalogImportProgressRef.current
+			const fromType = importKindFromJobType(p.type)
+			const next: CatalogImportLive = {
+				jobId,
+				status: String(p.status ?? 'processing'),
+				totalRows: Number(p.totalRows) || 0,
+				validRows: Number(p.validRows) || 0,
+				processedRows: Number(p.processedRows) || 0,
+				failedRows: Number(p.failedRows) || 0,
+				progressPercent: Math.min(100, Math.max(0, Number(p.progressPercent) || 0)),
+				errorMessage: p.errorMessage ?? null,
+				errorReportUrl: p.errorReportUrl ?? null,
+				sourceCsvUrl: p.sourceCsvUrl ?? null,
+				importKind:
+					fromType ??
+					p.importKind ??
+					(prev && prev.jobId === jobId && prev.importKind ? prev.importKind : 'vendor'),
+			}
+			setCatalogImportProgress(next)
+			if (next.status === 'completed' || next.status === 'failed') {
+				void runImportCompletion(next)
+			}
+		}
+
+		socket.on('connect', () => {
+			socket.emit('subscribeVendorImport', { jobId, token }, (ack: { ok?: boolean; error?: string }) => {
+				if (ack && ack.ok === false) {
+					console.warn('[vendor import] subscribeVendorImport:', ack.error)
+				}
+			})
+		})
+
+		socket.on('vendorImportProgress', (p: CatalogImportLive & { type?: string | null }) => {
+			applyPayload(p)
+		})
+
+		const poll = async () => {
+			try {
+				const r = await fetch(
+					`${BASE_API}/api/v2/bulk/vendor-catalog/import/jobs/${encodeURIComponent(jobId)}`,
+					{ headers: { Authorization: `Bearer ${token}` } }
+				)
+				const data = await r.json()
+				if (!r.ok || !data?.success || !data?.job) return
+				const j = data.job
+				applyPayload({
+					jobId: j.jobId,
+					type: j.type,
+					status: j.status,
+					totalRows: j.totalRows,
+					validRows: j.validRows,
+					processedRows: j.processedRows,
+					failedRows: j.failedRows,
+					progressPercent: j.progressPercent,
+					errorMessage: j.errorMessage,
+					errorReportUrl: j.errorReportUrl,
+					sourceCsvUrl: j.sourceCsvUrl,
+				})
+			} catch (e) {
+				console.warn('[vendor import] poll failed', e)
+			}
+		}
+
+		void poll()
+		pollRef.current = setInterval(() => void poll(), 2500)
+
+		return () => {
+			socket.disconnect()
+			if (socketRef.current === socket) socketRef.current = null
+			if (pollRef.current) {
+				clearInterval(pollRef.current)
+				pollRef.current = null
+			}
+		}
+	}, [catalogImportProgress?.jobId, token, BASE_API, runImportCompletion])
 
 	useEffect(() => {
 		fetchVendorProducts()
@@ -138,7 +438,6 @@ const VendorCatalogV2 = () => {
 			const data = await response.json()
 
 			if (!response.ok) {
-				// If backend returns an error report, still let admin download it
 				if (data?.errorReport?.url) {
 					await Swal.fire({
 						title: 'Import Failed',
@@ -157,6 +456,31 @@ const VendorCatalogV2 = () => {
 				throw new Error(data?.message || 'Vendor catalog import failed')
 			}
 
+			/** Backend queues import (202) and returns jobId for Socket.IO + GET status */
+			if ((response.status === 202 || data?.jobId) && data?.jobId) {
+				persistActiveImportJobId(data.jobId)
+				setCatalogImportProgress({
+					jobId: data.jobId,
+					status: 'queued',
+					totalRows: 0,
+					validRows: 0,
+					processedRows: 0,
+					failedRows: 0,
+					progressPercent: 0,
+					importKind: 'vendor',
+				})
+				void Swal.fire({
+					icon: 'info',
+					title: 'Import started',
+					text: 'Live progress is shown below. You can continue using this page.',
+					timer: 2400,
+					showConfirmButton: false,
+				})
+				setPage(1)
+				return
+			}
+
+			/** Fallback: legacy synchronous 200 response */
 			Swal.fire({
 				title: 'Import Complete',
 				icon: 'success',
@@ -177,7 +501,6 @@ const VendorCatalogV2 = () => {
 			if (data?.errorReport?.url) {
 				await downloadErrorReport(data.errorReport, 'vendor-catalog-errors.csv')
 			}
-
 			setPage(1)
 			await fetchVendorProducts()
 		} catch (error: any) {
@@ -223,6 +546,28 @@ const VendorCatalogV2 = () => {
 					return
 				}
 				throw new Error(data?.message || 'SKU inventory import failed')
+			}
+
+			if ((response.status === 202 || data?.jobId) && data?.jobId) {
+				persistActiveImportJobId(data.jobId)
+				setCatalogImportProgress({
+					jobId: data.jobId,
+					status: 'queued',
+					totalRows: 0,
+					validRows: 0,
+					processedRows: 0,
+					failedRows: 0,
+					progressPercent: 0,
+					importKind: 'sku',
+				})
+				void Swal.fire({
+					icon: 'info',
+					title: 'Inventory import started',
+					text: 'Live progress is shown below. You can continue using this page.',
+					timer: 2400,
+					showConfirmButton: false,
+				})
+				return
 			}
 
 			Swal.fire({
@@ -644,15 +989,27 @@ const showSkuDeleteModal = async (product: VendorProductListItem) => {
 
 							<Button
 								variant="primary"
-								disabled={importingCatalog}
+								disabled={
+									importingCatalog ||
+									importingInventory ||
+									!!catalogImportProgress
+								}
 								onClick={() => vendorFileInputRef.current?.click()}
 							>
-								{importingCatalog ? 'Importing…' : 'Import Product CSV'}
+								{importingCatalog
+									? 'Uploading…'
+									: catalogImportProgress
+										? 'Import running…'
+										: 'Import Product CSV'}
 							</Button>
 
 							<Button
 								variant="secondary"
-								disabled={importingInventory}
+								disabled={
+									importingInventory ||
+									importingCatalog ||
+									!!catalogImportProgress
+								}
 								onClick={() => inventoryFileInputRef.current?.click()}
 							>
 								{importingInventory ? 'Importing…' : 'Import Inventory CSV'}
@@ -689,6 +1046,86 @@ const showSkuDeleteModal = async (product: VendorProductListItem) => {
 							if (file) uploadSkuInventory(file)
 						}}
 					/>
+
+					{catalogImportProgress && (
+						<Alert
+							variant={
+								catalogImportProgress.status === 'failed'
+									? 'danger'
+									: catalogImportProgress.status === 'completed'
+										? 'success'
+										: 'info'
+							}
+							className="mt-3 mb-0"
+						>
+							<div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+								<strong>
+									{catalogImportProgress.importKind === 'sku'
+										? 'SKU inventory import'
+										: 'Vendor catalog import'}
+								</strong>
+								<span className="badge bg-secondary text-uppercase">
+									{catalogImportProgress.status}
+								</span>
+							</div>
+							<ProgressBar
+								now={catalogImportProgress.progressPercent}
+								label={`${catalogImportProgress.progressPercent}%`}
+								animated={
+									catalogImportProgress.status !== 'completed' &&
+									catalogImportProgress.status !== 'failed'
+								}
+							/>
+							{catalogImportProgress.status === 'processing' &&
+								catalogImportProgress.validRows > 0 &&
+								catalogImportProgress.processedRows >= catalogImportProgress.validRows && (
+									<div className="small text-muted mt-1">
+										Finalizing (updating cache and product listings)…
+									</div>
+								)}
+							<div className="small text-muted mt-2 d-flex flex-wrap gap-3">
+								<span>
+									<b>Processed:</b> {catalogImportProgress.processedRows}
+									{catalogImportProgress.validRows
+										? ` / ${catalogImportProgress.validRows} valid`
+										: ''}
+								</span>
+								<span>
+									<b>Total (file):</b> {catalogImportProgress.totalRows}
+								</span>
+								<span>
+									<b>Failed (validation):</b> {catalogImportProgress.failedRows}
+								</span>
+							</div>
+							{catalogImportProgress.errorMessage && (
+								<div className="small text-danger mt-2">{catalogImportProgress.errorMessage}</div>
+							)}
+							{(catalogImportProgress.sourceCsvUrl ||
+								catalogImportProgress.errorReportUrl) &&
+								catalogImportProgress.status !== 'queued' && (
+								<div className="small mt-2 d-flex flex-wrap gap-3">
+									{catalogImportProgress.sourceCsvUrl && (
+										<a
+											href={`${BASE_API}${catalogImportProgress.sourceCsvUrl}`}
+											target="_blank"
+											rel="noreferrer"
+										>
+											Download uploaded import CSV
+										</a>
+									)}
+									{catalogImportProgress.errorReportUrl && (
+										<a
+											href={`${BASE_API}${catalogImportProgress.errorReportUrl}`}
+											target="_blank"
+											rel="noreferrer"
+										>
+											Download error report CSV
+										</a>
+									)}
+								</div>
+							)}
+						</Alert>
+					)}
 
 					<div className="mt-4">
 						<div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
