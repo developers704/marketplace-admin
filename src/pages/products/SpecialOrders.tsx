@@ -42,19 +42,30 @@ const STATUS_OPTIONS = [
 	{ value: 'SUBMITTED', label: 'Submitted' },
 	{ value: 'RECEIVED_BY_SPO_TEAM', label: 'Received by SPO Team' },
 	{ value: 'WIP', label: 'WIP' },
-	{ value: 'COMPLETED', label: 'Completed' },
-	{ value: 'CLOSED', label: 'Closed' },
+	{ value: 'CLOSED', label: 'Delivered' },
+	// { value: 'RECEIVED', label: 'Received' },
+	{ value: 'FINALIZED', label: 'Received' },
 ]
+
+/** Admin cannot set FINALIZED via PATCH (requester confirms receipt). */
+const STATUS_OPTIONS_ADMIN_EDIT = STATUS_OPTIONS.filter((s) => s.value !== 'FINALIZED')
+
+const statusLabel = (status: string) => {
+	if (status === 'CLOSED') return 'Delivered'
+	if (status === 'FINALIZED') return 'Finalized'
+	return status?.replace(/_/g, ' ') || '—'
+}
 
 const statusBadge = (status: string) => {
 	const map: Record<string, string> = {
 		SUBMITTED: 'warning',
 		RECEIVED_BY_SPO_TEAM: 'info',
 		WIP: 'primary',
-		COMPLETED: 'success',
-		CLOSED: 'secondary',
+		CLOSED: 'info',
+		FINALIZED: 'dark',
+		RECEIVED: 'success',
 	}
-	return <Badge bg={map[status] || 'secondary'}>{status?.replace(/_/g, ' ')}</Badge>
+	return <Badge bg={map[status] || 'secondary'}>{statusLabel(status)}</Badge>
 }
 
 const SpecialOrders = () => {
@@ -129,13 +140,21 @@ const SpecialOrders = () => {
 		if (!editModal) return
 		setSaving(true)
 		try {
+			const body =
+				editModal.status === 'FINALIZEDs'
+					? {
+							assignedTo: editForm.assignedTo,
+							eta: editForm.eta,
+							notes: editForm.notes,
+						}
+					: editForm
 			const res = await fetch(`${BASE_API}/api/special-orders/${editModal._id}`, {
 				method: 'PATCH',
 				headers: {
 					'Content-Type': 'application/json',
 					Authorization: `Bearer ${token}`,
 				},
-				body: JSON.stringify(editForm),
+				body: JSON.stringify(body),
 			})
 			const data = await res.json()
 			if (!res.ok) throw new Error(data?.message || 'Update failed')
@@ -221,6 +240,7 @@ const SpecialOrders = () => {
 							<tr>
 								<th>Ticket</th>
 								<th>Receipt</th>
+								<th>ETA</th>
 								<th>Drawing</th>
 								<th>Store</th>
 								<th>Customer #</th>
@@ -231,14 +251,15 @@ const SpecialOrders = () => {
 						</thead>
 						<tbody>
 							{loading ? (
-								<tr><td colSpan={4}>Loading…</td></tr>
+								<tr><td colSpan={9}>Loading…</td></tr>
 							) : rows.length === 0 ? (
-								<tr><td colSpan={4} className="text-center text-muted">No special orders found.</td></tr>
+								<tr><td colSpan={9} className="text-center text-muted">No special orders found.</td></tr>
 							) : (
 								rows.map((r) => (
 									<tr key={r._id}>
 										<td><strong>{r?.ticketNumber || '—'}</strong></td>
 											<td>{r?.receiptNumber || '—'}</td>
+										<td>{r?.eta ? new Date(r.eta).toLocaleDateString() : '—'}</td>
 										<td>
 											{r?.canvasDrawing ? (
 												<Badge bg="success">Yes</Badge>
@@ -248,7 +269,7 @@ const SpecialOrders = () => {
 										</td>
 										<td>{r?.storeId?.name || '—'}</td>
 										<td>{r?.customerNumber || '—'}</td>
-										<td>{statusBadge(r?.status)}</td>
+										<td>{statusBadge(r?.status === "FINALIZED" ? "Order Received to store" : r?.status || '')}</td>
 										<td>{r?.assignedTo?.replace(/_/g, ' ') || '—'}</td>
 										<td>
 											<div className="d-flex gap-1 flex-wrap">
@@ -280,14 +301,21 @@ const SpecialOrders = () => {
 				<Modal.Body>
 					<Form.Group className="mb-3">
 						<Form.Label>Status</Form.Label>
-						<Form.Select
-							value={editForm.status}
-							onChange={(e) => setEditForm((p) => ({ ...p, status: e.target.value }))}
-						>
-							{STATUS_OPTIONS.map((s) => (
-								<option key={s.value} value={s.value}>{s.label}</option>
-							))}
-						</Form.Select>
+						{editModal?.status === 'FINALIZEDs' ? (
+							<div className="py-2">
+								<Badge bg="dark">Order Received to store</Badge>
+								<div className="text-muted small mt-1">Set by the customer after delivery.</div>
+							</div>
+						) : (
+							<Form.Select
+								value={editForm.status}
+								onChange={(e) => setEditForm((p) => ({ ...p, status: e.target.value }))}
+							>
+								{STATUS_OPTIONS_ADMIN_EDIT.map((s) => (
+									<option key={s.value} value={s.value}>{s.label}</option>
+								))}
+							</Form.Select>
+						)}
 					</Form.Group>
 					<Form.Group className="mb-3">
 						<Form.Label>Assigned To</Form.Label>

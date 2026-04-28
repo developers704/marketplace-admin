@@ -270,13 +270,13 @@ const SpecialOrderEmailRecipients = () => {
             </Form.Select>
           </div>
 
-          <div>
+          {/* <div>
           <iframe 
           src="https://docs.google.com/spreadsheets/d/1iFw4dkDSo5WN2EBTfrYBMp_aHlj20K1sKCT-d3YefyE/edit?usp=sharing&widget=true&headers=false"
           width="100%" 
           height="600">
           </iframe>
-          </div>
+          </div> */}
 
           <div className="table-responsive rounded-3 overflow-hidden border shadow-sm">
             <Table striped bordered hover className="mb-0">

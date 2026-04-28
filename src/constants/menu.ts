@@ -1,6 +1,8 @@
 export interface MenuItemTypes {
 	key: string
 	label: string
+	/** Shown on Ecommerce Settings cards when set; otherwise a default line is used. */
+	description?: string
 	isTitle?: boolean
 	icon?: React.ComponentType | any
 	url?: string
@@ -29,7 +31,7 @@ import { CiHospital1 } from 'react-icons/ci'
 import { MdFolderSpecial } from 'react-icons/md'
 import { MdOutlineRequestQuote } from 'react-icons/md'
 import { FaUsers } from 'react-icons/fa6'
-import { FaWarehouse } from 'react-icons/fa6'
+import { FaFolderOpen, FaWarehouse } from 'react-icons/fa6'
 import { HiClipboardDocumentList } from 'react-icons/hi2'
 import { IoSettingsSharp } from 'react-icons/io5'
 import { MdMedicalServices } from 'react-icons/md'
@@ -81,55 +83,49 @@ const MENU_ITEMS: MenuItemTypes[] = [
 		isTitle: false,
 		icon: MdProductionQuantityLimits,
 		children: [
-		
-				{
-					key: 'View',
-					label: 'Products',
-					url: '/products/vendor-catalog-v2',
-					parentKey: 'products',
-				},
-				{
-					key: 'View',
-					label: 'Product Reviews',
-					url: '/products/customer-reviews',
-					parentKey: 'products',
-				},
-				// {
-				// 	key: 'View',
-				// 	label: 'Purchase Approval',
-				// 	url: '/products/b2b-purchase-requests-v2',
-				// 	parentKey: 'products',
-				// },
-				{
-					key: 'View',
-					label: 'Store Inventory',
-					url: '/products/store-inventory-v2',
-					parentKey: 'products',
-				},
-				{
-					key: 'View',
-					label: 'Special Orders (SPO)',
-					url: '/products/special-orders',
-					parentKey: 'products',
-				},
-				// {
-				// 	key: 'View',
-				// 	label: 'Items Management',
-				// 	url: '/products/all-product',
-				// 	parentKey: 'products',
-				// },
-				{
-					key: 'View',
-					label: 'Categories',
-					url: '/products/categories',
-					parentKey: 'products',
-				},
-				{
-					key: 'View',
-					label: 'Sub-Categories',
-					url: '/products/sub-category',
-					parentKey: 'products',
-				},
+			{
+				key: 'View',
+				label: 'Products',
+				url: '/products/vendor-catalog-v2',
+				parentKey: 'products',
+			},
+			{
+				key: 'View',
+				label: 'Product Reviews',
+				url: '/products/customer-reviews',
+				parentKey: 'products',
+			},
+			// {
+			// 	key: 'View',
+			// 	label: 'Purchase Approval',
+			// 	url: '/products/b2b-purchase-requests-v2',
+			// 	parentKey: 'products',
+			// },
+			{
+				key: 'View',
+				label: 'Store Inventory',
+				url: '/products/store-inventory-v2',
+				parentKey: 'products',
+			},
+
+			// {
+			// 	key: 'View',
+			// 	label: 'Items Management',
+			// 	url: '/products/all-product',
+			// 	parentKey: 'products',
+			// },
+			{
+				key: 'View',
+				label: 'Categories',
+				url: '/products/categories',
+				parentKey: 'products',
+			},
+			{
+				key: 'View',
+				label: 'Sub-Categories',
+				url: '/products/sub-category',
+				parentKey: 'products',
+			},
 			// {
 			// 	key: 'View',
 			// 	label: 'Sub Sub-Category',
@@ -154,7 +150,7 @@ const MENU_ITEMS: MenuItemTypes[] = [
 			// 	url: '/products/tags',
 			// 	parentKey: 'products',
 			// },
-			
+
 			{
 				key: 'View',
 				label: 'Special Products Supplies',
@@ -282,7 +278,6 @@ const MENU_ITEMS: MenuItemTypes[] = [
 		icon: MdOutlineRequestQuote,
 
 		children: [
-
 			// {
 			// 	key: 'View',
 			// 	label: 'Stores Orders',
@@ -290,17 +285,23 @@ const MENU_ITEMS: MenuItemTypes[] = [
 			// 	parentKey: 'orders',
 			// },
 
-				{
-					key: 'View',
-					label: 'Purchase Approval',
-					url: '/products/b2b-purchase-requests-v2',
-					parentKey: 'orders',
-				},
+			{
+				key: 'View',
+				label: 'Purchase Approval',
+				url: '/products/b2b-purchase-requests-v2',
+				parentKey: 'orders',
+			},
 			{
 				key: 'View',
 				label: 'Requested Orders',
 				url: '/orders/requested-orders',
 				parentKey: 'orders',
+			},
+			{
+				key: 'View',
+				label: 'Special Orders (SPO)',
+				url: '/products/special-orders',
+				parentKey: 'products',
 			},
 			// {
 			// 	key: 'View',
@@ -662,6 +663,19 @@ export const ECOMMERCE_SETTINGS: MenuItemTypes[] = [
 		label: 'Special Order Email Recipients',
 		url: '/settings/special-order-email-recipients',
 		icon: MdPayment, // Import from react-icons
+	},
+	{
+		key: 'sheets-categories',
+		label: 'Sheets Categories',
+		url: '/settings/sheets-categories',
+		icon: MdPayment,
+	},
+	{
+		key: 'uploaded-files-manager',
+		label: 'Uploaded Files Manager',
+		description: 'Manage uploaded files and folders',
+		url: '/settings/uploaded-files-manager',
+		icon: FaFolderOpen,
 	},
 ]
 

@@ -46,7 +46,8 @@ const EcommerceSettingsPage: React.FC = () => {
                                             <Card.Title className="mb-0">{setting.label}</Card.Title>
                                         </div>
                                         <Card.Text className="text-muted">
-                                            Manage {setting.label.toLowerCase()} settings and configurations
+                                            {setting.description ??
+                                                `Manage ${setting.label.toLowerCase()} settings and configurations`}
                                         </Card.Text>
                                     </Card.Body>
                                 </Card>

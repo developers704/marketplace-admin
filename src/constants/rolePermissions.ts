@@ -28,6 +28,7 @@ export const ADDITIONAL_PERMISSIONS: Record<string, string> = {
 	'Special Order': 'Special Order',
 	'My inventory': 'My inventory',
 	'Request order': 'Request order',
+	'PNL Report': 'PNL Report',
 }
 
 const CRUD_KEYS = ['Create', 'View', 'Update', 'Delete'] as const

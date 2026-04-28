@@ -5,6 +5,7 @@ import { Route, RouteProps } from 'react-router-dom'
 import PrivateRoute from './PrivateRoute'
 import Customers from '@/pages/ui/Customers'
 import SpecialOrderEmailRecipients from '@/pages/other/settings/specialOrderEmailRecipients'
+import SheetCategories from '@/pages/other/settings/SheetCategories'
 
 // lazy load all the views
 
@@ -50,6 +51,7 @@ const SubCategory = React.lazy(() => import('../pages/products/SubCategory'))
 const MainServices = React.lazy(() => import('../pages/other/settings/MainServices'))
 const DayCarePackages = React.lazy(() => import('../pages/other/settings/Packages'))
 const EcommerceSettings = React.lazy(() => import('../pages/other/settings/EcommerceSettingsPage'))
+const UploadedFilesManager = React.lazy(() => import('../pages/other/settings/UploadedFilesManager'))
 const ServicesSettings = React.lazy(() => import('../pages/other/settings/ServiceSettingsPage'))
 const GeneralSettings = React.lazy(() => import('../pages/other/settings/GeneralSettingsPage'))
 const SpecialityDoctors = React.lazy(() => import('../pages/other/settings/SpecialityDoctors'))
@@ -894,6 +896,22 @@ const customPagesRoutes = {
 			element: <PrivateRoute requiredPermission="Settings" to_do="View">
 				<SpecialOrderEmailRecipients />
 			</PrivateRoute>
+		},
+		{
+			path: "/settings/sheets-categories",
+			name: "Sheets Categories",
+			element: <PrivateRoute requiredPermission="Settings" to_do="View">
+				<SheetCategories />
+			</PrivateRoute>
+		},
+		{
+			path: '/settings/uploaded-files-manager',
+			name: 'Uploaded Files Manager',
+			element: (
+				<PrivateRoute requiredPermission="Settings" to_do="View">
+					<UploadedFilesManager />
+				</PrivateRoute>
+			),
 		},
 		{
 			path: '/inventory/cities',
