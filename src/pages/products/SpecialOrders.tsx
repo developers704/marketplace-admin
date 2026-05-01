@@ -237,7 +237,7 @@ const SpecialOrders = () => {
 
 					<Table responsive hover>
 						<thead>
-							<tr>
+							<tr >
 								<th>Ticket</th>
 								<th>Receipt</th>
 								<th>ETA</th>
@@ -256,7 +256,7 @@ const SpecialOrders = () => {
 								<tr><td colSpan={9} className="text-center text-muted">No special orders found.</td></tr>
 							) : (
 								rows.map((r) => (
-									<tr key={r._id}>
+									<tr key={r._id} className={r?.status === "SUBMITTED" ? "bg-warning" : ""}>
 										<td><strong>{r?.ticketNumber || '—'}</strong></td>
 											<td>{r?.receiptNumber || '—'}</td>
 										<td>{r?.eta ? new Date(r.eta).toLocaleDateString() : '—'}</td>

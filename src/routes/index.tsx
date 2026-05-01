@@ -154,6 +154,7 @@ const LoginToggle = React.lazy(
 const ServiceSchedule = React.lazy(() => import('../pages/services/ServiceShedule'))
 const EcommerceOrders = React.lazy(() => import('../pages/orders/EcommerceOrder'))
 const RequestedOrder = React.lazy(() => import('../pages/orders/RequestedOrder'))
+const StoreToStoreTransfers = React.lazy(() => import('../pages/orders/StoreToStoreTransfers'))
 const ServiceOrders = React.lazy(() => import('../pages/orders/ServiceOrder'))
 const OrderStatus = React.lazy(() => import('../pages/orders/OrderStatus'))
 const ServiceBookings = React.lazy(() => import('../pages/orders/ServiceBookingsOrder'))
@@ -668,6 +669,15 @@ const customPagesRoutes = {
 			element: (
 				<PrivateRoute requiredPermission="Orders" to_do="View">
 					<RequestedOrder />
+				</PrivateRoute>
+			),
+		},
+		{
+			path: '/orders/store-to-store-transfers',
+			name: 'Store to store transfers',
+			element: (
+				<PrivateRoute requiredPermission="Orders" to_do="View">
+					<StoreToStoreTransfers />
 				</PrivateRoute>
 			),
 		},

@@ -938,7 +938,7 @@ const showSkuDeleteModal = async (product: VendorProductListItem) => {
 
 	return (
 		<>
-			<PageBreadcrumb title="Vendor Catalog (v2)" subName="Products" />
+			<PageBreadcrumb title="Vendor Catalog" subName="Products" />
 
 			<Card>
 				<Card.Body>

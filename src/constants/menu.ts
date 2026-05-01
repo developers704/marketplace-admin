@@ -299,6 +299,12 @@ const MENU_ITEMS: MenuItemTypes[] = [
 			},
 			{
 				key: 'View',
+				label: 'Store to store transfers',
+				url: '/orders/store-to-store-transfers',
+				parentKey: 'orders',
+			},
+			{
+				key: 'View',
 				label: 'Special Orders (SPO)',
 				url: '/products/special-orders',
 				parentKey: 'products',
