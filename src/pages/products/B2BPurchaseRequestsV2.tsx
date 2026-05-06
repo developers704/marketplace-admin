@@ -1,12 +1,20 @@
 import { PageBreadcrumb } from '@/components'
-import { Badge, Button, Card, Table, Tabs, Tab, Form, InputGroup } from 'react-bootstrap'
+import { Badge, Button, Card, Form, InputGroup, Spinner, Table } from 'react-bootstrap'
 import { useAuthContext } from '@/common'
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { FaWarehouse, FaSearch, FaExclamationTriangle } from 'react-icons/fa'
-import { LuRefreshCw } from "react-icons/lu";
-import { SlRefresh } from "react-icons/sl";
+import { LuRefreshCw } from 'react-icons/lu'
 
+const GOLD = '#C6A87D'
+
+const TABLE_SCROLL_AREA_STYLE = {
+	flex: '1 1 auto',
+	minHeight: 0,
+	overflowY: 'auto' as const,
+	WebkitOverflowScrolling: 'touch' as const,
+}
 
 type B2BPurchaseRequest = {
 	_id: string
@@ -39,7 +47,6 @@ type B2BPurchaseRequest = {
 		email?: string
 		phone_number?: string
 	}
-	// Low stock indicator (calculated on frontend or from backend)
 	vendorInventory?: number
 }
 
@@ -51,13 +58,29 @@ type Warehouse = {
 const statusBadge = (status: string) => {
 	switch (status) {
 		case 'PENDING_ADMIN':
-			return <Badge bg="warning">Pending Admin</Badge>
+			return (
+				<Badge bg="warning" text="dark" className="rounded-pill px-2 py-1 fw-semibold">
+					Pending Admin
+				</Badge>
+			)
 		case 'APPROVED':
-			return <Badge bg="success">Approved</Badge>
+			return (
+				<Badge bg="success" className="rounded-pill px-2 py-1 fw-semibold">
+					Approved
+				</Badge>
+			)
 		case 'REJECTED':
-			return <Badge bg="danger">Rejected</Badge>
+			return (
+				<Badge bg="danger" className="rounded-pill px-2 py-1 fw-semibold">
+					Rejected
+				</Badge>
+			)
 		default:
-			return <Badge bg="secondary">{status}</Badge>
+			return (
+				<Badge bg="secondary" className="rounded-pill px-2 py-1">
+					{status}
+				</Badge>
+			)
 	}
 }
 
@@ -71,6 +94,7 @@ const B2BPurchaseRequestsV2 = () => {
 	const BASE_API = import.meta.env.VITE_BASE_API
 	const { user } = useAuthContext()
 	const token = user?.token
+	const navigate = useNavigate()
 
 	const [activeKey, setActiveKey] = useState<string>('PENDING_ADMIN')
 	const [loading, setLoading] = useState(false)
@@ -79,9 +103,8 @@ const B2BPurchaseRequestsV2 = () => {
 	const [selectedWarehouse, setSelectedWarehouse] = useState<string>('')
 	const [searchTerm, setSearchTerm] = useState('')
 	const [inventoryMap, setInventoryMap] = useState<Record<string, number>>({})
-	const LOW_STOCK_THRESHOLD = 10 // Alert if vendor inventory < 10
+	const LOW_STOCK_THRESHOLD = 10
 
-	// Fetch warehouses list
 	const fetchWarehouses = async () => {
 		try {
 			const response = await fetch(`${BASE_API}/api/warehouses`, {
@@ -98,7 +121,6 @@ const B2BPurchaseRequestsV2 = () => {
 		}
 	}
 
-	// Fetch vendor inventory for a SKU
 	const fetchSkuInventory = async (skuId: string) => {
 		try {
 			const response = await fetch(`${BASE_API}/api/v2/skus/${skuId}`, {
@@ -116,7 +138,6 @@ const B2BPurchaseRequestsV2 = () => {
 		return 0
 	}
 
-	// Fetch all SKU inventories for current requests
 	const fetchAllInventories = async (requests: B2BPurchaseRequest[]) => {
 		const inventoryPromises = requests.map(async (r) => {
 			if (r.skuId?._id) {
@@ -138,11 +159,7 @@ const B2BPurchaseRequestsV2 = () => {
 		setLoading(true)
 		try {
 			const url = new URL(`${BASE_API}/api/v2/b2b/requests`)
-
-			// Admin only sees PENDING_ADMIN, APPROVED, REJECTED
 			url.searchParams.set('status', status)
-
-			// Filter by warehouse if selected
 			if (selectedWarehouse) {
 				url.searchParams.set('storeWarehouseId', selectedWarehouse)
 			}
@@ -161,7 +178,6 @@ const B2BPurchaseRequestsV2 = () => {
 			const requests = data?.data || []
 			setRows(requests)
 
-			// Fetch inventory for all SKUs
 			if (requests.length > 0) {
 				await fetchAllInventories(requests)
 			}
@@ -233,7 +249,6 @@ const B2BPurchaseRequestsV2 = () => {
 		}
 	}
 
-	// Filter rows by search term
 	const filteredRows = useMemo(() => {
 		let filtered = rows
 
@@ -246,65 +261,82 @@ const B2BPurchaseRequestsV2 = () => {
 					r.skuId?.sku?.toLowerCase().includes(term) ||
 					r.storeWarehouseId?.name?.toLowerCase().includes(term) ||
 					r.requestedByUser?.username?.toLowerCase().includes(term) ||
-					r.requestedByUser?.email?.toLowerCase().includes(term)
+					r.requestedByUser?.email?.toLowerCase().includes(term),
 			)
 		}
 
 		return filtered
 	}, [rows, searchTerm])
 
-	// Check if SKU has low stock
 	const isLowStock = (skuId?: string) => {
 		if (!skuId) return false
 		const inventory = inventoryMap[skuId] || 0
 		return inventory < LOW_STOCK_THRESHOLD
 	}
 
-	// Get inventory quantity for a SKU
 	const getInventoryQty = (skuId?: string) => {
 		if (!skuId) return null
 		return inventoryMap[skuId] ?? null
 	}
 
+	const lowStockAlert =
+		activeKey === 'PENDING_ADMIN' && filteredRows.some((r) => isLowStock(r.skuId?._id))
+
 	return (
 		<>
-			<PageBreadcrumb title="B2B Purchase Requests (v2)" subName="Products" />
+			<PageBreadcrumb title="B2B Purchase Requests" subName="Products" />
 
-			<Card>
-				<Card.Body>
-					<div className="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+			<Card
+				className="border-0 shadow d-flex flex-column"
+				style={{
+					borderRadius: '1rem',
+					borderBottom: `3px solid ${GOLD}`,
+					overflow: 'hidden',
+					height: 'calc(100vh - 108px)',
+					maxHeight: 'calc(100vh - 108px)',
+				}}
+			>
+				<div
+					className="px-4 py-4 text-white flex-shrink-0"
+					style={{ background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)' }}
+				>
+					<div className="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
 						<div>
-							<h4 className="mb-1">Admin Purchase Approvals</h4>
-							<div className="text-muted">
-								Review and approve/reject B2B purchase requests. DM/CM approvals are handled in Marketplace.
-								On Admin approval, vendor SKU inventory is deducted and store inventory is incremented.
+							<div
+								className="text-white-50 small text-uppercase mb-1"
+								style={{ fontSize: 11, letterSpacing: '0.1em' }}
+							>
+								B2B approvals
 							</div>
+							<h4 className="mb-1 fw-semibold text-white">Purchase requests</h4>
+							<p className="mb-0 text-white-50 small" style={{ maxWidth: 640 }}>
+								Approve or reject store purchase requests. Vendor inventory moves to the store on approval.
+							</p>
 						</div>
 						<Button
-						variant="outline-primary"
-						onClick={() => fetchRequests(activeKey)}
-						disabled={loading}
-						className="d-flex align-items-center  px-1 py-1 "
-						style={{ transition: 'all 0.2s ease-in-out' }}
+							variant="light"
+							className="rounded-pill px-3 d-flex align-items-center gap-2"
+							onClick={() => void fetchRequests(activeKey)}
+							disabled={loading}
 						>
-						{loading ? <SlRefresh className="spin-icon font-bold" size={24} /> : <LuRefreshCw className="font-bold"  size={24}/>}
+							{loading ? <Spinner animation="border" size="sm" /> : <LuRefreshCw size={18} />}
+							Refresh
 						</Button>
-
 					</div>
 
-					{/* Filters */}
-					<div className="row g-3 mb-3">
-						<div className="col-md-4">
-							<Form.Label>
+					<div className="row g-3 mb-3 pb-1 border-bottom border-secondary border-opacity-25">
+						<div className="col-md-5 col-lg-4">
+							<Form.Label className="text-white-50 small mb-1">
 								<FaWarehouse className="me-1" />
-								Filter by Warehouse
+								Warehouse
 							</Form.Label>
 							<Form.Select
+								className="rounded-3 border-0"
 								value={selectedWarehouse}
 								onChange={(e) => setSelectedWarehouse(e.target.value)}
 								disabled={loading}
 							>
-								<option value="">All Warehouses</option>
+								<option value="">All warehouses</option>
 								{warehouses.map((wh) => (
 									<option key={wh._id} value={wh._id}>
 										{wh.name}
@@ -312,166 +344,226 @@ const B2BPurchaseRequestsV2 = () => {
 								))}
 							</Form.Select>
 						</div>
-						<div className="col-md-8">
-							<Form.Label>
+						<div className="col-md-7 col-lg-8">
+							<Form.Label className="text-white-50 small mb-1">
 								<FaSearch className="me-1" />
 								Search
 							</Form.Label>
-							<InputGroup>
+							<InputGroup className="rounded-3 overflow-hidden">
 								<Form.Control
+									className="border-0"
 									type="text"
-									placeholder="Search by Vendor Model, Product, SKU, Store, Requester..."
+									placeholder="Model, product, SKU, store, requester…"
 									value={searchTerm}
 									onChange={(e) => setSearchTerm(e.target.value)}
 									disabled={loading}
 								/>
-								{searchTerm && (
+								{searchTerm ? (
 									<Button
-										variant="outline-secondary"
+										variant="light"
+										className="border-0"
 										onClick={() => setSearchTerm('')}
 										disabled={loading}
 									>
 										Clear
 									</Button>
-								)}
+								) : null}
 							</InputGroup>
 						</div>
 					</div>
 
-					<Tabs activeKey={activeKey} onSelect={(k) => k && setActiveKey(k)} className="mb-3">
-						{tabStatuses.map((t) => (
-							<Tab eventKey={t.key} title={t.label} key={t.key} />
-						))}
-					</Tabs>
+					<div className="d-flex flex-wrap gap-2">
+						{tabStatuses.map((t) => {
+							const active = activeKey === t.key
+							return (
+								<button
+									key={t.key}
+									type="button"
+									onClick={() => setActiveKey(t.key)}
+									disabled={loading}
+									className={`rounded-pill px-4 py-2 small fw-semibold border-0 transition-all ${
+										active ? 'text-dark' : 'text-white'
+									}`}
+									style={{
+										background: active ? GOLD : 'rgba(255,255,255,0.12)',
+										opacity: loading ? 0.7 : 1,
+									}}
+								>
+									{t.label}
+								</button>
+							)
+						})}
+					</div>
+				</div>
 
-					<Table responsive hover>
-						<thead>
-							<tr>
-								<th>Vendor Model</th>
-								<th>SKU</th>
-								<th className="text-end">Qty</th>
-								<th>Store</th>
-								<th>Requested By</th>
-								<th>Vendor Stock</th>
-								<th>Status</th>
-								<th className="text-end">Actions</th>
-							</tr>
-						</thead>
-						<tbody>
-							{loading ? (
-								<tr>
-									<td colSpan={8}>Loading…</td>
-								</tr>
-							) : filteredRows.length === 0 ? (
-								<tr>
-									<td colSpan={8} className="text-center text-muted">
-										No requests found.
-									</td>
-								</tr>
-							) : (
-								filteredRows.map((r) => {
-									const skuId = r.skuId?._id
-									const inventoryQty = getInventoryQty(skuId)
-									const lowStock = isLowStock(skuId)
-									const canApprove = r.status === 'PENDING_ADMIN' && inventoryQty !== null && inventoryQty >= r.quantity
+				{lowStockAlert ? (
+					<div
+						className="mx-4 mt-3 mb-0 rounded-3 px-3 py-2 small d-flex align-items-center gap-2 flex-shrink-0"
+						style={{
+							background: 'rgba(198, 168, 125, 0.15)',
+							border: '1px solid rgba(198, 168, 125, 0.45)',
+							color: '#5c4d32',
+						}}
+					>
+						<FaExclamationTriangle />
+						<span>
+							<strong>Low stock:</strong> Some SKUs are below {LOW_STOCK_THRESHOLD} units at vendor — review before
+							approving.
+						</span>
+					</div>
+				) : null}
 
-									return (
-										<tr key={r._id} className={lowStock && r.status === 'PENDING_ADMIN' ? 'table-warning' : ''}>
-											<td>
-												<div className="fw-bold">{r.vendorProductId?.vendorModel || '—'}</div>
-												<div className="text-muted small">{r.vendorProductId?.title || ''}</div>
-												{r.vendorProductId?.brand && (
-													<div className="text-muted small">Brand: {r.vendorProductId.brand}</div>
-												)}
-											</td>
-											<td>
-												<div className="fw-bold">{r.skuId?.sku || '—'}</div>
-												<div className="text-muted small">
-													{[r.skuId?.metalType, r.skuId?.metalColor, r.skuId?.size]
-														.filter(Boolean)
-														.join(' / ')}
-												</div>
-											</td>
-											<td className="text-end fw-bold">{r.quantity}</td>
-											<td>
-												<div className="fw-bold">{r.storeWarehouseId?.name || '—'}</div>
-											</td>
-											<td>
-												<div className="fw-bold">{r.requestedByUser?.username || '—'}</div>
-												<div className="text-muted small">{r.requestedByUser?.email || ''}</div>
-											</td>
-											<td>
-												{inventoryQty !== null ? (
-													<div>
-														<span className={lowStock ? 'text-danger fw-bold' : 'text-success'}>
-															{inventoryQty}
-														</span>
-														{lowStock && (
-															<Badge bg="danger" className="ms-2">
-																<FaExclamationTriangle className="me-1" />
-																Low Stock
-															</Badge>
-														)}
-														{r.status === 'PENDING_ADMIN' && inventoryQty < r.quantity && (
-															<div className="text-danger small mt-1">
-																Insufficient stock (need {r.quantity})
-															</div>
-														)}
-													</div>
-												) : (
-													<span className="text-muted">Loading...</span>
-												)}
-											</td>
-											<td>{statusBadge(r.status)}</td>
-											<td className="text-end">
-												<div className="d-inline-flex gap-2">
-													{r.status === 'PENDING_ADMIN' && (
-														<>
-															<Button
-																size="sm"
-																variant="success"
-																disabled={!canApprove || loading}
-																onClick={() => approveRequest(r._id)}
-																title={
-																	!canApprove
-																		? inventoryQty === null
-																			? 'Checking inventory...'
-																			: inventoryQty < r.quantity
-																			? `Insufficient stock. Available: ${inventoryQty}, Required: ${r.quantity}`
-																			: 'Cannot approve'
-																		: 'Approve request'
-																}
-															>
-																Approve
-															</Button>
-															<Button
-																size="sm"
-																variant="danger"
-																disabled={loading}
-																onClick={() => rejectRequest(r._id)}
-															>
-																Reject
-															</Button>
-														</>
-													)}
-													{(r.status === 'APPROVED' || r.status === 'REJECTED') && (
-														<span className="text-muted small">No actions</span>
-													)}
-												</div>
+				<Card.Body className="p-0 d-flex flex-column flex-grow-1 pt-3" style={{ minHeight: 0 }}>
+					{loading ? (
+						<div className="d-flex flex-grow-1 align-items-center justify-content-center py-5">
+							<Spinner animation="border" style={{ color: GOLD }} />
+						</div>
+					) : (
+						<div className="table-responsive flex-grow-1 px-0" style={TABLE_SCROLL_AREA_STYLE}>
+							<Table hover className="align-middle mb-0">
+								<thead className="table-light sticky-top border-bottom" style={{ zIndex: 5 }}>
+									<tr className="small text-uppercase text-muted" style={{ fontSize: 11, letterSpacing: '0.05em' }}>
+										<th className="ps-4 bg-light">Vendor / product</th>
+										<th className="bg-light">SKU</th>
+										<th className="text-end bg-light">Qty</th>
+										<th className="bg-light">Store</th>
+										<th className="bg-light">Requested by</th>
+										<th className="bg-light">Vendor stock</th>
+										<th className="bg-light">Status</th>
+										<th className="text-end pe-4 bg-light">Actions</th>
+									</tr>
+								</thead>
+								<tbody>
+									{filteredRows.length === 0 ? (
+										<tr>
+											<td colSpan={8} className="text-center text-muted py-5">
+												No requests in this tab.
 											</td>
 										</tr>
-									)
-								})
-							)}
-						</tbody>
-					</Table>
+									) : (
+										filteredRows.map((r) => {
+											const skuId = r.skuId?._id
+											const inventoryQty = getInventoryQty(skuId)
+											const lowStock = isLowStock(skuId)
+											const canApprove =
+												r.status === 'PENDING_ADMIN' && inventoryQty !== null && inventoryQty >= r.quantity
+											const warnRow = lowStock && r.status === 'PENDING_ADMIN'
 
-					{/* Low Stock Alert Summary */}
-					{activeKey === 'PENDING_ADMIN' && filteredRows.some((r) => isLowStock(r.skuId?._id)) && (
-						<div className="alert alert-warning mt-3">
-							<FaExclamationTriangle className="me-2" />
-							<strong>Low Stock Alert:</strong> Some products have vendor inventory below {LOW_STOCK_THRESHOLD} units.
-							Please review before approving requests.
+											return (
+												<tr
+													key={r._id}
+													style={
+														warnRow
+															? {
+																	boxShadow: `inset 3px 0 0 ${GOLD}`,
+																	background: 'rgba(198, 168, 125, 0.06)',
+																}
+															: undefined
+													}
+												>
+													<td className="ps-4">
+														<div className="fw-semibold small">{r.vendorProductId?.vendorModel || '—'}</div>
+														<div className="text-muted small">{r.vendorProductId?.title || ''}</div>
+														{r.vendorProductId?.brand && (
+															<div className="text-muted small" style={{ fontSize: 11 }}>
+																{r.vendorProductId.brand}
+															</div>
+														)}
+													</td>
+													<td>
+														<span className="font-monospace fw-semibold small">{r.skuId?.sku || '—'}</span>
+														<div className="text-muted small" style={{ fontSize: 11 }}>
+															{[r.skuId?.metalType, r.skuId?.metalColor, r.skuId?.size]
+																.filter(Boolean)
+																.join(' · ')}
+														</div>
+													</td>
+													<td className="text-end">
+														<span className="fw-bold">{r.quantity}</span>
+													</td>
+													<td className="small fw-medium">{r.storeWarehouseId?.name || '—'}</td>
+													<td>
+														<div className="fw-medium small">{r.requestedByUser?.username || '—'}</div>
+														<div className="text-muted small" style={{ fontSize: 11 }}>
+															{r.requestedByUser?.email || ''}
+														</div>
+													</td>
+													<td>
+														{inventoryQty !== null ? (
+															<div>
+																<span className={lowStock ? 'text-danger fw-bold' : 'text-success fw-semibold'}>
+																	{inventoryQty}
+																</span>
+																{lowStock && (
+																	<Badge bg="danger" className="ms-2 rounded-pill" style={{ fontSize: 10 }}>
+																		Low
+																	</Badge>
+																)}
+																{r.status === 'PENDING_ADMIN' && inventoryQty < r.quantity && (
+																	<div className="text-danger small mt-1" style={{ fontSize: 11 }}>
+																		Need {r.quantity} · short {r.quantity - inventoryQty}
+																	</div>
+																)}
+															</div>
+														) : (
+															<span className="text-muted small">…</span>
+														)}
+													</td>
+													<td>{statusBadge(r.status)}</td>
+													<td className="text-end pe-4">
+														<div className="d-inline-flex flex-wrap gap-2 justify-content-end align-items-center">
+															<Button
+																size="sm"
+																variant="outline-secondary"
+																className="rounded-pill px-3 fw-semibold"
+																style={{ borderColor: `${GOLD}66`, color: '#5c4d32' }}
+																onClick={() => navigate(`/products/b2b-purchase-requests-v2/${r._id}`)}
+															>
+																View
+															</Button>
+															{r.status === 'PENDING_ADMIN' ? (
+																<>
+																	<Button
+																		size="sm"
+																		className="rounded-pill px-3 fw-semibold"
+																		style={{
+																			background: canApprove ? '#198754' : '#adb5bd',
+																			border: 'none',
+																			opacity: canApprove ? 1 : 0.85,
+																		}}
+																		disabled={!canApprove || loading}
+																		onClick={() => void approveRequest(r._id)}
+																		title={
+																			!canApprove
+																				? inventoryQty === null
+																					? 'Checking inventory…'
+																					: inventoryQty < r.quantity
+																						? `Only ${inventoryQty} available · need ${r.quantity}`
+																						: 'Cannot approve'
+																				: 'Approve and transfer stock'
+																		}
+																	>
+																		Approve
+																	</Button>
+																	<Button
+																		size="sm"
+																		variant="outline-danger"
+																		className="rounded-pill px-3 fw-semibold"
+																		disabled={loading}
+																		onClick={() => void rejectRequest(r._id)}
+																	>
+																		Reject
+																	</Button>
+																</>
+															) : null}
+														</div>
+													</td>
+												</tr>
+											)
+										})
+									)}
+								</tbody>
+							</Table>
 						</div>
 					)}
 				</Card.Body>
@@ -481,3 +573,4 @@ const B2BPurchaseRequestsV2 = () => {
 }
 
 export default B2BPurchaseRequestsV2
+

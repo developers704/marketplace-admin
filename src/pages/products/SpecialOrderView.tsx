@@ -1,11 +1,13 @@
 import { PageBreadcrumb } from '@/components'
-import { Badge, Button, Card, Form, Modal } from 'react-bootstrap'
+import { Badge, Button, Card, Form, Modal, Spinner } from 'react-bootstrap'
 import { useAuthContext } from '@/common'
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { LuArrowLeft } from 'react-icons/lu'
 import { io } from 'socket.io-client'
+
+const GOLD = '#C6A87D'
 
 type SpoChatMessage = {
 	_id: string
@@ -81,14 +83,14 @@ const STATUS_OPTIONS = [
 	{ value: 'WIP', label: 'WIP' },
 	{ value: 'COMPLETED', label: 'Completed' },
 	{ value: 'CLOSED', label: 'Delivered' },
-	{ value: 'FINALIZED', label: 'Finalized' },
+	{ value: 'FINALIZED', label: 'Received' },
 ]
 
-const STATUS_OPTIONS_ADMIN_EDIT = STATUS_OPTIONS.filter((s) => s.value !== 'FINALIZEDs')
+const STATUS_OPTIONS_ADMIN_EDIT = STATUS_OPTIONS.filter((s) => s.value !== 'FINALIZED')
 
 const statusLabel = (status: string) => {
 	if (status === 'CLOSED') return 'Delivered'
-	if (status === 'FINALIZEDs') return 'Finalized'
+	if (status === 'FINALIZED') return 'Received'
 	return status?.replace(/_/g, ' ') || '—'
 }
 
@@ -104,10 +106,12 @@ const statusBadge = (status: string) => {
 	return <Badge bg={map[status] || 'secondary'}>{statusLabel(status)}</Badge>
 }
 
-const DetailRow = ({ label, value }: { label: string; value: React.ReactNode }) => (
-	<div className="d-flex border-bottom border-light py-3" style={{ minHeight: 48 }}>
-		<div className="text-muted fw-medium" style={{ minWidth: 180 }}>{label}</div>
-		<div className="text-dark">{value ?? '—'}</div>
+const DetailCell = ({ label, value }: { label: string; value: React.ReactNode }) => (
+	<div className="rounded-3 border border-light bg-white px-3 py-2 h-100 shadow-sm">
+		<div className="text-muted text-uppercase fw-semibold mb-1" style={{ fontSize: 10, letterSpacing: '0.04em' }}>
+			{label}
+		</div>
+		<div className="small text-dark fw-medium">{value ?? '—'}</div>
 	</div>
 )
 
@@ -115,8 +119,14 @@ const SpecialOrderView = () => {
 	const BASE_API = import.meta.env.VITE_BASE_API
 	const { id } = useParams<{ id: string }>()
 	const navigate = useNavigate()
-	const { user, isSuperUser } = useAuthContext()
+	const { user, isSuperUser, role } = useAuthContext()
 	const token = user?.token
+	const roleNorm = String(role ?? user?.role ?? '').toLowerCase().trim()
+	const isPrivilegedAdmin =
+		isSuperUser ||
+		roleNorm === 'admin' ||
+		roleNorm === 'super admin' ||
+		roleNorm === 'superuser'
 
 	const [order, setOrder] = useState<SpecialOrder | null>(null)
 	const [loading, setLoading] = useState(true)
@@ -133,9 +143,7 @@ const SpecialOrderView = () => {
 
 	const makePreview = (text: string) => {
 		const compact = String(text || '').replace(/\s+/g, ' ').trim()
-		return compact.length > CHAT_REPLY_PREVIEW
-			? `${compact.slice(0, CHAT_REPLY_PREVIEW)}...`
-			: compact
+		return compact.length > CHAT_REPLY_PREVIEW ? `${compact.slice(0, CHAT_REPLY_PREVIEW)}...` : compact
 	}
 
 	const jumpToMessage = (messageId?: string | null) => {
@@ -182,10 +190,10 @@ const SpecialOrderView = () => {
 	}
 
 	useEffect(() => {
-		if (!token || !isSuperUser || !id) return
+		if (!token || !isPrivilegedAdmin || !id) return
 		fetchOrder()
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [token, isSuperUser, id])
+	}, [token, isPrivilegedAdmin, id])
 
 	useEffect(() => {
 		if (!token || !id || !order) return
@@ -205,7 +213,7 @@ const SpecialOrderView = () => {
 			socket.emit('unsubscribeSpoOrder', id)
 			socket.disconnect()
 		}
-	}, [token, id, order?._id])
+	}, [token, id, order?._id, BASE_API])
 
 	useEffect(() => {
 		chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -215,14 +223,23 @@ const SpecialOrderView = () => {
 		if (!order) return
 		setSaving(true)
 		try {
-			const body =
-				order.status === 'FINALIZEDs'
-					? {
-							assignedTo: editForm.assignedTo,
-							eta: editForm.eta,
-							notes: editForm.notes,
-						}
-					: editForm
+			let body: Record<string, unknown>
+			if (order.status === 'FINALIZED' && !isPrivilegedAdmin) {
+				body = {
+					assignedTo: editForm.assignedTo,
+					eta: editForm.eta,
+					notes: editForm.notes,
+				}
+			} else if (isPrivilegedAdmin && editForm.status === 'FINALIZED') {
+				// API rejects PATCH with status FINALIZED (only store finalize flow); allow notes/ETA/assign while staying received
+				body = {
+					assignedTo: editForm.assignedTo,
+					eta: editForm.eta,
+					notes: editForm.notes,
+				}
+			} else {
+				body = editForm
+			}
 			const res = await fetch(`${BASE_API}/api/special-orders/${order._id}`, {
 				method: 'PATCH',
 				headers: {
@@ -245,7 +262,7 @@ const SpecialOrderView = () => {
 
 	const handleSendChat = async (e: React.FormEvent) => {
 		e.preventDefault()
-		if (!id || !chatInput.trim() || order?.status === 'FINALIZEDs') return
+		if (!id || !chatInput.trim() || (order?.status === 'FINALIZED' && !isPrivilegedAdmin)) return
 		setSendingChat(true)
 		try {
 			const res = await fetch(`${BASE_API}/api/special-orders/${id}/chat-messages`, {
@@ -277,11 +294,13 @@ const SpecialOrderView = () => {
 		}
 	}
 
-	if (!isSuperUser) {
+	if (!isPrivilegedAdmin) {
 		return (
 			<>
 				<PageBreadcrumb title="Special Order" subName="Products" />
-				<Card><Card.Body>Access denied.</Card.Body></Card>
+				<Card className="border-0 shadow-sm" style={{ borderRadius: '1rem' }}>
+					<Card.Body className="py-5 text-center text-muted">Access denied.</Card.Body>
+				</Card>
 			</>
 		)
 	}
@@ -290,7 +309,9 @@ const SpecialOrderView = () => {
 		return (
 			<>
 				<PageBreadcrumb title="Special Order" subName="Products" />
-				<Card><Card.Body className="text-center py-5">Loading…</Card.Body></Card>
+				<div className="text-center py-5">
+					<Spinner animation="border" style={{ color: GOLD }} />
+				</div>
 			</>
 		)
 	}
@@ -298,77 +319,157 @@ const SpecialOrderView = () => {
 	const videos = (order.attachments || []).filter(isVideo)
 	const images = (order.attachments || []).filter(isImage)
 	const hasDiagram = !!order.canvasDrawing
+	const chatClosed = order.status === 'FINALIZED' && !isPrivilegedAdmin
 
 	return (
 		<>
-			<PageBreadcrumb title={`SPO - ${order.ticketNumber}`} subName="Products" />
+			<PageBreadcrumb title={order.ticketNumber} subName="Products" />
 
-			<div className="mb-3">
-				<Button variant="link" className="text-decoration-none p-0 d-inline-flex align-items-center" onClick={() => navigate('/products/special-orders')}>
-					<LuArrowLeft size={20} className="me-1" /> Back to Special Orders
+			<div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+				<Button
+					variant="link"
+					className="text-decoration-none text-dark p-0 d-inline-flex align-items-center fw-semibold"
+					onClick={() => navigate('/products/special-orders')}
+				>
+					<LuArrowLeft size={22} className="me-2" />
+					Back to list
+				</Button>
+				<Button
+					className="rounded-pill px-4 fw-semibold"
+					style={{ background: GOLD, border: 'none' }}
+					onClick={() => setEditModal(true)}
+				>
+					Edit order
 				</Button>
 			</div>
 
-			<div className="row g-4">
-				{/* Key-Value Details - Luxury Card */}
-				<div className="col-lg-6">
-					<Card className="shadow-sm border-0 overflow-hidden" style={{ borderRadius: 12, borderColor: 'rgba(198,168,125,0.3)' }}>
-						<Card.Header className="py-3 px-4 text-white fw-semibold" style={{ background: 'linear-gradient(135deg, #1A1A1A 0%, #2d2d2d 100%)', border: 'none' }}>
-							Order Details
+			<Card
+				className="border-0 shadow-sm mb-4 overflow-hidden"
+				style={{ borderRadius: '1rem', borderBottom: `3px solid ${GOLD}` }}
+			>
+				<div
+					className="text-white px-4 py-4"
+					style={{ background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)' }}
+				>
+					<div className="row align-items-center g-3">
+						<div className="col-md-8">
+							<div className="text-white-50 small text-uppercase mb-1" style={{ fontSize: 11, letterSpacing: '0.1em' }}>
+								Special order
+							</div>
+							<h3 className="mb-2 fw-bold text-white">{order.ticketNumber}</h3>
+							<div className="d-flex flex-wrap align-items-center gap-2 gap-md-3">
+								{statusBadge(order.status)}
+								<span className="text-white-50 small">{order.storeId?.name}</span>
+								<span className="text-white-50 small">·</span>
+								<span className="text-white-50 small">
+									{new Date(order.createdAt).toLocaleString()}
+								</span>
+							</div>
+						</div>
+						<div className="col-md-4 text-md-end">
+							<div className="text-white-50 small text-uppercase mb-1">Requester</div>
+							<div className="fw-semibold text-white">{order.requestedBy?.username || '—'}</div>
+							{order.requestedBy?.email && (
+								<div className="small text-white-50">{order.requestedBy.email}</div>
+							)}
+						</div>
+					</div>
+				</div>
+			</Card>
+
+			<div className="row g-4 align-items-start">
+				<div className="col-lg-7">
+					<Card className="border-0 shadow-sm mb-4" style={{ borderRadius: '1rem' }}>
+						<Card.Header
+							className="border-0 py-3 text-white fw-semibold rounded-top"
+							style={{
+								background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)',
+								borderBottom: `2px solid ${GOLD}`,
+								borderRadius: '1rem 1rem 0 0',
+							}}
+						>
+							Order details
 						</Card.Header>
-						<Card.Body className="p-0 px-4">
-							<DetailRow label="Ticket Number" value={<strong>{order.ticketNumber}</strong>} />
-							<DetailRow label="Receipt Number" value={order.receiptNumber} />
-							<DetailRow label="Store" value={order.storeId?.name} />
-							<DetailRow label="Customer Number" value={order.customerNumber} />
-							<DetailRow label="Type of Request" value={order.typeOfRequest?.replace(/_/g, ' ')} />
-							<DetailRow label="Reference SKU" value={order.referenceSkuNumber} />
-							<DetailRow label="Metal Quality" value={order.metalQuality?.replace(/_/g, ' ')} />
-							<DetailRow label="Diamond Type" value={order.diamondType?.replace(/_/g, ' ')} />
-							<DetailRow label="Diamond Color" value={order.diamondColor} />
-							<DetailRow label="Diamond Clarity" value={order.diamondClarity} />
-							<DetailRow label="Diamond Details" value={order.diamondDetails} />
-							<DetailRow label="Customization" value={order.customization} />
-							<DetailRow label="Status" value={statusBadge(order.status)} />
-							<DetailRow label="Assigned To" value={order.assignedTo?.replace(/_/g, ' ') || '—'} />
-							<DetailRow label="ETA" value={order.eta ? new Date(order.eta).toLocaleDateString() : '—'} />
-							<DetailRow label="Requested By" value={
-								<div>
-									<div>{order.requestedBy?.username || '—'}</div>
-									{order.requestedBy?.email && <div className="text-muted small">{order.requestedBy.email}</div>}
+						<Card.Body className="p-4">
+							<div className="row g-2">
+								<div className="col-md-6">
+									<DetailCell label="Receipt" value={order.receiptNumber} />
 								</div>
-							} />
-							<DetailRow label="Created" value={new Date(order.createdAt).toLocaleString()} />
-							<div className="border-0 py-3">
-								<div className="text-muted fw-medium mb-2">Notes</div>
-								<div className="text-dark">{order.notes || '—'}</div>
+								<div className="col-md-6">
+									<DetailCell label="Customer #" value={order.customerNumber} />
+								</div>
+								<div className="col-md-6">
+									<DetailCell label="Type of request" value={order.typeOfRequest?.replace(/_/g, ' ')} />
+								</div>
+								<div className="col-md-6">
+									<DetailCell label="Reference SKU" value={order.referenceSkuNumber} />
+								</div>
+								<div className="col-md-6">
+									<DetailCell label="Metal quality" value={order.metalQuality?.replace(/_/g, ' ')} />
+								</div>
+								<div className="col-md-6">
+									<DetailCell label="Diamond type" value={order.diamondType?.replace(/_/g, ' ')} />
+								</div>
+								<div className="col-md-6">
+									<DetailCell label="Diamond color" value={order.diamondColor} />
+								</div>
+								<div className="col-md-6">
+									<DetailCell label="Diamond clarity" value={order.diamondClarity} />
+								</div>
+								<div className="col-12">
+									<DetailCell label="Diamond details" value={order.diamondDetails} />
+								</div>
+								<div className="col-12">
+									<DetailCell label="Customization" value={order.customization} />
+								</div>
+								<div className="col-md-6">
+									<DetailCell label="Assigned to" value={order.assignedTo?.replace(/_/g, ' ') || '—'} />
+								</div>
+								<div className="col-md-6">
+									<DetailCell
+										label="ETA"
+										value={order.eta ? new Date(order.eta).toLocaleDateString() : '—'}
+									/>
+								</div>
+							</div>
+							<div className="mt-4 p-3 rounded-3 border bg-light bg-opacity-50">
+								<div className="text-muted text-uppercase fw-semibold small mb-2" style={{ fontSize: 10 }}>
+									Notes
+								</div>
+								<div className="small text-dark">{order.notes || '—'}</div>
 							</div>
 						</Card.Body>
-						<Card.Footer className="bg-light border-0 py-3 px-4">
-							<Button variant="outline-primary" onClick={() => setEditModal(true)}>Edit Order</Button>
-						</Card.Footer>
 					</Card>
-				</div>
 
-				{/* Media Section */}
-				<div className="col-lg-6">
-					<Card className="shadow-sm border-0 overflow-hidden" style={{ borderRadius: 12, borderColor: 'rgba(198,168,125,0.3)' }}>
-						<Card.Header className="py-3 px-4 text-white fw-semibold" style={{ background: 'linear-gradient(135deg, #1A1A1A 0%, #2d2d2d 100%)', border: 'none' }}>
-							Attachments & Diagram
+					<Card className="border-0 shadow-sm" style={{ borderRadius: '1rem' }}>
+						<Card.Header
+							className="border-0 py-3 text-white fw-semibold rounded-top"
+							style={{
+								background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)',
+								borderBottom: `2px solid ${GOLD}`,
+								borderRadius: '1rem 1rem 0 0',
+							}}
+						>
+							Attachments & diagram
 						</Card.Header>
-						<Card.Body>
+						<Card.Body className="p-4">
 							{videos.length === 0 && images.length === 0 && !hasDiagram ? (
-								<p className="text-muted mb-0">—</p>
+								<p className="text-muted small mb-0">No attachments.</p>
 							) : (
 								<div className="d-flex flex-column gap-4">
 									{videos.length > 0 && (
 										<div>
-											<h6 className="mb-2 fw-semibold" style={{ color: '#C6A87D' }}>Videos</h6>
+											<h6 className="mb-3 fw-semibold text-uppercase small" style={{ color: GOLD }}>
+												Videos
+											</h6>
 											<div className="d-flex flex-wrap gap-3">
 												{videos.map((url) => (
-													<div key={url} className="rounded-3 overflow-hidden shadow-sm bg-dark" style={{ maxWidth: 320 }}>
+													<div
+														key={url}
+														className="rounded-4 overflow-hidden shadow-sm bg-dark"
+														style={{ maxWidth: 320 }}
+													>
 														<video controls className="w-100" src={`${BASE_API}/uploads/${url}`} />
-														<div className="p-2 small text-white text-truncate">{url.split('/').pop()}</div>
 													</div>
 												))}
 											</div>
@@ -376,7 +477,9 @@ const SpecialOrderView = () => {
 									)}
 									{images.length > 0 && (
 										<div>
-											<h6 className="mb-2 fw-semibold" style={{ color: '#C6A87D' }}>Images</h6>
+											<h6 className="mb-3 fw-semibold text-uppercase small" style={{ color: GOLD }}>
+												Images
+											</h6>
 											<div className="d-flex flex-wrap gap-3">
 												{images.map((url) => (
 													<a
@@ -384,7 +487,7 @@ const SpecialOrderView = () => {
 														href={`${BASE_API}/uploads/${url}`}
 														target="_blank"
 														rel="noreferrer"
-														className="rounded-3 overflow-hidden shadow-sm d-block border"
+														className="rounded-4 overflow-hidden shadow-sm d-block border"
 														style={{ maxWidth: 220 }}
 													>
 														<img
@@ -400,12 +503,14 @@ const SpecialOrderView = () => {
 									)}
 									{hasDiagram && (
 										<div>
-											<h6 className="mb-2 fw-semibold" style={{ color: '#C6A87D' }}>Customer Diagram</h6>
-											<div className="rounded-3 overflow-hidden border shadow-sm p-3 bg-light">
+											<h6 className="mb-3 fw-semibold text-uppercase small" style={{ color: GOLD }}>
+												Customer diagram
+											</h6>
+											<div className="rounded-4 overflow-hidden border shadow-sm p-3 bg-light">
 												<img
 													src={`${BASE_API}/uploads/${order.canvasDrawing}`}
-													alt="Customer diagram"
-													className="img-fluid rounded"
+													alt="Diagram"
+													className="img-fluid rounded-3"
 													style={{ maxHeight: 400, objectFit: 'contain' }}
 												/>
 											</div>
@@ -416,18 +521,29 @@ const SpecialOrderView = () => {
 						</Card.Body>
 					</Card>
 				</div>
-			</div>
 
-			<div className="row g-4 mt-1">
-				<div className="col-12">
-					<Card className="shadow-sm border-0 overflow-hidden" style={{ borderRadius: 12 }}>
-						<Card.Header className="py-3 px-4 text-white fw-semibold" style={{ background: 'linear-gradient(135deg, #1A1A1A 0%, #2d2d2d 100%)', border: 'none' }}>
-							Customer chat (live)
+				<div className="col-lg-5">
+					<Card
+						className="border-0 shadow-sm sticky-lg-top"
+						style={{ borderRadius: '1rem', top: '1rem', minHeight: 420 }}
+					>
+						<Card.Header
+							className="border-0 py-3 text-white fw-semibold rounded-top"
+							style={{
+								background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)',
+								borderBottom: `2px solid ${GOLD}`,
+								borderRadius: '1rem 1rem 0 0',
+							}}
+						>
+							Live chat with store
 						</Card.Header>
-						<Card.Body>
-							<div className="border rounded bg-light p-3 mb-3" style={{ maxHeight: 360, overflowY: 'auto' }}>
+						<Card.Body className="p-0 d-flex flex-column">
+							<div
+								className="flex-grow-1 overflow-auto px-3 py-3 bg-light bg-opacity-50"
+								style={{ maxHeight: 'min(55vh, 520px)' }}
+							>
 								{messages.length === 0 ? (
-									<p className="text-muted small mb-0">No messages yet.</p>
+									<p className="text-muted small mb-0 py-3 text-center">No messages yet.</p>
 								) : (
 									messages.map((m) => (
 										<div
@@ -435,21 +551,28 @@ const SpecialOrderView = () => {
 											ref={(el) => {
 												messageRefs.current[String(m._id)] = el
 											}}
-											className={`mb-2 p-2 rounded-3 small ${
-												m.role === 'admin' ? 'bg-primary text-white ms-4' : 'bg-white border me-4'
+											className={`mb-3 p-3 rounded-4 small shadow-sm ${
+												m.role === 'admin'
+													? 'bg-primary text-white ms-3'
+													: 'bg-white border me-3'
 											} ${highlightedMessageId === String(m._id) ? 'border border-warning shadow' : ''}`}
 										>
-											<div className="fw-semibold opacity-75" style={{ fontSize: 11 }}>
-												{m.role === 'admin' ? (m.senderName || 'Admin') : 'Store user'}
+											<div className="fw-semibold opacity-90" style={{ fontSize: 11 }}>
+												{m.role === 'admin' ? m.senderName || 'Admin' : 'Store'}
+												{m.createdAt && (
+													<span className="opacity-75 fw-normal ms-1">
+														· {new Date(m.createdAt).toLocaleString()}
+													</span>
+												)}
 											</div>
 											{m.replyToMessageId && m.replyToText && (
 												<button
 													type="button"
 													onClick={() => jumpToMessage(m.replyToMessageId)}
-													className={`w-100 text-start rounded border p-2 mb-1 small ${
+													className={`w-100 text-start rounded-3 border p-2 mb-2 small mt-2 ${
 														m.role === 'admin'
 															? 'bg-white text-dark border-light'
-															: 'bg-warning-subtle border-warning-subtle text-dark'
+															: 'bg-warning-subtle border-0 text-dark'
 													}`}
 												>
 													<div className="fw-semibold" style={{ fontSize: 10 }}>
@@ -460,19 +583,18 @@ const SpecialOrderView = () => {
 													</div>
 												</button>
 											)}
-											<div className="mt-1">{m.text}</div>
-											<div className="mt-1 opacity-75" style={{ fontSize: 10 }}>
-												{m.createdAt ? new Date(m.createdAt).toLocaleString() : ''}
+											<div className="mt-2" style={{ whiteSpace: 'pre-wrap' }}>
+												{m.text}
 											</div>
-											{order.status !== 'FINALIZED' && (
+											{!chatClosed && (
 												<Button
 													variant={m.role === 'admin' ? 'light' : 'outline-secondary'}
 													size="sm"
-													className="mt-2 py-0 px-2"
+													className="mt-2 py-0 px-2 rounded-pill"
 													onClick={() =>
 														setReplyTo({
 															id: String(m._id),
-															sender: m.role === 'admin' ? (m.senderName || 'Admin') : 'Store user',
+															sender: m.role === 'admin' ? m.senderName || 'Admin' : 'Store',
 															preview: makePreview(String(m.text || '')),
 														})
 													}
@@ -485,77 +607,137 @@ const SpecialOrderView = () => {
 								)}
 								<div ref={chatEndRef} />
 							</div>
-							{order.status === 'FINALIZEDs' ? (
-								<p className="text-muted small mb-0">Order finalized — chat is closed.</p>
+
+							{chatClosed ? (
+								<div className="p-3 border-top small text-muted bg-white rounded-bottom">
+									Order received — chat is closed.
+								</div>
 							) : (
-								<Form onSubmit={handleSendChat}>
-									{replyTo && (
-										<div className="mb-2 rounded border border-warning-subtle bg-warning-subtle p-2 small d-flex justify-content-between align-items-start gap-2">
-											<div className="text-truncate">
-												<div className="fw-semibold">Replying to {replyTo.sender}</div>
-												<div className="text-muted text-truncate">"{replyTo.preview}"</div>
+								<div className="p-3 border-top bg-white rounded-bottom">
+									<Form onSubmit={handleSendChat}>
+										{replyTo && (
+											<div className="mb-2 rounded-3 border border-warning-subtle bg-warning-subtle p-2 small d-flex justify-content-between align-items-start gap-2">
+												<div className="text-truncate">
+													<div className="fw-semibold">Replying to {replyTo.sender}</div>
+													<div className="text-muted text-truncate">&quot;{replyTo.preview}&quot;</div>
+												</div>
+												<Button
+													variant="link"
+													className="p-0 small text-decoration-none text-dark"
+													onClick={() => setReplyTo(null)}
+												>
+													Cancel
+												</Button>
 											</div>
-											<Button variant="link" className="p-0 small text-decoration-none" onClick={() => setReplyTo(null)}>
-												Cancel
+										)}
+										<div className="d-flex gap-2">
+											<Form.Control
+												className="rounded-3"
+												value={chatInput}
+												onChange={(e) => setChatInput(e.target.value)}
+												placeholder="Message the store…"
+												maxLength={4000}
+											/>
+											<Button
+												type="submit"
+												className="rounded-3 px-4 fw-semibold"
+												style={{ background: GOLD, border: 'none' }}
+												disabled={sendingChat || !chatInput.trim()}
+											>
+												{sendingChat ? '…' : 'Send'}
 											</Button>
 										</div>
-									)}
-									<div className="d-flex gap-2">
-										<Form.Control
-											value={chatInput}
-											onChange={(e) => setChatInput(e.target.value)}
-											placeholder="Reply to the store…"
-											maxLength={4000}
-										/>
-										<Button type="submit" variant="primary" disabled={sendingChat || !chatInput.trim()}>
-											{sendingChat ? '…' : 'Send'}
-										</Button>
-									</div>
-								</Form>
+									</Form>
+								</div>
 							)}
 						</Card.Body>
 					</Card>
 				</div>
 			</div>
 
-			{/* Edit Modal */}
-			<Modal show={editModal} onHide={() => setEditModal(false)}>
-				<Modal.Header closeButton>
-					<Modal.Title>Edit - {order.ticketNumber}</Modal.Title>
-				</Modal.Header>
-				<Modal.Body>
+			<Modal
+				show={editModal}
+				onHide={() => setEditModal(false)}
+				centered
+				contentClassName="border-0 rounded-4 overflow-hidden shadow"
+			>
+				<div style={{ background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)', borderBottom: `2px solid ${GOLD}` }}>
+					<Modal.Header closeButton closeVariant="white" className="border-0 text-white py-3">
+						<Modal.Title className="fw-semibold">Edit · {order.ticketNumber}</Modal.Title>
+					</Modal.Header>
+				</div>
+				<Modal.Body className="px-4 py-4">
 					<Form.Group className="mb-3">
-						<Form.Label>Status</Form.Label>
-						{order.status === 'FINALIZEDs' ? (
+						<Form.Label className="small text-muted text-uppercase fw-semibold">Status</Form.Label>
+						{order.status === 'FINALIZED' && !isPrivilegedAdmin ? (
 							<div>
-								<Badge bg="dark">Finalized</Badge>
-								<div className="text-muted small mt-1">Set by the customer after delivery.</div>
+								<Badge bg="dark">Received</Badge>
+								<div className="text-muted small mt-1">Confirmed by the store.</div>
 							</div>
 						) : (
-							<Form.Select value={editForm.status} onChange={(e) => setEditForm((p) => ({ ...p, status: e.target.value }))}>
-								{STATUS_OPTIONS_ADMIN_EDIT.map((s) => (<option key={s.value} value={s.value}>{s.label}</option>))}
+							<Form.Select
+								className="rounded-3"
+								value={editForm.status}
+								onChange={(e) => setEditForm((p) => ({ ...p, status: e.target.value }))}
+							>
+								{(isPrivilegedAdmin && editForm.status === 'FINALIZED'
+									? [{ value: 'FINALIZED', label: 'Received' }, ...STATUS_OPTIONS_ADMIN_EDIT]
+									: STATUS_OPTIONS_ADMIN_EDIT
+								).map((s) => (
+									<option key={s.value} value={s.value}>
+										{s.label}
+									</option>
+								))}
 							</Form.Select>
 						)}
 					</Form.Group>
 					<Form.Group className="mb-3">
-						<Form.Label>Assigned To</Form.Label>
-						<Form.Select value={editForm.assignedTo} onChange={(e) => setEditForm((p) => ({ ...p, assignedTo: e.target.value }))}>
+						<Form.Label className="small text-muted text-uppercase fw-semibold">Assigned to</Form.Label>
+						<Form.Select
+							className="rounded-3"
+							value={editForm.assignedTo}
+							onChange={(e) => setEditForm((p) => ({ ...p, assignedTo: e.target.value }))}
+						>
 							<option value="">—</option>
-							{ASSIGNED_OPTIONS.map((o) => (<option key={o.value} value={o.value}>{o.label}</option>))}
+							{ASSIGNED_OPTIONS.map((o) => (
+								<option key={o.value} value={o.value}>
+									{o.label}
+								</option>
+							))}
 						</Form.Select>
 					</Form.Group>
 					<Form.Group className="mb-3">
-						<Form.Label>ETA</Form.Label>
-						<Form.Control type="date" value={editForm.eta} onChange={(e) => setEditForm((p) => ({ ...p, eta: e.target.value }))} />
+						<Form.Label className="small text-muted text-uppercase fw-semibold">ETA</Form.Label>
+						<Form.Control
+							className="rounded-3"
+							type="date"
+							value={editForm.eta}
+							onChange={(e) => setEditForm((p) => ({ ...p, eta: e.target.value }))}
+						/>
 					</Form.Group>
 					<Form.Group>
-						<Form.Label>Notes</Form.Label>
-						<Form.Control as="textarea" rows={3} value={editForm.notes} onChange={(e) => setEditForm((p) => ({ ...p, notes: e.target.value }))} />
+						<Form.Label className="small text-muted text-uppercase fw-semibold">Notes</Form.Label>
+						<Form.Control
+							className="rounded-3"
+							as="textarea"
+							rows={3}
+							value={editForm.notes}
+							onChange={(e) => setEditForm((p) => ({ ...p, notes: e.target.value }))}
+						/>
 					</Form.Group>
 				</Modal.Body>
-				<Modal.Footer>
-					<Button variant="secondary" onClick={() => setEditModal(false)}>Cancel</Button>
-					<Button variant="primary" onClick={handleSaveEdit} disabled={saving}>{saving ? 'Saving…' : 'Save'}</Button>
+				<Modal.Footer className="border-0 px-4 pb-4 bg-light bg-opacity-50">
+					<Button variant="outline-secondary" className="rounded-pill px-4" onClick={() => setEditModal(false)}>
+						Cancel
+					</Button>
+					<Button
+						className="rounded-pill px-4 fw-semibold"
+						style={{ background: GOLD, border: 'none' }}
+						onClick={() => void handleSaveEdit()}
+						disabled={saving}
+					>
+						{saving ? 'Saving…' : 'Save changes'}
+					</Button>
 				</Modal.Footer>
 			</Modal>
 		</>

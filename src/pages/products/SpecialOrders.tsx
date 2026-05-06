@@ -1,11 +1,21 @@
 import { PageBreadcrumb } from '@/components'
-import { Badge, Button, Card, Form, Modal, Table } from 'react-bootstrap'
+import { Badge, Button, Card, Dropdown, Form, Modal, Spinner, Table } from 'react-bootstrap'
 import { useAuthContext } from '@/common'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { FaSearch, FaWarehouse } from 'react-icons/fa'
 import { LuRefreshCw } from 'react-icons/lu'
+
+const GOLD = '#C6A87D'
+
+/** Scroll area inside flex card — fills all space below filters */
+const TABLE_SCROLL_AREA_STYLE = {
+	flex: '1 1 auto',
+	minHeight: 0,
+	overflowY: 'auto' as const,
+	WebkitOverflowScrolling: 'touch' as const,
+}
 
 type SpecialOrderRow = {
 	_id: string
@@ -43,16 +53,14 @@ const STATUS_OPTIONS = [
 	{ value: 'RECEIVED_BY_SPO_TEAM', label: 'Received by SPO Team' },
 	{ value: 'WIP', label: 'WIP' },
 	{ value: 'CLOSED', label: 'Delivered' },
-	// { value: 'RECEIVED', label: 'Received' },
 	{ value: 'FINALIZED', label: 'Received' },
 ]
 
-/** Admin cannot set FINALIZED via PATCH (requester confirms receipt). */
 const STATUS_OPTIONS_ADMIN_EDIT = STATUS_OPTIONS.filter((s) => s.value !== 'FINALIZED')
 
 const statusLabel = (status: string) => {
 	if (status === 'CLOSED') return 'Delivered'
-	if (status === 'FINALIZED') return 'Finalized'
+	if (status === 'FINALIZED') return 'Received'
 	return status?.replace(/_/g, ' ') || '—'
 }
 
@@ -71,8 +79,14 @@ const statusBadge = (status: string) => {
 const SpecialOrders = () => {
 	const BASE_API = import.meta.env.VITE_BASE_API
 	const navigate = useNavigate()
-	const { user, isSuperUser } = useAuthContext()
+	const { user, isSuperUser, role } = useAuthContext()
 	const token = user?.token
+	const roleNorm = String(role ?? user?.role ?? '').toLowerCase().trim()
+	const isPrivilegedAdmin =
+		isSuperUser ||
+		roleNorm === 'admin' ||
+		roleNorm === 'super admin' ||
+		roleNorm === 'superuser'
 
 	const [rows, setRows] = useState<SpecialOrderRow[]>([])
 	const [loading, setLoading] = useState(false)
@@ -120,11 +134,11 @@ const SpecialOrders = () => {
 	}
 
 	useEffect(() => {
-		if (!token || !isSuperUser) return
+		if (!token || !isPrivilegedAdmin) return
 		fetchWarehouses()
 		fetchOrders()
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [token, isSuperUser])
+	}, [token, isPrivilegedAdmin])
 
 	const openEdit = (row: SpecialOrderRow) => {
 		setEditModal(row)
@@ -140,14 +154,22 @@ const SpecialOrders = () => {
 		if (!editModal) return
 		setSaving(true)
 		try {
-			const body =
-				editModal.status === 'FINALIZEDs'
-					? {
-							assignedTo: editForm.assignedTo,
-							eta: editForm.eta,
-							notes: editForm.notes,
-						}
-					: editForm
+			let body: Record<string, unknown>
+			if (editModal.status === 'FINALIZED' && !isPrivilegedAdmin) {
+				body = {
+					assignedTo: editForm.assignedTo,
+					eta: editForm.eta,
+					notes: editForm.notes,
+				}
+			} else if (isPrivilegedAdmin && editForm.status === 'FINALIZED') {
+				body = {
+					assignedTo: editForm.assignedTo,
+					eta: editForm.eta,
+					notes: editForm.notes,
+				}
+			} else {
+				body = editForm
+			}
 			const res = await fetch(`${BASE_API}/api/special-orders/${editModal._id}`, {
 				method: 'PATCH',
 				headers: {
@@ -168,12 +190,12 @@ const SpecialOrders = () => {
 		}
 	}
 
-	if (!isSuperUser) {
+	if (!isPrivilegedAdmin) {
 		return (
 			<>
 				<PageBreadcrumb title="Special Orders" subName="Products" />
-				<Card>
-					<Card.Body>Access denied.</Card.Body>
+				<Card className="border-0 shadow-sm" style={{ borderRadius: '1rem' }}>
+					<Card.Body className="py-5 text-center text-muted">Access denied.</Card.Body>
 				</Card>
 			</>
 		)
@@ -183,163 +205,254 @@ const SpecialOrders = () => {
 		<>
 			<PageBreadcrumb title="Special Orders" subName="Products" />
 
-			<Card>
-				<Card.Body>
-					<div className="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+			<Card
+				className="border-0 shadow d-flex flex-column"
+				style={{
+					borderRadius: '1rem',
+					borderBottom: `3px solid ${GOLD}`,
+					overflow: 'hidden',
+					height: 'calc(100vh - 108px)',
+					maxHeight: 'calc(100vh - 108px)',
+				}}
+			>
+				<div
+					className="px-4 py-4 text-white flex-shrink-0"
+					style={{ background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)' }}
+				>
+					<div className="d-flex flex-wrap justify-content-between align-items-start gap-3">
 						<div>
-							<h4 className="mb-1">Special Order (SPO) Requests</h4>
-							<div className="text-muted">View and manage special order requests from store managers.</div>
+							<div
+								className="text-white-50 small text-uppercase mb-1"
+								style={{ fontSize: 11, letterSpacing: '0.1em' }}
+							>
+								Special order program
+							</div>
+							<h4 className="mb-1 fw-semibold text-white">SPO requests</h4>
+							<p className="mb-0 text-white-50 small">Review and manage requests from store teams.</p>
 						</div>
 						<Button
-							variant="outline-primary"
-							onClick={fetchOrders}
+							variant="light"
+							className="rounded-pill px-4 d-flex align-items-center gap-2"
+							onClick={() => void fetchOrders()}
 							disabled={loading}
-							className="d-flex align-items-center"
 						>
-							<LuRefreshCw size={18} className="me-1" />
+							<LuRefreshCw size={18} />
 							Refresh
 						</Button>
 					</div>
 
-					<div className="row g-3 mb-3">
-						<div className="col-md-2">
-							<Form.Label><FaWarehouse className="me-1" /> Store</Form.Label>
-							<Form.Select value={storeFilter} onChange={(e) => setStoreFilter(e.target.value)}>
-								<option value="">All</option>
+					<div className="row g-3 mt-2 pt-2 border-top border-secondary border-opacity-25">
+						<div className="col-md-6 col-lg-3">
+							<Form.Label className="text-white-50 small mb-1">
+								<FaWarehouse className="me-1" /> Store
+							</Form.Label>
+							<Form.Select
+								value={storeFilter}
+								onChange={(e) => setStoreFilter(e.target.value)}
+								className="rounded-3 border-0"
+							>
+								<option value="">All stores</option>
 								{warehouses.map((w) => (
-									<option key={w._id} value={w._id}>{w.name}</option>
+									<option key={w._id} value={w._id}>
+										{w.name}
+									</option>
 								))}
 							</Form.Select>
 						</div>
-						<div className="col-md-2">
-							<Form.Label>Status</Form.Label>
-							<Form.Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+						<div className="col-md-6 col-lg-2">
+							<Form.Label className="text-white-50 small mb-1">Status</Form.Label>
+							<Form.Select
+								value={statusFilter}
+								onChange={(e) => setStatusFilter(e.target.value)}
+								className="rounded-3 border-0"
+							>
 								<option value="">All</option>
 								{STATUS_OPTIONS.map((s) => (
-									<option key={s.value} value={s.value}>{s.label}</option>
+									<option key={s.value} value={s.value}>
+										{s.label}
+									</option>
 								))}
 							</Form.Select>
 						</div>
-						<div className="col-md-4">
-							<Form.Label><FaSearch className="me-1" /> Search</Form.Label>
+						<div className="col-md-8 col-lg-4">
+							<Form.Label className="text-white-50 small mb-1">
+								<FaSearch className="me-1" /> Search
+							</Form.Label>
 							<Form.Control
-								placeholder="Ticket, receipt, customer..."
+								className="rounded-3 border-0"
+								placeholder="Ticket, receipt, customer…"
 								value={search}
 								onChange={(e) => setSearch(e.target.value)}
 							/>
 						</div>
-						<div className="col-md-2 d-flex align-items-end">
-							<Button variant="primary" onClick={fetchOrders} disabled={loading}>
-								{loading ? 'Loading…' : 'Filter'}
+						<div className="col-md-4 col-lg-3 d-flex align-items-end">
+							<Button
+								className="w-100 rounded-3 fw-semibold"
+								style={{ background: GOLD, border: 'none' }}
+								onClick={() => void fetchOrders()}
+								disabled={loading}
+							>
+								{loading ? 'Loading…' : 'Apply filters'}
 							</Button>
 						</div>
 					</div>
+				</div>
 
-					<Table responsive hover>
-						<thead>
-							<tr >
-								<th>Ticket</th>
-								<th>Receipt</th>
-								<th>ETA</th>
-								<th>Drawing</th>
-								<th>Store</th>
-								<th>Customer #</th>
-								<th>Status</th>
-								<th>Assigned To</th>
-								<th>Actions</th>
-							</tr>
-						</thead>
-						<tbody>
-							{loading ? (
-								<tr><td colSpan={9}>Loading…</td></tr>
-							) : rows.length === 0 ? (
-								<tr><td colSpan={9} className="text-center text-muted">No special orders found.</td></tr>
-							) : (
-								rows.map((r) => (
-									<tr key={r._id} className={r?.status === "SUBMITTED" ? "bg-warning" : ""}>
-										<td><strong>{r?.ticketNumber || '—'}</strong></td>
-											<td>{r?.receiptNumber || '—'}</td>
-										<td>{r?.eta ? new Date(r.eta).toLocaleDateString() : '—'}</td>
-										<td>
-											{r?.canvasDrawing ? (
-												<Badge bg="success">Yes</Badge>
-											) : (
-												<span className="text-muted">—</span>
-											)}
-										</td>
-										<td>{r?.storeId?.name || '—'}</td>
-										<td>{r?.customerNumber || '—'}</td>
-										<td>{statusBadge(r?.status === "FINALIZED" ? "Order Received to store" : r?.status || '')}</td>
-										<td>{r?.assignedTo?.replace(/_/g, ' ') || '—'}</td>
-										<td>
-											<div className="d-flex gap-1 flex-wrap">
-												<Button
-													size="sm"
-													variant="outline-info"
-													onClick={() => navigate(`/products/special-orders/${r._id}`)}
-													title="View full details"
-												>
-													View
-												</Button>
-												<Button size="sm" variant="outline-primary" onClick={() => openEdit(r)}>
-													Edit
-												</Button>
-											</div>
-										</td>
+				<Card.Body className="p-0 d-flex flex-column flex-grow-1" style={{ minHeight: 0 }}>
+					{loading ? (
+						<div className="d-flex flex-grow-1 align-items-center justify-content-center py-5">
+							<Spinner animation="border" style={{ color: GOLD }} />
+						</div>
+					) : (
+						<div className="table-responsive flex-grow-1" style={TABLE_SCROLL_AREA_STYLE}>
+							<Table hover className="align-middle mb-0">
+								<thead className="table-light sticky-top border-bottom" style={{ zIndex: 5 }}>
+									<tr className="small text-uppercase text-muted" style={{ fontSize: 11, letterSpacing: '0.06em' }}>
+										<th className="ps-4 bg-light">Ticket</th>
+										<th className="bg-light">Receipt</th>
+										<th className="bg-light">ETA</th>
+										<th className="bg-light">Drawing</th>
+										<th className="bg-light">Store</th>
+										<th className="bg-light">Customer #</th>
+										<th className="bg-light">Status</th>
+										<th className="bg-light">Assigned</th>
+										<th className="pe-4 text-end bg-light" style={{ minWidth: 120 }}>
+											Actions
+										</th>
 									</tr>
-								))
-							)}
-						</tbody>
-					</Table>
+								</thead>
+								<tbody>
+									{rows.length === 0 ? (
+										<tr>
+											<td colSpan={9} className="text-center text-muted py-5">
+												No special orders found.
+											</td>
+										</tr>
+									) : (
+										rows.map((r) => (
+											<tr
+												key={r._id}
+												style={
+													r.status === 'SUBMITTED'
+														? { boxShadow: `inset 3px 0 0 ${GOLD}`, background: 'rgba(198, 168, 125, 0.06)' }
+														: undefined
+												}
+											>
+												<td className="ps-4 font-monospace fw-semibold small">{r.ticketNumber || '—'}</td>
+												<td className="small">{r.receiptNumber || '—'}</td>
+												<td className="small text-nowrap">
+													{r.eta ? new Date(r.eta).toLocaleDateString() : '—'}
+												</td>
+												<td>
+													{r.canvasDrawing ? (
+														<Badge bg="success" className="rounded-pill px-2">
+															Yes
+														</Badge>
+													) : (
+														<span className="text-muted">—</span>
+													)}
+												</td>
+												<td className="small">{r.storeId?.name || '—'}</td>
+												<td className="small">{r.customerNumber || '—'}</td>
+												<td>{statusBadge(r.status || '')}</td>
+												<td className="small">{r.assignedTo?.replace(/_/g, ' ') || '—'}</td>
+												<td className="pe-4 text-end">
+													<Dropdown align="end">
+														<Dropdown.Toggle
+															variant="outline-dark"
+															size="sm"
+															className="rounded-pill px-3"
+															id={`spo-actions-${r._id}`}
+															style={{ borderColor: '#dee2e6' }}
+														>
+															Actions
+														</Dropdown.Toggle>
+														<Dropdown.Menu className="shadow border-0 rounded-3 py-2">
+															<Dropdown.Item
+																onClick={() => navigate(`/products/special-orders/${r._id}`)}
+															>
+																View details
+															</Dropdown.Item>
+															<Dropdown.Item onClick={() => openEdit(r)}>Edit order</Dropdown.Item>
+														</Dropdown.Menu>
+													</Dropdown>
+												</td>
+											</tr>
+										))
+									)}
+								</tbody>
+							</Table>
+						</div>
+					)}
 				</Card.Body>
 			</Card>
 
-			<Modal show={!!editModal} onHide={() => setEditModal(null)}>
-				<Modal.Header closeButton>
-					<Modal.Title>Edit Special Order - {editModal?.ticketNumber}</Modal.Title>
-				</Modal.Header>
-				<Modal.Body>
+			<Modal
+				show={!!editModal}
+				onHide={() => setEditModal(null)}
+				centered
+				contentClassName="border-0 rounded-4 overflow-hidden shadow"
+			>
+				<div style={{ background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)', borderBottom: `2px solid ${GOLD}` }}>
+					<Modal.Header closeButton closeVariant="white" className="border-0 text-white py-3">
+						<Modal.Title className="fw-semibold">
+							Edit order · {editModal?.ticketNumber}
+						</Modal.Title>
+					</Modal.Header>
+				</div>
+				<Modal.Body className="px-4 py-4">
 					<Form.Group className="mb-3">
-						<Form.Label>Status</Form.Label>
-						{editModal?.status === 'FINALIZEDs' ? (
+						<Form.Label className="small text-muted text-uppercase fw-semibold">Status</Form.Label>
+						{editModal?.status === 'FINALIZED' && !isPrivilegedAdmin ? (
 							<div className="py-2">
-								<Badge bg="dark">Order Received to store</Badge>
-								<div className="text-muted small mt-1">Set by the customer after delivery.</div>
+								<Badge bg="dark">Received</Badge>
+								<div className="text-muted small mt-1">Confirmed by the store after delivery.</div>
 							</div>
 						) : (
 							<Form.Select
+								className="rounded-3"
 								value={editForm.status}
 								onChange={(e) => setEditForm((p) => ({ ...p, status: e.target.value }))}
 							>
-								{STATUS_OPTIONS_ADMIN_EDIT.map((s) => (
-									<option key={s.value} value={s.value}>{s.label}</option>
+								{(isPrivilegedAdmin && editForm.status === 'FINALIZED'
+									? [{ value: 'FINALIZED', label: 'Received' }, ...STATUS_OPTIONS_ADMIN_EDIT]
+									: STATUS_OPTIONS_ADMIN_EDIT
+								).map((s) => (
+									<option key={s.value} value={s.value}>
+										{s.label}
+									</option>
 								))}
 							</Form.Select>
 						)}
 					</Form.Group>
 					<Form.Group className="mb-3">
-						<Form.Label>Assigned To</Form.Label>
+						<Form.Label className="small text-muted text-uppercase fw-semibold">Assigned to</Form.Label>
 						<Form.Select
+							className="rounded-3"
 							value={editForm.assignedTo}
 							onChange={(e) => setEditForm((p) => ({ ...p, assignedTo: e.target.value }))}
 						>
 							<option value="">—</option>
 							{ASSIGNED_OPTIONS.map((o) => (
-								<option key={o.value} value={o.value}>{o.label}</option>
+								<option key={o.value} value={o.value}>
+									{o.label}
+								</option>
 							))}
 						</Form.Select>
 					</Form.Group>
 					<Form.Group className="mb-3">
-						<Form.Label>ETA</Form.Label>
+						<Form.Label className="small text-muted text-uppercase fw-semibold">ETA</Form.Label>
 						<Form.Control
+							className="rounded-3"
 							type="date"
 							value={editForm.eta}
 							onChange={(e) => setEditForm((p) => ({ ...p, eta: e.target.value }))}
 						/>
 					</Form.Group>
 					<Form.Group>
-						<Form.Label>Notes</Form.Label>
+						<Form.Label className="small text-muted text-uppercase fw-semibold">Notes</Form.Label>
 						<Form.Control
+							className="rounded-3"
 							as="textarea"
 							rows={3}
 							value={editForm.notes}
@@ -347,23 +460,30 @@ const SpecialOrders = () => {
 						/>
 					</Form.Group>
 					{editModal?.canvasDrawing && (
-						<Form.Group className="mt-3">
-							<Form.Label>Customer Drawing</Form.Label>
-							<div className="border rounded p-2 bg-light">
+						<Form.Group className="mt-4">
+							<Form.Label className="small text-muted text-uppercase fw-semibold">Customer drawing</Form.Label>
+							<div className="border rounded-3 p-3 bg-light">
 								<img
 									src={`${BASE_API}/uploads/${editModal.canvasDrawing}`}
 									alt="Customer drawing"
-									className="img-fluid rounded"
+									className="img-fluid rounded-3"
 									style={{ maxHeight: 300, objectFit: 'contain' }}
 								/>
 							</div>
 						</Form.Group>
 					)}
 				</Modal.Body>
-				<Modal.Footer>
-					<Button variant="secondary" onClick={() => setEditModal(null)}>Cancel</Button>
-					<Button variant="primary" onClick={handleSaveEdit} disabled={saving}>
-						{saving ? 'Saving…' : 'Save'}
+				<Modal.Footer className="border-0 px-4 pb-4 bg-light bg-opacity-50">
+					<Button variant="outline-secondary" className="rounded-pill px-4" onClick={() => setEditModal(null)}>
+						Cancel
+					</Button>
+					<Button
+						className="rounded-pill px-4 fw-semibold"
+						style={{ background: GOLD, border: 'none' }}
+						onClick={() => void handleSaveEdit()}
+						disabled={saving}
+					>
+						{saving ? 'Saving…' : 'Save changes'}
 					</Button>
 				</Modal.Footer>
 			</Modal>

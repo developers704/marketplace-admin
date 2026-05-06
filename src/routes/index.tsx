@@ -44,6 +44,7 @@ const Categories = React.lazy(() => import('../pages/products/Categories'))
 const Products = React.lazy(() => import('../pages/products/Products'))
 const VendorCatalogV2 = React.lazy(() => import('../pages/products/VendorCatalogV2'))
 const B2BPurchaseRequestsV2 = React.lazy(() => import('../pages/products/B2BPurchaseRequestsV2'))
+const B2BPurchaseRequestView = React.lazy(() => import('../pages/products/B2BPurchaseRequestView'))
 const StoreInventoryV2 = React.lazy(() => import('../pages/products/StoreInventoryV2'))
 const SpecialOrders = React.lazy(() => import('../pages/products/SpecialOrders'))
 const SpecialOrderView = React.lazy(() => import('../pages/products/SpecialOrderView'))
@@ -155,6 +156,7 @@ const ServiceSchedule = React.lazy(() => import('../pages/services/ServiceShedul
 const EcommerceOrders = React.lazy(() => import('../pages/orders/EcommerceOrder'))
 const RequestedOrder = React.lazy(() => import('../pages/orders/RequestedOrder'))
 const StoreToStoreTransfers = React.lazy(() => import('../pages/orders/StoreToStoreTransfers'))
+const StoreToStoreTransferView = React.lazy(() => import('../pages/orders/StoreToStoreTransferView'))
 const ServiceOrders = React.lazy(() => import('../pages/orders/ServiceOrder'))
 const OrderStatus = React.lazy(() => import('../pages/orders/OrderStatus'))
 const ServiceBookings = React.lazy(() => import('../pages/orders/ServiceBookingsOrder'))
@@ -380,6 +382,15 @@ const customPagesRoutes = {
 			element: (
 				<PrivateRoute requiredPermission="Products" to_do="View">
 					<B2BPurchaseRequestsV2 />
+				</PrivateRoute>
+			),
+		},
+		{
+			path: '/products/b2b-purchase-requests-v2/:id',
+			name: 'B2B Purchase Request',
+			element: (
+				<PrivateRoute requiredPermission="Products" to_do="View">
+					<B2BPurchaseRequestView />
 				</PrivateRoute>
 			),
 		},
@@ -669,6 +680,15 @@ const customPagesRoutes = {
 			element: (
 				<PrivateRoute requiredPermission="Orders" to_do="View">
 					<RequestedOrder />
+				</PrivateRoute>
+			),
+		},
+		{
+			path: '/orders/store-to-store-transfers/:id',
+			name: 'Store transfer detail',
+			element: (
+				<PrivateRoute requiredPermission="Orders" to_do="View">
+					<StoreToStoreTransferView />
 				</PrivateRoute>
 			),
 		},
