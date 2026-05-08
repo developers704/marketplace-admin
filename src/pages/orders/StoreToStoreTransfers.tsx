@@ -121,7 +121,7 @@ const StoreToStoreTransfers = () => {
 					<div className="d-flex flex-wrap align-items-center justify-content-between gap-2">
 						<div>
 							<div className="text-white-50 small text-uppercase mb-0" style={{ fontSize: 11, letterSpacing: '0.08em' }}>
-								B2B logistics
+							Store to store transfers
 							</div>
 							<h5 className="mb-0 fw-semibold">Transfer requests</h5>
 						</div>

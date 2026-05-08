@@ -30,6 +30,16 @@ type ChatMsg = {
 	replyToSenderName?: string
 }
 
+const mergeChatMessage = (prev: ChatMsg[], incoming: ChatMsg): ChatMsg[] => {
+	if (!incoming?._id) return prev
+	const id = String(incoming._id)
+	const idx = prev.findIndex((m) => String(m._id) === id)
+	if (idx === -1) return [...prev, incoming]
+	const next = [...prev]
+	next[idx] = { ...next[idx], ...incoming }
+	return next
+}
+
 const getSocketOrigin = (baseApi: string) => {
 	const raw = String(baseApi || '')
 		.trim()
@@ -151,10 +161,7 @@ const StoreToStoreTransferView = () => {
 			},
 		)
 		socket.on('b2bStoreTransferChatMessage', (msg: ChatMsg) => {
-			setMessages((prev) => {
-				if (prev.some((m) => String(m._id) === String(msg._id))) return prev
-				return [...prev, msg]
-			})
+			setMessages((prev) => mergeChatMessage(prev, msg))
 		})
 		return () => {
 			socket.emit('unsubscribeB2bStoreTransfer', id)
@@ -188,7 +195,7 @@ const StoreToStoreTransferView = () => {
 			if (!res.ok) throw new Error(json.message || 'Send failed')
 			setChatText('')
 			setReplyTo(null)
-			if (json.data) setMessages((m) => [...m, json.data])
+			if (json.data) setMessages((prev) => mergeChatMessage(prev, json.data))
 		} catch (e: unknown) {
 			toast.error(e instanceof Error ? e.message : 'Send failed')
 		} finally {
