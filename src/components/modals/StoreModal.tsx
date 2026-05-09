@@ -10,7 +10,7 @@ interface StoreModalProps {
     onHide: () => void
     onSuccess?: () => void
     editingStore?: {
-        _id: number
+        _id: string | number
         name: string
         location: string
         capacity?: number
@@ -22,21 +22,59 @@ interface StoreModalProps {
             balance: number
         }
 
-         // 🟢 Add these 2 optional fields
-        districtManager?: {
-            _id: string
-            name: string
-        } | null
+        districtManager?:
+            | {
+                  _id: string
+                  name?: string
+                  username?: string
+              }
+            | string
+            | null
 
-        corporateManager?: {
-            _id: string
-            name: string
-        } | null
+        corporateManager?:
+            | {
+                  _id: string
+                  name?: string
+                  username?: string
+              }
+            | string
+            | null
 
-        // B2B Approval Permission Flags (v2)
         requireDMApproval?: boolean
         requireCMApproval?: boolean
     } | null
+}
+
+/** Merge API DM/CM list with warehouse-assigned managers so edit dropdown always shows current picks. */
+function mergeManagersWithWarehouseAssignments(apiList: any[], editing: StoreModalProps['editingStore']) {
+    const map = new Map<string, any>()
+    for (const u of apiList || []) {
+        if (u?._id) map.set(String(u._id), u)
+    }
+    const addFromWarehouse = (field: 'districtManager' | 'corporateManager', roleLabel: string) => {
+        const m = editing?.[field]
+        if (!m) return
+        const id = typeof m === 'string' ? m : m._id
+        if (!id) return
+        const key = String(id)
+        if (map.has(key)) return
+        const username =
+            typeof m === 'object' && m
+                ? (m as { username?: string; name?: string }).username ||
+                  (m as { username?: string; name?: string }).name ||
+                  'User'
+                : 'User'
+        map.set(key, {
+            _id: id,
+            username,
+            role: { role_name: roleLabel },
+        })
+    }
+    if (editing) {
+        addFromWarehouse('districtManager', 'District Manager')
+        addFromWarehouse('corporateManager', 'Corporate Manager')
+    }
+    return Array.from(map.values())
 }
 
 const StoreModal: React.FC<StoreModalProps> = ({
@@ -49,7 +87,7 @@ const StoreModal: React.FC<StoreModalProps> = ({
     const canUpdate = isSuperUser || permissions.Products?.Update
     const canCreate = isSuperUser || permissions.Products?.Create
     const [apiLoading, setApiLoading] = useState(false)
-    const [managers, setManagers] = useState([])
+    const [managers, setManagers] = useState<any[]>([])
     const BASE_API = import.meta.env.VITE_BASE_API
     const { token } = user
 
@@ -59,37 +97,37 @@ const StoreModal: React.FC<StoreModalProps> = ({
         control,
         reset,
         setValue,
+        watch,
         formState: { errors },
     } = useForm()
 
+    const selectedDistrictManager = watch('districtManager')
+    const selectedCorporateManager = watch('corporateManager')
+
     // Handle form submission
     useEffect(() => {
-    const fetchManagers = async () => {
-        try {
-            const res = await fetch(`${BASE_API}/api/customers/getcustomer-forstore`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            })
-            const data = await res.json()
-            console.log("data for user store", data);
-            
-
-            // 🟢 Sirf "District Manager" ya "Corporate Manager" roles filter kar lo
-            const filteredManagers = data.filter(
-                (user: any) =>
-                    user.role?.role_name?.toLowerCase() === 'district manager' ||
-                    user.role?.role_name?.toLowerCase() === 'corporate manager'
-            )
-
-            setManagers(filteredManagers)
-        } catch (err) {
-            console.error('Failed to fetch managers', err)
+        const fetchManagers = async () => {
+            try {
+                const res = await fetch(`${BASE_API}/api/customers/getcustomer-forstore`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                })
+                const data = await res.json()
+                const list = Array.isArray(data) ? data : []
+                const filteredManagers = list.filter(
+                    (u: any) =>
+                        u.role?.role_name?.toLowerCase() === 'district manager' ||
+                        u.role?.role_name?.toLowerCase() === 'corporate manager'
+                )
+                setManagers(mergeManagersWithWarehouseAssignments(filteredManagers, editingStore))
+            } catch (err) {
+                console.error('Failed to fetch managers', err)
+            }
         }
-    }
 
-    if (show) fetchManagers()
-}, [show])
+        if (show) void fetchManagers()
+    }, [show, BASE_API, token, editingStore?._id])
 
     const handleFormSubmit = async (storeData: any) => {
         setApiLoading(true)
@@ -115,8 +153,8 @@ const StoreModal: React.FC<StoreModalProps> = ({
                     initialSuppliesBalance: parseFloat(storeData.initialSuppliesBalance) || 0,
                     districtManager: storeData.districtManager || null,
                     corporateManager: storeData.corporateManager || null,
-                    requireDMApproval: storeData.requireDMApproval !== false, // Default true
-                    requireCMApproval: storeData.requireCMApproval !== false, // Default true
+                    requireDMApproval: storeData.districtManager ? !!storeData.requireDMApproval : false,
+                    requireCMApproval: storeData.corporateManager ? !!storeData.requireCMApproval : false,
                 }),
             })
 
@@ -160,7 +198,11 @@ const StoreModal: React.FC<StoreModalProps> = ({
             capacity: '',
             description: '',
             initialInventoryBalance: '',
-            initialSuppliesBalance: ''
+            initialSuppliesBalance: '',
+            districtManager: '',
+            corporateManager: '',
+            requireDMApproval: false,
+            requireCMApproval: false,
         })
         onHide()
     }
@@ -168,16 +210,25 @@ const StoreModal: React.FC<StoreModalProps> = ({
     // Set form values when editing
     useEffect(() => {
         if (show && editingStore) {
+            const districtManagerValue =
+                typeof editingStore.districtManager === 'string'
+                    ? editingStore.districtManager
+                    : editingStore.districtManager?._id || ''
+            const corporateManagerValue =
+                typeof editingStore.corporateManager === 'string'
+                    ? editingStore.corporateManager
+                    : editingStore.corporateManager?._id || ''
+
             setValue('name', editingStore.name)
             setValue('location', editingStore.location)
             setValue('capacity', editingStore.capacity || '')
             setValue('initialInventoryBalance', editingStore.inventoryWallet?.balance || 0)
             setValue('initialSuppliesBalance', editingStore.suppliesWallet?.balance || 0)
             setValue('description', editingStore.description || '')
-            setValue('districtManager', editingStore.districtManager || '')
-            setValue('corporateManager', editingStore.corporateManager || '')
-            setValue('requireDMApproval', editingStore.requireDMApproval !== false)
-            setValue('requireCMApproval', editingStore.requireCMApproval !== false)
+            setValue('districtManager', districtManagerValue)
+            setValue('corporateManager', corporateManagerValue)
+            setValue('requireDMApproval', !!editingStore.requireDMApproval)
+            setValue('requireCMApproval', !!editingStore.requireCMApproval)
         } else if (show && !editingStore) {
             reset({
                 name: '',
@@ -185,10 +236,22 @@ const StoreModal: React.FC<StoreModalProps> = ({
                 capacity: '',
                 description: '',
                 initialInventoryBalance: '',
-                initialSuppliesBalance: ''
+                initialSuppliesBalance: '',
+                districtManager: '',
+                corporateManager: '',
+                requireDMApproval: false,
+                requireCMApproval: false,
             })
         }
     }, [show, editingStore, setValue, reset])
+
+    useEffect(() => {
+        if (!selectedDistrictManager) setValue('requireDMApproval', false)
+    }, [selectedDistrictManager, setValue])
+
+    useEffect(() => {
+        if (!selectedCorporateManager) setValue('requireCMApproval', false)
+    }, [selectedCorporateManager, setValue])
 
     return (
         <Modal show={show} onHide={handleModalClose} dialogClassName="modal-dialog-centered">
@@ -242,39 +305,43 @@ const StoreModal: React.FC<StoreModalProps> = ({
                         </Form.Group>
 
                     {/* B2B Approval Permission Switches (v2) */}
-                    <div className="mb-3 p-3 border rounded bg-light">
-                        <h6 className="mb-3">Purchase Approval Settings</h6>
-                        <Form.Group className="mb-2">
-                            <Form.Check
-                                type="switch"
-                                id="requireDMApproval"
-                                label="Require District Manager Approval"
-                                {...register('requireDMApproval')}
-                                defaultChecked={editingStore?.requireDMApproval !== false}
-                            />
-                            <Form.Text className="text-muted">
-                                If enabled, DM must approve before request proceeds to next stage
+                    {(selectedDistrictManager || selectedCorporateManager) ? (
+                        <div className="mb-3 p-3 border rounded bg-light">
+                            <h6 className="mb-3">Purchase Approval Settings</h6>
+                            {selectedDistrictManager ? (
+                                <Form.Group className="mb-2">
+                                    <Form.Check
+                                        type="switch"
+                                        id="requireDMApproval"
+                                        label="Require District Manager Approval"
+                                        {...register('requireDMApproval')}
+                                    />
+                                    <Form.Text className="text-muted">
+                                        If enabled, DM must approve before request proceeds to next stage
+                                    </Form.Text>
+                                </Form.Group>
+                            ) : null}
+                            {selectedCorporateManager ? (
+                                <Form.Group className="mb-2">
+                                    <Form.Check
+                                        type="switch"
+                                        id="requireCMApproval"
+                                        label="Require Corporate Manager Approval"
+                                        {...register('requireCMApproval')}
+                                    />
+                                    <Form.Text className="text-muted">
+                                        If enabled, CM must approve before request proceeds to Admin
+                                    </Form.Text>
+                                </Form.Group>
+                            ) : null}
+                            <Form.Text className="text-muted d-block mt-2">
+                                <small>
+                                    <strong>Note:</strong> If both switches are OFF, requests go directly to Admin.
+                                    Admin always has final approval authority.
+                                </small>
                             </Form.Text>
-                        </Form.Group>
-                        <Form.Group className="mb-2">
-                            <Form.Check
-                                type="switch"
-                                id="requireCMApproval"
-                                label="Require Corporate Manager Approval"
-                                {...register('requireCMApproval')}
-                                defaultChecked={editingStore?.requireCMApproval !== false}
-                            />
-                            <Form.Text className="text-muted">
-                                If enabled, CM must approve before request proceeds to Admin
-                            </Form.Text>
-                        </Form.Group>
-                        <Form.Text className="text-muted d-block mt-2">
-                            <small>
-                                <strong>Note:</strong> If both switches are OFF, requests go directly to Admin. 
-                                Admin always has final approval authority.
-                            </small>
-                        </Form.Text>
-                    </div>
+                        </div>
+                    ) : null}
 
                     <Form.Group className="mb-3">
                         <FormInput

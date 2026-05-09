@@ -42,11 +42,13 @@ interface WarehouseRecord {
     }
     districtManager?: {
         _id: string
-        name: string
+        name?: string
+        username?: string
     } | null
     corporateManager?: {
         _id: string
-        name: string
+        name?: string
+        username?: string
     } | null
     requireDMApproval?: boolean
     requireCMApproval?: boolean
@@ -150,8 +152,8 @@ const Stores = () => {
         setValue('description', warehouse.description || '')
         setValue('districtManager', warehouse.districtManager?._id || '')
         setValue('corporateManager', warehouse.corporateManager?._id || '')
-        setValue('requireDMApproval', warehouse.requireDMApproval !== false)
-        setValue('requireCMApproval', warehouse.requireCMApproval !== false)
+        setValue('requireDMApproval', !!warehouse.requireDMApproval)
+        setValue('requireCMApproval', !!warehouse.requireCMApproval)
         toggleModal()
     }
     const handleSort = () => {
