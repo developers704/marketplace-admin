@@ -29,6 +29,7 @@ export const ADDITIONAL_PERMISSIONS: Record<string, string> = {
 	'My inventory': 'My inventory',
 	'Request order': 'Request order',
 	'Report': 'Report',
+	RapNet: 'RapNet',
 }
 
 const CRUD_KEYS = ['Create', 'View', 'Update', 'Delete'] as const
