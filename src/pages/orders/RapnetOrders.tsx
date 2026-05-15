@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { toastService } from '@/common/context/toast.service'
 import Swal from 'sweetalert2'
 import {
-	MdDiamond, MdFilterList, MdRefresh, MdRemoveRedEye,
+	MdDiamond, MdRefresh, MdRemoveRedEye,
 	MdCheckCircle, MdCancel, MdPending, MdSend,
 	MdImage, MdVideoLibrary, MdArticle, MdArrowBack,
 } from 'react-icons/md'
