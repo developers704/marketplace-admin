@@ -334,6 +334,12 @@ const MENU_ITEMS: MenuItemTypes[] = [
 				url: '/orders/abandoned-carts',
 				parentKey: 'orders',
 			},
+			{
+				key: 'View',
+				label: 'RapNet Orders',
+				url: '/orders/rapnet-orders',
+				parentKey: 'orders',
+			},
 		],
 	},
 	{
