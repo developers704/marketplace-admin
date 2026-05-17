@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { PageBreadcrumb } from '@/components'
 import { Card, Button, Badge, Modal, Form, Spinner } from 'react-bootstrap'
 import { useAuthContext } from '@/common'
@@ -12,12 +13,14 @@ interface SuppliesOrderRow {
 	_id: string
 	ticketNumber: string
 	customer?: { username?: string; email?: string; phone_number?: string }
+	warehouse?: { _id?: string; name?: string; isMain?: boolean }
 	items: Array<{
 		name: string
 		sku: string
 		quantity: number
 		unitPrice: number
 		currency: string
+		image?: string
 	}>
 	totalAmount: number
 	currency: string
@@ -230,7 +233,8 @@ export default function SuppliesOrders() {
 								<thead style={{ background: '#faf8f5', borderBottom: '2px solid #e8dfd4' }}>
 									<tr className="small text-uppercase text-secondary" style={{ letterSpacing: '0.06em' }}>
 										<th className="ps-4 py-3">Ticket</th>
-										<th className="py-3">Store</th>
+										<th className="py-3">Customer</th>
+										<th className="py-3">Warehouse</th>
 										<th className="py-3">Items</th>
 										<th className="py-3">Total</th>
 										<th className="py-3">Status</th>
@@ -249,6 +253,12 @@ export default function SuppliesOrders() {
 											<td>
 												<div className="fw-medium text-dark">{o.customer?.username || '—'}</div>
 												<div className="small text-muted">{o.customer?.email || ''}</div>
+											</td>
+											<td>
+												<div className="fw-medium text-dark">{o.warehouse?.name || '—'}</div>
+												{o.warehouse?.isMain ? (
+													<Badge bg="secondary" className="mt-1">Main</Badge>
+												) : null}
 											</td>
 											<td>
 												<div className="small text-dark">
@@ -279,23 +289,29 @@ export default function SuppliesOrders() {
 												) : null}
 											</td>
 											<td className="pe-4 text-end">
-												{o.status === 'PENDING_ADMIN' ? (
-													<div className="d-flex gap-2 justify-content-end flex-wrap">
-														<Button
-															size="sm"
-															variant="outline-dark"
-															style={{ borderColor: '#3d2914', color: '#3d2914' }}
-															onClick={() => void approve(o)}
-														>
-															Approve
-														</Button>
-														<Button size="sm" variant="outline-danger" onClick={() => openReject(o)}>
-															Reject
-														</Button>
-													</div>
-												) : (
-													<span className="small text-muted">—</span>
-												)}
+												<div className="d-flex gap-2 justify-content-end flex-wrap align-items-center">
+													<Link
+														className="btn btn-sm btn-outline-secondary"
+														to={`/orders/supplies-orders/${o._id}`}
+													>
+														View
+													</Link>
+													{o.status === 'PENDING_ADMIN' ? (
+														<>
+															<Button
+																size="sm"
+																variant="outline-dark"
+																style={{ borderColor: '#3d2914', color: '#3d2914' }}
+																onClick={() => void approve(o)}
+															>
+																Approve
+															</Button>
+															<Button size="sm" variant="outline-danger" onClick={() => openReject(o)}>
+																Reject
+															</Button>
+														</>
+													) : null}
+												</div>
 											</td>
 										</tr>
 									))}

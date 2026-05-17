@@ -156,6 +156,7 @@ const ServiceSchedule = React.lazy(() => import('../pages/services/ServiceShedul
 const EcommerceOrders = React.lazy(() => import('../pages/orders/EcommerceOrder'))
 const RequestedOrder = React.lazy(() => import('../pages/orders/RequestedOrder'))
 const SuppliesOrders = React.lazy(() => import('../pages/orders/SuppliesOrders'))
+const SuppliesOrderDetail = React.lazy(() => import('../pages/orders/SuppliesOrderDetail'))
 const RapnetOrders = React.lazy(() => import('../pages/orders/RapnetOrders'))
 const StoreToStoreTransfers = React.lazy(() => import('../pages/orders/StoreToStoreTransfers'))
 const StoreToStoreTransferView = React.lazy(() => import('../pages/orders/StoreToStoreTransferView'))
@@ -682,6 +683,15 @@ const customPagesRoutes = {
 			element: (
 				<PrivateRoute requiredPermission="Orders" to_do="View">
 					<RequestedOrder />
+				</PrivateRoute>
+			),
+		},
+		{
+			path: '/orders/supplies-orders/:id',
+			name: 'Supplies order detail',
+			element: (
+				<PrivateRoute requiredPermission="Orders" to_do="View">
+					<SuppliesOrderDetail />
 				</PrivateRoute>
 			),
 		},

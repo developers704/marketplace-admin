@@ -19,17 +19,17 @@ export const MENU_PERMISSIONS: Record<string, string> = {
 export const ADDITIONAL_PERMISSIONS: Record<string, string> = {
 	Home: 'Home',
 	'Valliani University': 'Valliani University',
-	Inventory: 'Inventory Order',
-	Marketing: 'Marketing',
-	Supplies: 'Supplies',
-	'Tool Finding': 'Tool Finding',
-	GWP: 'GWP',
-	'Add to Cart': 'Cart',
-	'Special Order': 'Special Order',
-	'My inventory': 'My inventory',
-	'Request order': 'Request order',
-	'Report': 'Report',
-	RapNet: 'RapNet',
+	 Inventory: 'Inventory Order',
+	 // Marketing: 'Marketing',
+	 Supplies: 'Supplies',
+	//  'Tool Finding': 'Tool Finding',
+	//   GWP: 'GWP',
+	 'Add to Cart': 'Cart',
+	 'Special Order': 'Special Order',
+	// 'My inventory': 'My inventory',
+	  'Request order': 'Request order',
+	  'Report': 'Report',
+	  'RapNet': 'RapNet',
 }
 
 const CRUD_KEYS = ['Create', 'View', 'Update', 'Delete'] as const
